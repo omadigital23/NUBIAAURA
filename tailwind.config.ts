@@ -16,6 +16,9 @@ const config: Config = {
           dark: '#1A1A1A',
         },
       },
+      fontSize: {
+        'xs': ['0.875rem', { lineHeight: '1.25rem' }], // 14px instead of 12px
+      },
       fontFamily: {
         playfair: ['Playfair Display', 'serif'],
         inter: ['Inter', 'sans-serif'],

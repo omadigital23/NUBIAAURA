@@ -2,8 +2,18 @@ import type { Metadata, Viewport } from 'next';
 import { Inter, Playfair_Display } from 'next/font/google';
 import '@/app/globals.css';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
-const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' });
+const inter = Inter({ 
+  subsets: ['latin'], 
+  variable: '--font-inter',
+  display: 'swap',
+  preload: true,
+});
+const playfair = Playfair_Display({ 
+  subsets: ['latin'], 
+  variable: '--font-playfair',
+  display: 'swap',
+  preload: true,
+});
 
 // Generate static params for locales
 export function generateStaticParams() {
@@ -56,6 +66,11 @@ export default function LocaleLayout({
   const { locale } = params;
   return (
     <html lang={locale} className={`${inter.variable} ${playfair.variable}`}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://exjtjbciznzyyqrfctsc.supabase.co" />
+      </head>
       <body className="font-inter bg-nubia-white text-nubia-black antialiased">{children}</body>
     </html>
   );
