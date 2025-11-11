@@ -1,0 +1,48 @@
+{
+  "title": "Nous Contacter",
+  "subtitle": "Nous sommes à votre écoute",
+  "description": "Avez-vous des questions ? Nous serions ravis de vous aider. Contactez-nous par email, téléphone ou WhatsApp.",
+  "form": {
+    "name": "Nom complet",
+    "email": "Adresse email",
+    "phone": "Numéro de téléphone",
+    "subject": "Sujet",
+    "message": "Votre message",
+    "submit": "Envoyer",
+    "sending": "Envoi en cours...",
+    "success": "Message envoyé avec succès !",
+    "error": "Une erreur s'est produite. Veuillez réessayer."
+  },
+  "contact": {
+    "title": "Coordonnées",
+    "email": "Email",
+    "phone": "Téléphone",
+    "whatsapp": "WhatsApp",
+    "location": "Localisation",
+    "hours": "Horaires",
+    "mondayFriday": "Lundi - Vendredi",
+    "saturday": "Samedi",
+    "sunday": "Dimanche",
+    "closed": "Fermé"
+  },
+  "social": {
+    "title": "Suivez-nous",
+    "instagram": "Instagram",
+    "facebook": "Facebook",
+    "tiktok": "TikTok",
+    "twitter": "Twitter"
+  },
+  "faq": {
+    "title": "Questions Fréquentes",
+    "q1": "Quel est le délai de livraison ?",
+    "a1": "Les commandes sur-mesure sont généralement livrées dans un délai de 4 à 6 semaines selon la complexité du projet.",
+    "q2": "Acceptez-vous les retours ?",
+    "a2": "Oui, nous acceptons les retours dans un délai de 14 jours après la livraison pour les articles non portés.",
+    "q3": "Quels sont les modes de paiement ?",
+    "a3": "Nous acceptons les cartes bancaires, le mobile money et les virements bancaires via Flutterwave.",
+    "q4": "Livrez-vous à l'international ?",
+    "a4": "Oui, nous livrons dans toute l'Afrique de l'Ouest et au-delà. Les frais de port varient selon la destination.",
+    "q5": "Comment prendre mes mensurations ?",
+    "a5": "Consultez notre guide complet de mensurations sur la page sur-mesure. Vous pouvez également nous envoyer vos mesures par WhatsApp."
+  }
+}

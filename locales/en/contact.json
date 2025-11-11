@@ -1,0 +1,48 @@
+{
+  "title": "Contact Us",
+  "subtitle": "We're here to help",
+  "description": "Have any questions? We'd love to hear from you. Contact us by email, phone, or WhatsApp.",
+  "form": {
+    "name": "Full Name",
+    "email": "Email Address",
+    "phone": "Phone Number",
+    "subject": "Subject",
+    "message": "Your Message",
+    "submit": "Send",
+    "sending": "Sending...",
+    "success": "Message sent successfully!",
+    "error": "An error occurred. Please try again."
+  },
+  "contact": {
+    "title": "Contact Information",
+    "email": "Email",
+    "phone": "Phone",
+    "whatsapp": "WhatsApp",
+    "location": "Location",
+    "hours": "Hours",
+    "mondayFriday": "Monday - Friday",
+    "saturday": "Saturday",
+    "sunday": "Sunday",
+    "closed": "Closed"
+  },
+  "social": {
+    "title": "Follow Us",
+    "instagram": "Instagram",
+    "facebook": "Facebook",
+    "tiktok": "TikTok",
+    "twitter": "Twitter"
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "q1": "What is the delivery time?",
+    "a1": "Custom orders are typically delivered within 4 to 6 weeks depending on the complexity of the project.",
+    "q2": "Do you accept returns?",
+    "a2": "Yes, we accept returns within 14 days of delivery for unworn items.",
+    "q3": "What payment methods do you accept?",
+    "a3": "We accept credit cards, mobile money, and bank transfers via Flutterwave.",
+    "q4": "Do you ship internationally?",
+    "a4": "Yes, we ship throughout West Africa and beyond. Shipping fees vary depending on the destination.",
+    "q5": "How do I take my measurements?",
+    "a5": "Check out our complete measurement guide on the custom order page. You can also send us your measurements via WhatsApp."
+  }
+}

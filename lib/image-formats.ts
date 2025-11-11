@@ -1,0 +1,91 @@
+export type ImageUsage =
+  | 'hero'
+  | 'catalog'
+  | 'cover'
+  | 'gallery'
+  | 'variant'
+  | 'category'
+  | 'og'
+  | 'thumbnail'
+  | 'icon'
+  | 'avatar';
+
+const presets: Record<ImageUsage, { w?: number; h?: number; fit?: string; sizes?: string }> = {
+  hero: { w: 1200, h: 675, fit: 'crop', sizes: '(max-width: 768px) 100vw, 50vw' },
+  catalog: { w: 500, h: 600, fit: 'crop', sizes: '(max-width: 1024px) 100vw, 33vw' },
+  cover: { w: 1200, h: 1500, fit: 'crop', sizes: '(max-width: 768px) 100vw, 50vw' },
+  gallery: { w: 800, h: 1000, fit: 'crop', sizes: '(max-width: 768px) 100vw, 50vw' },
+  variant: { w: 1000, h: 1200, fit: 'crop', sizes: '(max-width: 768px) 100vw, 50vw' },
+  category: { w: 800, h: 600, fit: 'crop', sizes: '(max-width: 1024px) 50vw, 25vw' },
+  og: { w: 1200, h: 630, fit: 'crop', sizes: '100vw' },
+  thumbnail: { w: 300, h: 360, fit: 'crop', sizes: '(max-width: 768px) 50vw, 25vw' },
+  icon: { sizes: '48px' },
+  avatar: { w: 256, h: 256, fit: 'crop', sizes: '128px' },
+};
+
+const isExternal = (src: string) => /^https?:\/\//i.test(src);
+
+function adjustLocalPathForUsage(usage: ImageUsage, src: string) {
+  // Only rewrite if path looks like our public schema and contains a size folder
+  // Expected folders: petite / moyenne / grande
+  const hasSizeSegment = /\/(petite|moyenne|grande)\//.test(src);
+  if (!hasSizeSegment) return src;
+
+  const desired = (() => {
+    switch (usage) {
+      case 'catalog':
+      case 'thumbnail':
+        return 'petite';
+      case 'cover':
+      case 'gallery':
+      case 'variant':
+        return 'moyenne';
+      case 'og':
+        return 'grande';
+      default:
+        return null;
+    }
+  })();
+
+  if (!desired) return src;
+  return src.replace(/\/(petite|moyenne|grande)\//, `/${desired}/`);
+}
+
+export function withImageParams(usage: ImageUsage, src: string) {
+  if (!src) return src;
+  const base = process.env.NEXT_PUBLIC_IMAGE_BASE; // e.g. https://<proj>.supabase.co/storage/v1/object/public
+  const bucket = process.env.NEXT_PUBLIC_IMAGE_BUCKET || 'products';
+  
+  // Local public/ images: rewrite size folder according to usage, and optionally prefix with Supabase public URL
+  if (!isExternal(src)) {
+    let path = adjustLocalPathForUsage(usage, src);
+    if (base) {
+      const cleanedBase = base.replace(/\/$/, '');
+      if (path.startsWith('/images/')) {
+        // Map /images/... to <base>/<bucket>/images/...
+        path = `${cleanedBase}/${bucket}${path}`;
+      } else if (path.startsWith('images/')) {
+        // Map images/... (without leading slash) as well
+        path = `${cleanedBase}/${bucket}/${path}`;
+      }
+    }
+    return path;
+  }
+  
+  // Supabase Storage URLs: return as-is (don't add params)
+  if (src.includes('supabase.co')) {
+    return src;
+  }
+  
+  // External images (Unsplash, etc): apply URL params
+  const url = new URL(src);
+  const p = presets[usage];
+  if (p.w) url.searchParams.set('w', String(p.w));
+  if (p.h) url.searchParams.set('h', String(p.h));
+  if (p.fit) url.searchParams.set('fit', p.fit);
+  return url.toString();
+}
+
+export function sizesFor(usage: ImageUsage) {
+  return presets[usage]?.sizes || undefined;
+}

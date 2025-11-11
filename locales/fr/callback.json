@@ -1,0 +1,23 @@
+{
+  "callback": {
+    "loading_title": "Vérification du Paiement",
+    "loading_message": "Vérification du paiement en cours...",
+    "success_title": "Paiement Réussi!",
+    "success_message": "Paiement vérifié avec succès!",
+    "details_title": "Détails de la Commande",
+    "details": {
+      "order_id": "ID Commande:",
+      "payment_status": "Statut Paiement:",
+      "order_status": "Statut Commande:"
+    },
+    "redirecting": "Vous serez redirigé vers la page de confirmation dans quelques secondes...",
+    "buttons": {
+      "go_to_confirmation": "Aller à la Confirmation",
+      "retry_payment": "Réessayer le Paiement",
+      "back_to_catalog": "Retour au Catalogue"
+    },
+    "failed_title": "Paiement Échoué",
+    "failed_message": "Le paiement n'a pas pu être vérifié",
+    "missing_params": "Paramètres de paiement manquants"
+  }
+}

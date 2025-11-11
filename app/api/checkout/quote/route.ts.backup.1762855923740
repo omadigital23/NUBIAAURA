@@ -1,0 +1,125 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { getSupabaseServerClient } from '@/lib/supabase';
+import { computeQuote, QuoteItem, ShippingMethod } from '@/lib/pricing';
+import { getLocaleFromPath, getTranslations, getTranslationKey } from '@/lib/i18n';
+
+// Pour contourner les erreurs Redis en développement
+const isDevelopment = process.env.NODE_ENV === 'development';
+
+const QuoteSchema = z.object({
+  locale: z.string().optional(),
+  shippingMethod: z.enum(['standard', 'express']),
+  country: z.string().optional(),
+  items: z.array(
+    z.object({
+      product_id: z.string().min(1),
+      quantity: z.number().int().positive(),
+    })
+  ).min(1),
+});
+
+function getClientIdentifier(req: NextRequest) {
+  const ip = req.ip || req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'global';
+  return `quote:${String(ip).split(',')[0].trim()}`;
+}
+
+export async function POST(request: NextRequest) {
+  // Resolve locale from body or referer path
+  const referer = request.headers.get('referer') || '';
+  const path = (() => { try { return new URL(referer).pathname; } catch { return referer; } })();
+
+  let locale: 'fr' | 'en' = 'fr';
+  try {
+    const bodyPeek = await request.clone().json();
+    if (bodyPeek?.locale === 'en' || bodyPeek?.locale === 'fr') locale = bodyPeek.locale;
+    else if (path) locale = getLocaleFromPath(path);
+  } catch {
+    if (path) locale = getLocaleFromPath(path);
+  }
+
+  // Load translations namespaces used for messages
+  const checkoutNs = await getTranslations(locale, 'checkout');
+  const commonNs = await getTranslations(locale, 'common');
+
+  try {
+    // Rate limit - skip in development to avoid Redis errors
+    if (!isDevelopment) {
+      try {
+        const rl = await checkRateLimit(getClientIdentifier(request), formRatelimit);
+        if (!rl.success) {
+          const msg = getTranslationKey(commonNs, 'common.error') || 'Too many requests';
+          return NextResponse.json({ error: msg }, { status: 429 });
+        }
+      } catch (rlError) {
+        console.warn('[Quote API] Rate limit check failed, continuing without rate limit:', rlError);
+        // Continue without rate limiting in development
+      }
+    } else {
+      console.log('[Quote API] Development mode - skipping rate limit');
+    }
+
+    // Validate input
+    const body = await request.json();
+    const parsed = QuoteSchema.parse(body);
+
+    // Fetch products and validate stock
+    const supabase = getSupabaseServerClient();
+    const productIds = parsed.items.map(i => i.product_id);
+
+    console.log('[Quote API] Fetching products:', productIds);
+    
+    const { data: products, error } = await supabase
+      .from('products')
+      .select('id, price, "inStock", product_variants(stock)')
+      .in('id', productIds);
+
+    if (error) {
+      console.error('[Quote API] Database error:', error);
+      const msg = getTranslationKey(commonNs, 'common.error') || 'Server error';
+      return NextResponse.json({ error: msg, details: 'Database query failed' }, { status: 500 });
+    }
+
+    if (!products || products.length === 0) {
+      console.error('[Quote API] No products found for IDs:', productIds);
+      return NextResponse.json({ error: 'Products not found' }, { status: 404 });
+    }
+
+    // Build normalized items with server prices and enforce stock
+    const normalized: QuoteItem[] = [];
+    for (const reqItem of parsed.items) {
+      const p = products?.find(pr => pr.id === reqItem.product_id);
+      if (!p || !p.inStock) {
+        const msg = getTranslationKey(commonNs, 'product.out_of_stock') || 'Out of stock';
+        return NextResponse.json({ error: msg, product_id: reqItem.product_id }, { status: 400 });
+      }
+      const hasVariants = Array.isArray(p.product_variants) && p.product_variants.length > 0;
+      const totalStock = hasVariants ? p.product_variants.reduce((s: number, v: any) => s + (v?.stock || 0), 0) : null;
+      if (totalStock !== null && totalStock < reqItem.quantity) {
+        const msg = getTranslationKey(commonNs, 'product.out_of_stock') || 'Out of stock';
+        return NextResponse.json({ error: msg, product_id: reqItem.product_id }, { status: 400 });
+      }
+      const price = typeof p.price === 'string' ? parseFloat(p.price) : p.price;
+      normalized.push({ product_id: reqItem.product_id, price, quantity: reqItem.quantity });
+    }
+
+    // Compute quote
+    const quote = computeQuote({
+      items: normalized,
+      shippingMethod: parsed.shippingMethod as ShippingMethod,
+      country: parsed.country,
+    });
+
+    console.log('[Quote API] Computed quote:', JSON.stringify(quote, null, 2));
+
+    return NextResponse.json({ success: true, locale, items: normalized, shippingMethod: parsed.shippingMethod, country: parsed.country, quote });
+  } catch (err: any) {
+    if (err instanceof z.ZodError) {
+      const msg = getTranslationKey(checkoutNs, 'checkout.errors.missing_fields') || getTranslationKey(commonNs, 'common.error') || 'Invalid request';
+      return NextResponse.json({ error: msg, details: err.issues }, { status: 400 });
+    }
+    console.error('[Quote API] Unexpected error:', err);
+    const msg = getTranslationKey(commonNs, 'common.error') || 'Server error';
+    return NextResponse.json({ error: msg, details: err.message }, { status: 500 });
+  }
+}

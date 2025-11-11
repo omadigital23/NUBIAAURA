@@ -1,0 +1,76 @@
+'use client';
+
+import { useState } from 'react';
+import { Mail, Check } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
+
+export default function NewsletterForm() {
+  const { t } = useTranslation();
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess(false);
+
+    try {
+      // Validate email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        setError(t('common.error', 'Email invalide'));
+        setLoading(false);
+        return;
+      }
+
+      // TODO: Integrate with SendGrid or your email service
+      // For now, just show success
+      setSuccess(true);
+      setEmail('');
+      
+      // Reset success message after 3 seconds
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err) {
+      setError(t('common.error', 'Une erreur est survenue'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+      <div className="flex-1 relative">
+        <Mail className="absolute left-3 top-3 text-nubia-gold" size={20} />
+        <input
+          type="email"
+          placeholder={t('common.search', 'Votre email')}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          disabled={loading}
+          className="w-full pl-10 pr-4 py-3 border border-nubia-gold/30 rounded-lg bg-nubia-white text-nubia-black placeholder-nubia-black/50 focus:outline-none focus:border-nubia-gold transition-colors disabled:opacity-50"
+          required
+        />
+      </div>
+      <button
+        type="submit"
+        disabled={loading || success}
+        className="px-6 py-3 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white transition-all duration-300 disabled:opacity-60 flex items-center justify-center gap-2 whitespace-nowrap"
+      >
+        {success ? (
+          <>
+            <Check size={18} />
+            {t('common.success', 'Succès')}
+          </>
+        ) : loading ? (
+          t('common.loading', 'Chargement...')
+        ) : (
+          'S\'abonner'
+        )}
+      </button>
+      {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+    </form>
+  );
+}
