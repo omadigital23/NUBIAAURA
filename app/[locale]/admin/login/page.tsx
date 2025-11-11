@@ -86,7 +86,7 @@ export default function AdminLoginPage() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Nubia_dca740c1"
+                placeholder={t('admin.usernamePlaceholder') || 'Username'}
                 className="w-full px-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20"
                 required
                 disabled={loading}

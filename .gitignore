@@ -76,3 +76,8 @@ logs/
 *.rar
 *.tar.gz
 *.7z
+
+# Scripts with hardcoded credentials (to be refactored)
+test-admin-auth.js
+*-test-credentials.js
+*-with-secrets.js
