@@ -121,6 +121,8 @@ export default function HeroSlider() {
             fill
             priority={currentIndex === 0}
             sizes={sizesFor('hero')}
+            quality={75}
+            loading={currentIndex === 0 ? 'eager' : 'lazy'}
             className="object-cover transition-opacity duration-500"
           />
         ) : (

@@ -219,6 +219,8 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
                       alt={`${name} - ${idx + 1}`}
                       fill
                       sizes={sizesFor('thumbnail')}
+                      quality={60}
+                      loading="lazy"
                       className="object-cover"
                     />
                   </button>
@@ -234,7 +236,9 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
                     src={withImageParams('cover', currentImage)}
                     alt={name}
                     fill
+                    priority
                     sizes={sizesFor('cover')}
+                    quality={80}
                     className="object-cover"
                   />
                 )}

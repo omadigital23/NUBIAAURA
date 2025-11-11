@@ -69,7 +69,7 @@ export default function RelatedProducts({ category, excludeId, locale }: { categ
               <Link href={`/${locale}/produit/${p.slug}`} key={p.id} className="group border border-nubia-gold/20 rounded-xl overflow-hidden bg-white hover:shadow-md transition-shadow">
                 <div className="relative w-full h-40 bg-nubia-cream/30">
                   {imageSrc && (
-                    <Image src={withImageParams('thumbnail', imageSrc)} alt={name} fill sizes={sizesFor('thumbnail')} className="object-cover" />
+                    <Image src={withImageParams('thumbnail', imageSrc)} alt={name} fill sizes={sizesFor('thumbnail')} quality={65} loading="lazy" className="object-cover" />
                   )}
                 </div>
                 <div className="p-3">
