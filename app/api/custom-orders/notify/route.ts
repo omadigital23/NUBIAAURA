@@ -45,9 +45,13 @@ export async function POST(request: NextRequest) {
     // Send WhatsApp alert to manager (CallMeBot)
     try {
       const managerMessage = `Nouvelle commande personnalisée! ✨\n\nRéférence: ${validatedData.reference}\nClient: ${validatedData.customerName}\nTéléphone: ${validatedData.phone}\nDescription: ${validatedData.description}`;
-      const managerPhone = process.env.MANAGER_WHATSAPP || '+212701193811';
-      await sendWhatsAppMessage(managerPhone, managerMessage);
-      console.log(`Manager WhatsApp alert sent for custom order ${validatedData.reference}`);
+      const managerPhone = process.env.MANAGER_WHATSAPP;
+      if (!managerPhone) {
+        console.error('MANAGER_WHATSAPP is not configured');
+      } else {
+        await sendWhatsAppMessage(managerPhone, managerMessage);
+        console.log(`Manager WhatsApp alert sent for custom order ${validatedData.reference}`);
+      }
     } catch (error: any) {
       console.error('Manager WhatsApp notification failed:', error.message);
     }

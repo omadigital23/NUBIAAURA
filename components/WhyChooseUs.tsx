@@ -49,7 +49,7 @@ export default function WhyChooseUs() {
               <AnimatedCard key={index} className="bg-nubia-cream/30 rounded-lg p-6 text-center border border-nubia-gold/20 hover:border-nubia-gold/50 transition-all">
                 <div className="flex justify-center mb-4">
                   <div className="w-16 h-16 bg-nubia-gold/10 rounded-full flex items-center justify-center">
-                    <Icon className="text-nubia-gold" size={32} />
+                    <Icon className="text-nubia-gold" size={32} aria-hidden="true" />
                   </div>
                 </div>
                 <h3 className="font-semibold text-nubia-black mb-2 text-lg">{reason.title}</h3>

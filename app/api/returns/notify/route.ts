@@ -76,11 +76,15 @@ export async function POST(request: NextRequest) {
       const managerMessage = `Nouvelle demande de retour!\n\nNuméro: ${validated.returnNumber}\nClient: ${user.name || user.email}\nRaison: ${validated.reason}\n\nVeuillez vérifier et approuver.`;
 
       try {
-        const managerPhone = process.env.MANAGER_WHATSAPP || '+212701193811';
-        await sendWhatsAppMessage(
-          managerPhone,
-          managerMessage
-        );
+        const managerPhone = process.env.MANAGER_WHATSAPP;
+        if (!managerPhone) {
+          console.error('MANAGER_WHATSAPP is not configured');
+        } else {
+          await sendWhatsAppMessage(
+            managerPhone,
+            managerMessage
+          );
+        }
       } catch (error) {
         console.error('Manager WhatsApp error:', error);
       }

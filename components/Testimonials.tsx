@@ -52,9 +52,9 @@ export default function Testimonials() {
                 </div>
               </div>
 
-              <div className="flex mb-4">
+              <div className="flex mb-4" role="img" aria-label={`${testimonial.rating} étoiles sur 5`}>
                 {Array.from({ length: testimonial.rating }).map((_, i) => (
-                  <span key={i} className="text-nubia-gold">⭐</span>
+                  <span key={i} className="text-nubia-gold" aria-hidden="true">⭐</span>
                 ))}
               </div>
 

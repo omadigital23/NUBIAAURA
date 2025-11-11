@@ -53,7 +53,11 @@ export default function FeaturedProducts() {
           <h2 className="font-playfair text-3xl md:text-4xl font-bold text-nubia-black">
             {t('home.featured_title', 'Produits à la une')}
           </h2>
-          <Link href={`/${locale}/catalogue`} className="text-nubia-gold hover:underline">
+          <Link 
+            href={`/${locale}/catalogue`} 
+            className="text-nubia-gold hover:underline focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2 rounded"
+            aria-label={t('home.view_all', 'Voir tout le catalogue')}
+          >
             {t('home.view_all', 'Voir tout')}
           </Link>
         </div>
@@ -72,7 +76,12 @@ export default function FeaturedProducts() {
                 : (p.name_en || '');
               const imageSrc = p.image || p.image_url || '';
               return (
-                <Link key={p.id} href={`/${locale}/produit/${p.slug}`} className="group border border-nubia-gold/20 rounded-xl overflow-hidden bg-white hover:shadow-2xl hover:border-nubia-gold/60 transition-all duration-300 transform hover:-translate-y-2 block cursor-pointer">
+                <Link 
+                  key={p.id} 
+                  href={`/${locale}/produit/${p.slug}`} 
+                  className="group border border-nubia-gold/20 rounded-xl overflow-hidden bg-white hover:shadow-2xl hover:border-nubia-gold/60 transition-all duration-300 transform hover:-translate-y-2 block cursor-pointer focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2"
+                  aria-label={`Découvrir ${name}`}
+                >
                   <div className="relative w-full h-96 bg-nubia-cream/30 overflow-hidden">
                     {imageSrc && (
                       <Image
@@ -90,7 +99,11 @@ export default function FeaturedProducts() {
                       <span className="font-semibold group-hover:text-nubia-gold transition-colors duration-300">
                         {p.price.toLocaleString('fr-FR')} {t('common.currency')}
                       </span>
-                      <span className="text-nubia-black/60 group-hover:text-nubia-gold transition-colors duration-300">
+                      <span 
+                        className="text-nubia-black/60 group-hover:text-nubia-gold transition-colors duration-300"
+                        role="img"
+                        aria-label={`${Math.max(1, Math.min(5, p.rating ?? 5))} étoiles sur 5`}
+                      >
                         {'⭐'.repeat(Math.max(1, Math.min(5, p.rating ?? 5)))}
                       </span>
                     </div>
