@@ -1,0 +1,46 @@
+<svg viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="300" height="400" fill="#F5F1E8"/>
+  
+  <!-- Head -->
+  <circle cx="150" cy="60" r="25" fill="#D4A574"/>
+  
+  <!-- Hair/Headwrap -->
+  <ellipse cx="150" cy="45" rx="30" ry="20" fill="#D4AF37"/>
+  <path d="M 120 50 Q 150 35 180 50" stroke="#D4AF37" stroke-width="8" fill="none"/>
+  
+  <!-- Neck -->
+  <rect x="145" y="85" width="10" height="8" fill="#D4A574"/>
+  
+  <!-- Traditional African Dress/Wrapper -->
+  <path d="M 120 93 L 100 200 Q 100 250 120 280 L 180 280 Q 200 250 200 200 L 180 93 Z" fill="#C41E3A" stroke="#D4AF37" stroke-width="2"/>
+  
+  <!-- Pattern on dress -->
+  <circle cx="130" cy="130" r="4" fill="#D4AF37"/>
+  <circle cx="170" cy="130" r="4" fill="#D4AF37"/>
+  <circle cx="130" cy="160" r="4" fill="#D4AF37"/>
+  <circle cx="170" cy="160" r="4" fill="#D4AF37"/>
+  <circle cx="130" cy="190" r="4" fill="#D4AF37"/>
+  <circle cx="170" cy="190" r="4" fill="#D4AF37"/>
+  <circle cx="130" cy="220" r="4" fill="#D4AF37"/>
+  <circle cx="170" cy="220" r="4" fill="#D4AF37"/>
+  
+  <!-- Arms -->
+  <ellipse cx="105" cy="120" rx="12" ry="35" fill="#D4A574"/>
+  <ellipse cx="195" cy="120" rx="12" ry="35" fill="#D4A574"/>
+  
+  <!-- Bracelets -->
+  <circle cx="105" cy="155" r="8" fill="none" stroke="#D4AF37" stroke-width="3"/>
+  <circle cx="195" cy="155" r="8" fill="none" stroke="#D4AF37" stroke-width="3"/>
+  
+  <!-- Legs -->
+  <rect x="135" y="280" width="8" height="50" fill="#D4A574"/>
+  <rect x="157" y="280" width="8" height="50" fill="#D4A574"/>
+  
+  <!-- Feet -->
+  <ellipse cx="139" cy="335" rx="8" ry="6" fill="#8B4513"/>
+  <ellipse cx="161" cy="335" rx="8" ry="6" fill="#8B4513"/>
+  
+  <!-- Label -->
+  <text x="150" y="370" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#000">Costume Africain</text>
+</svg>

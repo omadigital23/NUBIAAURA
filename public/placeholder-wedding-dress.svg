@@ -1,0 +1,54 @@
+<svg viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="300" height="400" fill="#F5F1E8"/>
+  
+  <!-- Head -->
+  <circle cx="150" cy="60" r="25" fill="#D4A574"/>
+  
+  <!-- Hair -->
+  <path d="M 125 50 Q 150 30 175 50" stroke="#2C1810" stroke-width="8" fill="none"/>
+  
+  <!-- Tiara/Crown -->
+  <path d="M 130 45 L 135 35 L 145 40 L 150 30 L 155 40 L 165 35 L 170 45" fill="#D4AF37" stroke="#D4AF37" stroke-width="1"/>
+  
+  <!-- Neck -->
+  <rect x="145" y="85" width="10" height="8" fill="#D4A574"/>
+  
+  <!-- Wedding Dress - Bodice -->
+  <path d="M 120 93 L 115 150 L 150 145 L 185 150 L 180 93 Z" fill="#FFFFFF" stroke="#D4AF37" stroke-width="2"/>
+  
+  <!-- Dress - Skirt (flowing) -->
+  <path d="M 115 150 Q 80 200 75 280 Q 75 320 100 340 L 200 340 Q 225 320 225 280 Q 220 200 185 150 Z" fill="#FFFFFF" stroke="#D4AF37" stroke-width="2"/>
+  
+  <!-- Lace pattern on dress -->
+  <circle cx="130" cy="120" r="3" fill="#D4AF37" opacity="0.6"/>
+  <circle cx="170" cy="120" r="3" fill="#D4AF37" opacity="0.6"/>
+  <circle cx="130" cy="140" r="3" fill="#D4AF37" opacity="0.6"/>
+  <circle cx="170" cy="140" r="3" fill="#D4AF37" opacity="0.6"/>
+  
+  <!-- Arms with sleeves -->
+  <ellipse cx="105" cy="110" rx="12" ry="40" fill="#FFFFFF" stroke="#D4AF37" stroke-width="1"/>
+  <ellipse cx="195" cy="110" rx="12" ry="40" fill="#FFFFFF" stroke="#D4AF37" stroke-width="1"/>
+  
+  <!-- Gloves -->
+  <ellipse cx="105" cy="150" rx="10" ry="8" fill="#FFFFFF"/>
+  <ellipse cx="195" cy="150" rx="10" ry="8" fill="#FFFFFF"/>
+  
+  <!-- Bouquet -->
+  <circle cx="110" cy="180" r="12" fill="#E91E63"/>
+  <circle cx="105" cy="170" r="10" fill="#FF69B4"/>
+  <circle cx="115" cy="170" r="10" fill="#FF69B4"/>
+  <circle cx="100" cy="185" r="8" fill="#FF1493"/>
+  <circle cx="120" cy="185" r="8" fill="#FF1493"/>
+  
+  <!-- Legs -->
+  <rect x="135" y="340" width="8" height="40" fill="#D4A574"/>
+  <rect x="157" y="340" width="8" height="40" fill="#D4A574"/>
+  
+  <!-- Shoes -->
+  <ellipse cx="139" cy="385" rx="10" ry="6" fill="#D4AF37"/>
+  <ellipse cx="161" cy="385" rx="10" ry="6" fill="#D4AF37"/>
+  
+  <!-- Label -->
+  <text x="150" y="370" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#000">Robe de Mariage</text>
+</svg>
