@@ -2,6 +2,14 @@
  * Types centralisés pour les commandes
  */
 
+export interface CartItem {
+  product_id: string;
+  quantity: number;
+  size?: string;
+  color?: string;
+  price: number;
+}
+
 export interface Order {
   id: string;
   order_number: string;
