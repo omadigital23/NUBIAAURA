@@ -130,9 +130,14 @@ export async function sendWhatsAppMessage(phone: string, message: string): Promi
  * Envoie les détails d'une commande sur WhatsApp
  */
 export async function sendOrderToWhatsApp(data: OrderWhatsAppData): Promise<boolean> {
-  const managerPhone = process.env.MANAGER_WHATSAPP || '+212701193811';
-  const message = formatOrderMessage(data);
+  const managerPhone = process.env.MANAGER_WHATSAPP;
   
+  if (!managerPhone) {
+    console.error('[WhatsApp] MANAGER_WHATSAPP is not configured');
+    return false;
+  }
+  
+  const message = formatOrderMessage(data);
   console.log('[WhatsApp] Envoi de la commande', data.orderNumber, 'à', managerPhone);
   
   return await sendWhatsAppMessage(managerPhone, message);
@@ -142,7 +147,13 @@ export async function sendOrderToWhatsApp(data: OrderWhatsAppData): Promise<bool
  * Version simplifiée pour tests
  */
 export async function sendTestMessage(): Promise<boolean> {
-  const managerPhone = process.env.MANAGER_WHATSAPP || '+212701193811';
+  const managerPhone = process.env.MANAGER_WHATSAPP;
+  
+  if (!managerPhone) {
+    console.error('[WhatsApp] MANAGER_WHATSAPP is not configured');
+    return false;
+  }
+  
   const message = '🧪 Test Nubia Aura - Le système de notification WhatsApp fonctionne!';
   
   return await sendWhatsAppMessage(managerPhone, message);

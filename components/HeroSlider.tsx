@@ -137,12 +137,15 @@ export default function HeroSlider() {
             <span className="text-lg font-semibold">
               {price.toLocaleString('fr-FR')} {t('common.currency')}
             </span>
-            <span className="text-sm">{'⭐'.repeat(Math.max(1, Math.min(5, rating)))}</span>
+            <span className="text-sm" role="img" aria-label={`${Math.max(1, Math.min(5, rating))} étoiles sur 5`}>
+              {'⭐'.repeat(Math.max(1, Math.min(5, rating)))}
+            </span>
           </div>
           {currentProduct && (
             <Link
               href={`/${locale}/produit/${currentProduct.slug}`}
-              className="inline-block px-6 py-2 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white transition-all duration-300 transform hover:scale-105"
+              className="inline-block px-6 py-2 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2"
+              aria-label={`Découvrir ${displayName}`}
             >
               {t('home.discover', 'Découvrir')}
             </Link>
@@ -179,7 +182,7 @@ export default function HeroSlider() {
                 ? 'bg-nubia-gold w-8'
                 : 'bg-nubia-white/50 hover:bg-nubia-white/80 w-2'
             }`}
-            aria-label={`${t('common.next')} ${index + 1}`}
+            aria-label={`Aller à la diapositive ${index + 1}`}
           />
         ))}
       </div>

@@ -30,6 +30,9 @@ export default function LanguageSwitcher() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-nubia-gold/10 transition-colors"
+        aria-label="Changer la langue / Change language"
+        aria-expanded={isOpen}
+        aria-haspopup="true"
         title="Changer la langue / Change language"
       >
         <Globe size={20} className="text-nubia-gold" />
@@ -40,17 +43,21 @@ export default function LanguageSwitcher() {
         <div className="absolute right-0 mt-2 w-32 bg-nubia-white border border-nubia-gold/20 rounded-lg shadow-lg z-50">
           <button
             onClick={() => switchLanguage('fr')}
-            className={`w-full text-left px-4 py-2 hover:bg-nubia-gold/10 transition-colors ${
+            className={`w-full text-left px-4 py-2 hover:bg-nubia-gold/10 transition-colors focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-inset ${
               currentLocale === 'fr' ? 'bg-nubia-gold/20 text-nubia-gold font-bold' : ''
             }`}
+            aria-label="Changer la langue en français"
+            aria-current={currentLocale === 'fr' ? 'true' : undefined}
           >
             🇫🇷 Français
           </button>
           <button
             onClick={() => switchLanguage('en')}
-            className={`w-full text-left px-4 py-2 hover:bg-nubia-gold/10 transition-colors ${
+            className={`w-full text-left px-4 py-2 hover:bg-nubia-gold/10 transition-colors focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-inset ${
               currentLocale === 'en' ? 'bg-nubia-gold/20 text-nubia-gold font-bold' : ''
             }`}
+            aria-label="Change language to English"
+            aria-current={currentLocale === 'en' ? 'true' : undefined}
           >
             🇬🇧 English
           </button>

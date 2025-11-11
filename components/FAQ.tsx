@@ -53,9 +53,11 @@ export default function FAQ() {
               >
                 <button
                   onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                  className="w-full px-6 py-4 flex items-center justify-between bg-nubia-white hover:bg-nubia-cream/20 transition-colors"
+                  className="w-full px-6 py-4 flex items-center justify-between bg-nubia-white hover:bg-nubia-cream/20 transition-colors focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2"
+                  aria-expanded={openIndex === index}
+                  aria-controls={`faq-answer-${index}`}
                 >
-                  <h3 className="font-semibold text-nubia-black text-left">{faq.question}</h3>
+                  <h3 id={`faq-question-${index}`} className="font-semibold text-nubia-black text-left">{faq.question}</h3>
                   <ChevronDown
                     size={20}
                     className={`text-nubia-gold flex-shrink-0 transition-transform ${
@@ -65,7 +67,12 @@ export default function FAQ() {
                 </button>
 
                 {openIndex === index && (
-                  <div className="px-6 py-4 bg-nubia-cream/10 border-t border-nubia-gold/20">
+                  <div 
+                    id={`faq-answer-${index}`}
+                    className="px-6 py-4 bg-nubia-cream/10 border-t border-nubia-gold/20"
+                    role="region"
+                    aria-labelledby={`faq-question-${index}`}
+                  >
                     <p className="text-nubia-black/80 leading-relaxed">{faq.answer}</p>
                   </div>
                 )}
