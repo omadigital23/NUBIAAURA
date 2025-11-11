@@ -67,9 +67,8 @@ export default function LocaleLayout({
   return (
     <html lang={locale} className={`${inter.variable} ${playfair.variable}`}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://exjtjbciznzyyqrfctsc.supabase.co" />
+        <link rel="preconnect" href="https://vercel.live" />
       </head>
       <body className="font-inter bg-nubia-white text-nubia-black antialiased">{children}</body>
     </html>

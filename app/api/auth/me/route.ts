@@ -13,7 +13,15 @@ export async function GET(request: NextRequest) {
     const token = request.cookies.get('sb-auth-token')?.value;
 
     if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Unauthorized' }, 
+        { 
+          status: 401,
+          headers: {
+            'Cache-Control': 'private, max-age=60',
+          },
+        }
+      );
     }
 
     // Get user from token
