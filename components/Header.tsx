@@ -30,18 +30,18 @@ export default function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-nubia-black text-nubia-gold border-b border-nubia-gold/20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20 md:h-24">
+    <header className="sticky top-0 z-50 bg-nubia-black text-nubia-gold border-b border-nubia-gold/20 shadow-lg">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16 md:h-20 lg:h-24">
           {/* Logo */}
           <Link href={`/${locale}`} className="flex items-center space-x-2 flex-shrink-0">
-            <div className="w-[148px] h-16 relative md:w-[180px] md:h-20">
+            <div className="w-[120px] h-12 relative sm:w-[148px] sm:h-14 md:w-[180px] md:h-16 lg:h-20">
               <Image
                 src={getProductImageUrl('images/logo.png')}
                 alt="Nubia Aura Logo"
                 fill
-                sizes="(max-width: 768px) 148px, 180px"
-                className="object-cover"
+                sizes="(max-width: 640px) 120px, (max-width: 768px) 148px, 180px"
+                className="object-contain"
                 priority
               />
             </div>
@@ -65,15 +65,15 @@ export default function Header() {
           </nav>
 
           {/* Right Icons */}
-          <div className="flex items-center space-x-4">
-            <button className="p-2 text-nubia-gold hover:text-nubia-white transition-colors">
-              <Search size={20} />
+          <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4">
+            <button className="p-1.5 sm:p-2 text-nubia-gold hover:text-nubia-white transition-colors">
+              <Search size={18} className="sm:w-5 sm:h-5" />
             </button>
             <LanguageSwitcher />
-            <Link href={`/${locale}/panier`} className="relative p-2 text-nubia-gold hover:text-nubia-white transition-colors">
-              <ShoppingBag size={20} />
+            <Link href={`/${locale}/panier`} className="relative p-1.5 sm:p-2 text-nubia-gold hover:text-nubia-white transition-colors">
+              <ShoppingBag size={18} className="sm:w-5 sm:h-5" />
               {cartCount > 0 && (
-                <span className="absolute top-0 right-0 bg-nubia-gold text-nubia-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-nubia-gold text-nubia-black text-xs font-bold rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
                   {cartCount}
                 </span>
               )}
@@ -86,17 +86,17 @@ export default function Header() {
               ) : (
                 <Link
                   href={`/${locale}/auth/login`}
-                  className="p-2 text-nubia-gold hover:text-nubia-white transition-colors"
+                  className="p-1.5 sm:p-2 text-nubia-gold hover:text-nubia-white transition-colors"
                   title={t('nav.login', 'Se connecter')}
                 >
-                  <UserIcon size={20} />
+                  <UserIcon size={18} className="sm:w-5 sm:h-5" />
                 </Link>
               )
             )}
 
             {/* Mobile Menu Button */}
             <button
-              className="md:hidden p-2 text-nubia-gold hover:text-nubia-white transition-colors"
+              className="md:hidden p-1.5 sm:p-2 text-nubia-gold hover:text-nubia-white transition-colors"
               onClick={() => setIsOpen(!isOpen)}
             >
               {isOpen ? <X size={20} /> : <Menu size={20} />}
