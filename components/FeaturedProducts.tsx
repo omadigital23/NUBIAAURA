@@ -87,6 +87,8 @@ export default function FeaturedProducts() {
                       <Image
                         src={withImageParams('thumbnail', imageSrc)}
                         alt={name}
+                        quality={70}
+                        loading="lazy"
                         fill
                         sizes={sizesFor('thumbnail')}
                         className="object-cover group-hover:scale-110 transition-transform duration-500"

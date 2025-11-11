@@ -136,8 +136,13 @@ export default function LocaleLayout({
   return (
     <html lang={locale} className={`${inter.variable} ${playfair.variable}`}>
       <head>
-        {supabaseUrl && <link rel="dns-prefetch" href={supabaseUrl} />}
-        <link rel="preconnect" href="https://vercel.live" />
+        {supabaseUrl && (
+          <>
+            <link rel="dns-prefetch" href={supabaseUrl} />
+            <link rel="preconnect" href={supabaseUrl} crossOrigin="anonymous" />
+          </>
+        )}
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
