@@ -64,10 +64,12 @@ export default function LocaleLayout({
   params: { locale: 'fr' | 'en' };
 }) {
   const { locale } = params;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  
   return (
     <html lang={locale} className={`${inter.variable} ${playfair.variable}`}>
       <head>
-        <link rel="dns-prefetch" href="https://exjtjbciznzyyqrfctsc.supabase.co" />
+        {supabaseUrl && <link rel="dns-prefetch" href={supabaseUrl} />}
         <link rel="preconnect" href="https://vercel.live" />
       </head>
       <body className="font-inter bg-nubia-white text-nubia-black antialiased">{children}</body>
