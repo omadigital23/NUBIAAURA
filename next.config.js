@@ -25,6 +25,20 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react'],
   },
+  // Headers pour forcer le rechargement des assets
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+        ],
+      },
+    ];
+  },
   // Désactiver la génération statique pour les pages dynamiques
   generateBuildId: async () => {
     return 'nubia-build-' + Date.now();

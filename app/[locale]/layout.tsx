@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter, Playfair_Display } from 'next/font/google';
 import '@/app/globals.css';
 
@@ -9,6 +9,14 @@ const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfa
 export function generateStaticParams() {
   return [{ locale: 'fr' }, { locale: 'en' }];
 }
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: '#000000',
+};
 
 export const metadata: Metadata = {
   title: 'Nubia Aura - Mode Africaine Éthique & Sur-Mesure',
@@ -48,12 +56,7 @@ export default function LocaleLayout({
   const { locale } = params;
   return (
     <html lang={locale} className={`${inter.variable} ${playfair.variable}`}>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
-        <meta name="theme-color" content="#000000" />
-        <link rel="icon" href="/favicon.ico" />
-      </head>
-      <body className="font-inter bg-nubia-white text-nubia-black">{children}</body>
+      <body className="font-inter bg-nubia-white text-nubia-black antialiased">{children}</body>
     </html>
   );
 }
