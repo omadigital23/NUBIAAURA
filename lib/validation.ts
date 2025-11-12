@@ -37,10 +37,10 @@ export const OrderSchema = z.object({
 export const CustomOrderSchema = z.object({
   name: z.string().min(2, 'Nom requis').max(100),
   email: z.string().email('Email invalide'),
-  phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, 'Numéro invalide'),
+  phone: z.string().min(8, 'Numéro invalide').max(20),
   type: z.enum(['dress', 'suit', 'shirt', 'pants', 'skirt', 'other']),
-  measurements: z.string().min(10, 'Mesures requises').max(500),
-  preferences: z.string().min(10, 'Préférences requises').max(1000),
+  measurements: z.string().min(5, 'Mesures requises').max(500),
+  preferences: z.string().min(5, 'Préférences requises').max(1000),
   budget: z.number().positive('Budget invalide'),
 });
 

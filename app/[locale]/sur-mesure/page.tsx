@@ -35,12 +35,18 @@ export default function CustomOrderPage() {
     setStatus('idle');
 
     try {
+      // Convertir le budget en nombre
+      const payload = {
+        ...formData,
+        budget: parseFloat(formData.budget) || 0,
+      };
+
       const response = await fetch('/api/custom-orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();

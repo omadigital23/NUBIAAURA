@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { CustomOrderSchema } from '@/lib/validation';
+import { sendEmail } from '@/lib/sendgrid';
+import { getCustomOrderConfirmationEmail, getCustomOrderManagerNotification } from '@/lib/email-templates';
+import { notifyManagerNewCustomOrder } from '@/lib/whatsapp-notifications';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -41,14 +44,50 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error;
 
-    // TODO: Send WhatsApp notification to manager
-    // await sendWhatsAppNotification(
-    //   process.env.MANAGER_PHONE!,
-    //   `Nouvelle commande sur-mesure: ${validated.name} - ${validated.type} - ${validated.budget} FCFA`
-    // );
+    const reference = customOrder.id.substring(0, 8).toUpperCase();
 
-    // TODO: Send email confirmation
-    // await sendEmailConfirmation(validated.email, customOrder);
+    // Envoyer email de confirmation au client
+    try {
+      const confirmationEmail = getCustomOrderConfirmationEmail({
+        ...validated,
+        reference,
+      });
+      await sendEmail({
+        to: validated.email,
+        subject: confirmationEmail.subject,
+        html: confirmationEmail.html,
+      });
+    } catch (emailError) {
+      console.error('Erreur envoi email confirmation:', emailError);
+    }
+
+    // Envoyer notification au manager (Email)
+    try {
+      const managerEmail = process.env.MANAGER_EMAIL || 'contact@nubiaaura.com';
+      const managerNotification = getCustomOrderManagerNotification({
+        ...validated,
+        reference,
+      });
+      await sendEmail({
+        to: managerEmail,
+        subject: managerNotification.subject,
+        html: managerNotification.html,
+      });
+    } catch (emailError) {
+      console.error('Erreur envoi email manager:', emailError);
+    }
+
+    // Envoyer notification au manager (WhatsApp)
+    try {
+      await notifyManagerNewCustomOrder({
+        name: validated.name,
+        type: validated.type,
+        budget: validated.budget,
+        reference,
+      });
+    } catch (whatsappError) {
+      console.error('Erreur notification WhatsApp:', whatsappError);
+    }
 
     return NextResponse.json(
       {
@@ -56,7 +95,7 @@ export async function POST(request: NextRequest) {
         message: 'Commande personnalisée créée avec succès',
         customOrder: {
           id: customOrder.id,
-          reference: customOrder.id.substring(0, 8).toUpperCase(),
+          reference,
         },
       },
       { status: 201 }
