@@ -32,9 +32,23 @@ export default function CustomOrderPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
+    setStatus('idle');
 
     try {
-      console.log('Form data:', formData);
+      const response = await fetch('/api/custom-orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur lors de l\'envoi');
+      }
+
       setStatus('success');
       setFormData({
         name: '',
@@ -45,9 +59,11 @@ export default function CustomOrderPage() {
         preferences: '',
         budget: '',
       });
+      setTimeout(() => setStatus('idle'), 5000);
     } catch (error) {
       setStatus('error');
       console.error('Error:', error);
+      setTimeout(() => setStatus('idle'), 5000);
     } finally {
       setLoading(false);
     }
