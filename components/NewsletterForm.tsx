@@ -26,15 +26,28 @@ export default function NewsletterForm() {
         return;
       }
 
-      // TODO: Integrate with SendGrid or your email service
-      // For now, just show success
+      // Call API to save to Supabase
+      const response = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur lors de l\'inscription');
+      }
+
       setSuccess(true);
       setEmail('');
       
-      // Reset success message after 3 seconds
-      setTimeout(() => setSuccess(false), 3000);
-    } catch (err) {
-      setError(t('common.error', 'Une erreur est survenue'));
+      // Reset success message after 5 seconds
+      setTimeout(() => setSuccess(false), 5000);
+    } catch (err: any) {
+      setError(err.message || t('common.error', 'Une erreur est survenue'));
     } finally {
       setLoading(false);
     }
