@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import { sendEmail } from '@/lib/sendgrid';
+import { getContactConfirmationEmail, getContactManagerNotification } from '@/lib/email-templates';
+import { notifyManagerNewContact } from '@/lib/whatsapp-notifications';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -11,9 +14,9 @@ const supabase = createClient(
 const ContactSchema = z.object({
   name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
   email: z.string().email('Email invalide'),
-  phone: z.string().optional(),
-  subject: z.string().min(3, 'Le sujet doit contenir au moins 3 caractères'),
-  message: z.string().min(10, 'Le message doit contenir au moins 10 caractères'),
+  phone: z.string().optional().or(z.literal('')),
+  subject: z.string().min(2, 'Le sujet doit contenir au moins 2 caractères'),
+  message: z.string().min(5, 'Le message doit contenir au moins 5 caractères'),
 });
 
 export async function POST(request: NextRequest) {
@@ -42,16 +45,41 @@ export async function POST(request: NextRequest) {
       throw error;
     }
 
-    // TODO: Send email notification to manager
-    // await notifyManagerEmail(
-    //   'Nouveau message de contact',
-    //   `De: ${validated.name} (${validated.email})`,
-    //   {
-    //     Sujet: validated.subject,
-    //     Message: validated.message,
-    //     Téléphone: validated.phone || 'Non fourni',
-    //   }
-    // );
+    // Envoyer email de confirmation au client
+    try {
+      const confirmationEmail = getContactConfirmationEmail(validated);
+      await sendEmail({
+        to: validated.email,
+        subject: confirmationEmail.subject,
+        html: confirmationEmail.html,
+      });
+    } catch (emailError) {
+      console.error('Erreur envoi email confirmation:', emailError);
+    }
+
+    // Envoyer notification au manager (Email)
+    try {
+      const managerEmail = process.env.MANAGER_EMAIL || 'contact@nubiaaura.com';
+      const managerNotification = getContactManagerNotification(validated);
+      await sendEmail({
+        to: managerEmail,
+        subject: managerNotification.subject,
+        html: managerNotification.html,
+      });
+    } catch (emailError) {
+      console.error('Erreur envoi email manager:', emailError);
+    }
+
+    // Envoyer notification au manager (WhatsApp)
+    try {
+      await notifyManagerNewContact({
+        name: validated.name,
+        email: validated.email,
+        subject: validated.subject,
+      });
+    } catch (whatsappError) {
+      console.error('Erreur notification WhatsApp:', whatsappError);
+    }
 
     return NextResponse.json(
       {

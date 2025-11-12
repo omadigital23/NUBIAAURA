@@ -2,11 +2,12 @@ import sgMail from '@sendgrid/mail';
 
 const sendgridApiKey = process.env.SENDGRID_API_KEY;
 const fromEmail = process.env.SENDGRID_FROM_EMAIL || 'noreply@nubiaaura.com';
+const fromName = 'Nubia Aura';
 
 if (sendgridApiKey) {
   sgMail.setApiKey(sendgridApiKey);
 } else {
-  console.warn('SendGrid API key not configured');
+  console.warn('SendGrid API key not configured - Emails will not be sent');
 }
 
 interface EmailOptions {
@@ -22,21 +23,26 @@ interface EmailOptions {
 export async function sendEmail(options: EmailOptions): Promise<string> {
   try {
     if (!sendgridApiKey) {
-      throw new Error('SendGrid API key not configured');
+      console.warn('SendGrid not configured - Email not sent:', options.subject);
+      return 'skipped';
     }
 
     const msg = {
       to: options.to,
-      from: fromEmail,
+      from: {
+        email: fromEmail,
+        name: fromName,
+      },
       subject: options.subject,
-      text: options.text || options.html,
+      text: options.text || options.html.replace(/<[^>]*>/g, ''),
       html: options.html,
     };
 
     const response = await sgMail.send(msg);
+    console.log('✅ Email sent:', options.subject, 'to', options.to);
     return response[0].headers['x-message-id'] || 'sent';
   } catch (error: any) {
-    console.error('SendGrid error:', error);
+    console.error('❌ SendGrid error:', error);
     throw new Error(`Erreur lors de l'envoi de l'email: ${error.message}`);
   }
 }
