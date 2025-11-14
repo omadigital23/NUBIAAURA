@@ -137,8 +137,7 @@ export async function POST(request: NextRequest) {
         const { data: newCart, error: newCartError } = await supabase
           .from('carts')
           .insert({ 
-            user_id: userId,
-            anonymous_id: anonymousId
+            user_id: userId
           })
           .select('id')
           .single();
