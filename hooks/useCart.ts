@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useEffect } from 'react';
 import { CartItem, CartState } from '@/lib/types/cart';
+import { useAuthToken } from './useAuthToken';
 
 interface UseCartResult extends CartState {
   addItem: (item: CartItem) => Promise<void>;
@@ -15,6 +16,7 @@ export function useCart(): UseCartResult {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { token, getAuthHeaders } = useAuthToken();
 
   // Load initial cart from Supabase on mount
   useEffect(() => {
@@ -22,9 +24,14 @@ export function useCart(): UseCartResult {
     const loadCartFromDB = async () => {
       try {
         setLoading(true);
+        const headers: any = { 'Content-Type': 'application/json' };
+        if (getAuthHeaders.Authorization) {
+          headers.Authorization = getAuthHeaders.Authorization;
+        }
+        
         const response = await fetch('/api/cart', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ action: 'get' }),
           credentials: 'include',
         });
@@ -45,9 +52,11 @@ export function useCart(): UseCartResult {
       }
     };
 
-    loadCartFromDB();
+    if (token) {
+      loadCartFromDB();
+    }
     return () => { mounted = false; };
-  }, []);
+  }, [token, getAuthHeaders]);
 
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -56,9 +65,14 @@ export function useCart(): UseCartResult {
       setLoading(true);
       console.log('[useCart] Adding item:', item);
       
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (getAuthHeaders.Authorization) {
+        headers.Authorization = getAuthHeaders.Authorization;
+      }
+      
       const response = await fetch('/api/cart', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ action: 'add', item }),
         credentials: 'include',
       });
@@ -74,9 +88,14 @@ export function useCart(): UseCartResult {
       
       // Recharger le panier depuis la DB après ajout
       if (data.success) {
+        const cartHeaders: any = { 'Content-Type': 'application/json' };
+        if (getAuthHeaders.Authorization) {
+          cartHeaders.Authorization = getAuthHeaders.Authorization;
+        }
+        
         const cartResponse = await fetch('/api/cart', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: cartHeaders,
           body: JSON.stringify({ action: 'get' }),
           credentials: 'include',
         });
@@ -96,15 +115,20 @@ export function useCart(): UseCartResult {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [getAuthHeaders]);
 
   const removeItem = useCallback(async (id: string) => {
     try {
       setLoading(true);
       
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (getAuthHeaders.Authorization) {
+        headers.Authorization = getAuthHeaders.Authorization;
+      }
+      
       const response = await fetch('/api/cart', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ action: 'remove', item: { id } }),
         credentials: 'include',
       });
@@ -116,9 +140,14 @@ export function useCart(): UseCartResult {
       }
 
       // Recharger le panier depuis la DB après suppression
+      const cartHeaders: any = { 'Content-Type': 'application/json' };
+      if (getAuthHeaders.Authorization) {
+        cartHeaders.Authorization = getAuthHeaders.Authorization;
+      }
+      
       const cartResponse = await fetch('/api/cart', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: cartHeaders,
         body: JSON.stringify({ action: 'get' }),
         credentials: 'include',
       });
@@ -137,15 +166,20 @@ export function useCart(): UseCartResult {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [getAuthHeaders]);
 
   const updateQuantity = useCallback(async (id: string, quantity: number) => {
     try {
       setLoading(true);
       
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (getAuthHeaders.Authorization) {
+        headers.Authorization = getAuthHeaders.Authorization;
+      }
+      
       const response = await fetch('/api/cart', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ action: 'update', item: { id, quantity, name: '', price: 0, image: '' } }),
         credentials: 'include',
       });
@@ -157,9 +191,14 @@ export function useCart(): UseCartResult {
       }
       
       // Recharger le panier depuis la DB après mise à jour
+      const cartHeaders: any = { 'Content-Type': 'application/json' };
+      if (getAuthHeaders.Authorization) {
+        cartHeaders.Authorization = getAuthHeaders.Authorization;
+      }
+      
       const cartResponse = await fetch('/api/cart', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: cartHeaders,
         body: JSON.stringify({ action: 'get' }),
         credentials: 'include',
       });
@@ -178,15 +217,20 @@ export function useCart(): UseCartResult {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [getAuthHeaders]);
 
   const clearCart = useCallback(async () => {
     try {
       setLoading(true);
       
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (getAuthHeaders.Authorization) {
+        headers.Authorization = getAuthHeaders.Authorization;
+      }
+      
       const response = await fetch('/api/cart/clear', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         credentials: 'include',
       });
 
@@ -205,7 +249,7 @@ export function useCart(): UseCartResult {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [getAuthHeaders]);
 
   return {
     items,

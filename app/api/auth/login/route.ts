@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create response with session cookie
+    // Create response with session token
     const response = NextResponse.json(
       {
         success: true,
@@ -36,18 +36,21 @@ export async function POST(request: NextRequest) {
           id: data.user.id,
           email: data.user.email,
         },
+        token: data.session?.access_token, // Return token for client-side storage
       },
       { status: 200 }
     );
 
-    // Set session cookie
+    // Also set session cookie for server-side requests
     if (data.session) {
       response.cookies.set('sb-auth-token', data.session.access_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        httpOnly: false, // Allow JavaScript access
+        secure: process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_APP_URL?.startsWith('https'),
         sameSite: 'lax',
         maxAge: 60 * 60 * 24 * 7, // 7 days
+        path: '/',
       });
+      console.log('[Auth] Cookie set for user:', data.user.email);
     }
 
     return response;

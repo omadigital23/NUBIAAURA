@@ -29,17 +29,31 @@ export async function POST(request: NextRequest) {
 
     // ✅ AUTHENTIFICATION OBLIGATOIRE
     let userId: string | null = null;
-    const authHeader = request.cookies.get('sb-auth-token');
     
-    if (!authHeader) {
+    // Try to get token from Authorization header first, then from cookie
+    let token: string | null = null;
+    const authHeader = request.headers.get('Authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      token = authHeader.slice(7); // Remove 'Bearer ' prefix
+    } else {
+      const cookieToken = request.cookies.get('sb-auth-token');
+      token = cookieToken?.value || null;
+    }
+    
+    console.log('[Cart API] Token from Authorization header:', !!authHeader);
+    console.log('[Cart API] Token from cookie:', !!request.cookies.get('sb-auth-token'));
+    console.log('[Cart API] Final token present:', !!token);
+    
+    if (!token) {
       return NextResponse.json(
         { error: 'Authentication required', code: 'AUTH_REQUIRED' },
         { status: 401 }
       );
     }
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.value);
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) {
+      console.error('[Cart API] Auth error:', authError);
       return NextResponse.json(
         { error: 'Invalid authentication', code: 'AUTH_INVALID' },
         { status: 401 }
