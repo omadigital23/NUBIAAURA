@@ -26,6 +26,7 @@ export function useCart(): UseCartResult {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'get' }),
+          credentials: 'include',
         });
 
         if (!response.ok) {
@@ -59,6 +60,7 @@ export function useCart(): UseCartResult {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'add', item }),
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -76,6 +78,7 @@ export function useCart(): UseCartResult {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'get' }),
+          credentials: 'include',
         });
         
         if (cartResponse.ok) {
@@ -103,6 +106,7 @@ export function useCart(): UseCartResult {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'remove', item: { id } }),
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -116,6 +120,7 @@ export function useCart(): UseCartResult {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'get' }),
+        credentials: 'include',
       });
       
       if (cartResponse.ok) {
@@ -142,6 +147,7 @@ export function useCart(): UseCartResult {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'update', item: { id, quantity, name: '', price: 0, image: '' } }),
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -155,6 +161,7 @@ export function useCart(): UseCartResult {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'get' }),
+        credentials: 'include',
       });
       
       if (cartResponse.ok) {
@@ -180,6 +187,7 @@ export function useCart(): UseCartResult {
       const response = await fetch('/api/cart/clear', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
       });
 
       if (!response.ok) {
