@@ -2,14 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
+const CartItemSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  price: z.number(),
+  quantity: z.number().int().positive(),
+  image: z.string(),
+});
+
 const CartSchema = z.object({
-  action: z.enum(['add', 'remove', 'update', 'get']),
+  action: z.enum(['add', 'remove', 'update', 'get', 'clear']),
+  item: CartItemSchema.optional(),
   user_id: z.string().uuid().optional(),
-  items: z.array(z.object({
-    product_id: z.string().uuid(),
-    quantity: z.number().int().positive(),
-    price: z.number().positive()
-  })).optional()
 });
 
 export async function POST(request: NextRequest) {
@@ -32,16 +36,23 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    if (parsed.action === 'get') {
-      if (!parsed.user_id) {
-        return NextResponse.json({ items: [] });
-      }
+    // Récupérer l'utilisateur depuis le token
+    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.value);
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Invalid authentication', code: 'AUTH_INVALID' },
+        { status: 401 }
+      );
+    }
 
+    const userId = user.id;
+
+    if (parsed.action === 'get') {
       // Récupérer ou créer le panier
       const { data: cart, error: cartError } = await supabase
         .from('carts')
         .select('id')
-        .eq('user_id', parsed.user_id)
+        .eq('user_id', userId)
         .single();
 
       if (cartError && cartError.code !== 'PGRST116') {
@@ -53,7 +64,7 @@ export async function POST(request: NextRequest) {
       if (!cart) {
         const { data: newCart, error: newCartError } = await supabase
           .from('carts')
-          .insert({ user_id: parsed.user_id })
+          .insert({ user_id: userId })
           .select('id')
           .single();
         
@@ -77,14 +88,245 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: itemsError.message }, { status: 500 });
       }
 
-      return NextResponse.json({ items: items || [] });
+      // Transformer les items pour correspondre au format attendu par le frontend
+      const transformedItems = items?.map(item => ({
+        id: item.product_id,
+        name: item.products?.name_fr || item.products?.name || 'Produit',
+        price: Number(item.products?.price || item.price),
+        quantity: item.quantity,
+        image: item.products?.image || item.image || '',
+      })) || [];
+
+      return NextResponse.json({ items: transformedItems });
     }
 
-    // Pour add/remove/update - implémentation future
-    return NextResponse.json({ success: true });
+    if (parsed.action === 'add' && parsed.item) {
+      // Vérifier que le produit existe et est en stock
+      const { data: product, error: productError } = await supabase
+        .from('products')
+        .select('id, inStock, name, name_fr, name_en, price, image')
+        .eq('id', parsed.item.id)
+        .single();
+
+      if (productError || !product) {
+        return NextResponse.json(
+          { error: 'Product not found' },
+          { status: 404 }
+        );
+      }
+
+      if (!product.inStock) {
+        return NextResponse.json(
+          { error: 'Product out of stock' },
+          { status: 400 }
+        );
+      }
+
+      // Récupérer ou créer le panier
+      const { data: cart } = await supabase
+        .from('carts')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      let cartId = cart?.id;
+      if (!cart) {
+        const { data: newCart, error: newCartError } = await supabase
+          .from('carts')
+          .insert({ user_id: userId })
+          .select('id')
+          .single();
+        
+        if (newCartError) {
+          return NextResponse.json({ error: newCartError.message }, { status: 500 });
+        }
+        cartId = newCart.id;
+      }
+
+      // Vérifier si l'item existe déjà dans le panier
+      const { data: existingItem, error: existingError } = await supabase
+        .from('cart_items')
+        .select('*')
+        .eq('cart_id', cartId)
+        .eq('product_id', parsed.item.id)
+        .single();
+
+      if (existingError && existingError.code !== 'PGRST116') {
+        console.error('[Cart API] Existing item error:', existingError);
+        return NextResponse.json({ error: existingError.message }, { status: 500 });
+      }
+
+      if (existingItem) {
+        // Mettre à jour la quantité
+        const { error: updateError } = await supabase
+          .from('cart_items')
+          .update({ 
+            quantity: existingItem.quantity + parsed.item.quantity,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingItem.id);
+
+        if (updateError) {
+          return NextResponse.json({ error: updateError.message }, { status: 500 });
+        }
+      } else {
+        // Ajouter le nouvel item
+        const { error: insertError } = await supabase
+          .from('cart_items')
+          .insert({
+            cart_id: cartId,
+            product_id: parsed.item.id,
+            quantity: parsed.item.quantity,
+            price: parsed.item.price,
+            image: parsed.item.image,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+
+        if (insertError) {
+          return NextResponse.json({ error: insertError.message }, { status: 500 });
+        }
+      }
+
+      // Retourner l'item mis à jour
+      const transformedItem = {
+        id: parsed.item.id,
+        name: product.name_fr || product.name || 'Produit',
+        price: Number(product.price),
+        quantity: existingItem ? existingItem.quantity + parsed.item.quantity : parsed.item.quantity,
+        image: product.image || parsed.item.image,
+      };
+
+      return NextResponse.json({ success: true, item: transformedItem });
+    }
+
+    if (parsed.action === 'remove' && parsed.item) {
+      // Récupérer le panier
+      const { data: cart } = await supabase
+        .from('carts')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (!cart) {
+        return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
+      }
+
+      // Supprimer l'item du panier
+      const { error: deleteError } = await supabase
+        .from('cart_items')
+        .delete()
+        .eq('cart_id', cart.id)
+        .eq('product_id', parsed.item.id);
+
+      if (deleteError) {
+        return NextResponse.json({ error: deleteError.message }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true });
+    }
+
+    if (parsed.action === 'update' && parsed.item) {
+      // Vérifier que le produit existe
+      const { data: product, error: productError } = await supabase
+        .from('products')
+        .select('id, inStock')
+        .eq('id', parsed.item.id)
+        .single();
+
+      if (productError || !product) {
+        return NextResponse.json(
+          { error: 'Product not found' },
+          { status: 404 }
+        );
+      }
+
+      if (!product.inStock) {
+        return NextResponse.json(
+          { error: 'Product out of stock' },
+          { status: 400 }
+        );
+      }
+
+      // Récupérer le panier
+      const { data: cart } = await supabase
+        .from('carts')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (!cart) {
+        return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
+      }
+
+      if (parsed.item.quantity <= 0) {
+        // Si quantité = 0, supprimer l'item
+        const { error: deleteError } = await supabase
+          .from('cart_items')
+          .delete()
+          .eq('cart_id', cart.id)
+          .eq('product_id', parsed.item.id);
+
+        if (deleteError) {
+          return NextResponse.json({ error: deleteError.message }, { status: 500 });
+        }
+      } else {
+        // Mettre à jour la quantité
+        const { error: updateError } = await supabase
+          .from('cart_items')
+          .update({ 
+            quantity: parsed.item.quantity,
+            updated_at: new Date().toISOString()
+          })
+          .eq('cart_id', cart.id)
+          .eq('product_id', parsed.item.id);
+
+        if (updateError) {
+          return NextResponse.json({ error: updateError.message }, { status: 500 });
+        }
+      }
+
+      // Retourner l'item mis à jour
+      const transformedItem = {
+        id: parsed.item.id,
+        name: parsed.item.name,
+        price: parsed.item.price,
+        quantity: parsed.item.quantity,
+        image: parsed.item.image,
+      };
+
+      return NextResponse.json({ success: true, item: transformedItem });
+    }
+
+    if (parsed.action === 'clear') {
+      // Récupérer le panier
+      const { data: cart } = await supabase
+        .from('carts')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (!cart) {
+        return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
+      }
+
+      // Supprimer tous les items du panier
+      const { error: deleteError } = await supabase
+        .from('cart_items')
+        .delete()
+        .eq('cart_id', cart.id);
+
+      if (deleteError) {
+        return NextResponse.json({ error: deleteError.message }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true });
+    }
+
+    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
 
   } catch (error) {
-    console.error('[Cart API] Validation error:', error);
+    console.error('[Cart API] Error:', error);
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 }

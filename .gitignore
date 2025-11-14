@@ -81,3 +81,15 @@ logs/
 test-admin-auth.js
 *-test-credentials.js
 *-with-secrets.js
+
+# Test files
+test-*.js
+*-test.js
+test-cart-api.js
+
+# Security audit files (keep local)
+scripts/SECURITY_AUDIT.md
+
+# Temporary build files
+*.trace
+*.build

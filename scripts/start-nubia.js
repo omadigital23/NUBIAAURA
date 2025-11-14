@@ -77,6 +77,30 @@ function createEnvTemplate() {
     return;
   }
   
+  console.log('\n📝 .env.local template:');
+  console.log('   # Supabase');
+  console.log('   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co');
+  console.log('   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key');
+  console.log('   SUPABASE_SERVICE_ROLE_KEY=your-service-key');
+  console.log('');
+  console.log('   # Flutterwave (Payments)');
+  console.log('   NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY=FLWPUBK_TEST-...');
+  console.log('   FLUTTERWAVE_SECRET_KEY=FLWSECK_TEST-...');
+  console.log('   FLUTTERWAVE_ENCRYPTION_KEY=your-encryption-key');
+  console.log('');
+  console.log('   # Email (Resend)');
+  console.log('   RESEND_API_KEY=re_...');
+  console.log('   RESEND_FROM_EMAIL=noreply@yourdomain.com');
+  console.log('');
+  console.log('   # SMS (Twilio)');
+  console.log('   TWILIO_ACCOUNT_SID=AC...');
+  console.log('   TWILIO_AUTH_TOKEN=your-auth-token');
+  console.log('   TWILIO_PHONE_NUMBER=+1234567890');
+  console.log('');
+  console.log('   # Redis (Upstash)');
+  console.log('   UPSTASH_REDIS_REST_URL=https://your-redis-url.upstash.io');
+  console.log('   UPSTASH_REDIS_REST_TOKEN=your-redis-token');
+
   const template = `# Configuration Supabase
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
@@ -87,15 +111,17 @@ NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY=FLWPUBK_TEST-...
 FLUTTERWAVE_SECRET_KEY=FLWSECK_TEST-...
 FLUTTERWAVE_ENCRYPTION_KEY=your-encryption-key
 
+# Configuration Email (Resend)
+RESEND_API_KEY=re_...
+RESEND_FROM_EMAIL=noreply@yourdomain.com
+
 # Configuration Twilio (optionnel)
-TWILIO_ACCOUNT_SID=your-account-sid
+TWILIO_ACCOUNT_SID=AC...
 TWILIO_AUTH_TOKEN=your-auth-token
-TWILIO_WHATSAPP_NUMBER=+14155238886
-MANAGER_PHONE=+221771234567
-MANAGER_EMAIL=manager@nubiaaura.com
+TWILIO_PHONE_NUMBER=+1234567890
 
 # Configuration Redis (optionnel)
-UPSTASH_REDIS_REST_URL=your-redis-url
+UPSTASH_REDIS_REST_URL=https://your-redis-url.upstash.io
 UPSTASH_REDIS_REST_TOKEN=your-redis-token`;
 
   fs.writeFileSync(envPath, template);

@@ -318,6 +318,35 @@ a.button,
   }
 }
 
+/* Tablet specific styles */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .tablet\:flex-col {
+    flex-direction: column;
+  }
+  
+  .tablet\:w-full {
+    width: 100%;
+  }
+  
+  .tablet\:aspect-square {
+    aspect-ratio: 1 / 1;
+  }
+  
+  /* Ensure images load properly on iPad */
+  img {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+  
+  /* Fix for image rendering on iPad */
+  .object-cover {
+    object-fit: cover;
+    object-position: center;
+  }
+}
+
 /* Print Styles */
 @media print {
   body {
