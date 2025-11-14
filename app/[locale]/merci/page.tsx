@@ -16,6 +16,18 @@ interface OrderDetails {
   shipping_address: any;
   shipping_method: string;
   created_at: string;
+  order_items?: OrderItem[];
+}
+
+interface OrderItem {
+  id: string;
+  product_id: string;
+  quantity: number;
+  price: number;
+  products?: {
+    name: string;
+    image_url: string;
+  };
 }
 
 function ThankYouContent() {
@@ -85,8 +97,11 @@ function ThankYouContent() {
           <h1 className="font-playfair text-4xl font-bold text-nubia-black mb-4">
             {t('merci.title', 'Merci pour votre commande !')}
           </h1>
-          <p className="text-nubia-black/70 text-lg">
+          <p className="text-nubia-black/70 text-lg mb-4">
             {t('merci.subtitle', 'Nous vous avons envoyé un e-mail de confirmation avec les détails de votre commande.')}
+          </p>
+          <p className="text-nubia-black/60 text-base">
+            {t('merci.appreciation', 'Nous apprécions votre confiance et sommes ravis de vous compter parmi nos clients. Votre commande sera traitée avec le plus grand soin.')}
           </p>
         </div>
 
@@ -183,6 +198,64 @@ function ThankYouContent() {
           </div>
         )}
 
+        {/* Order Items Summary */}
+        {orderDetails?.order_items && orderDetails.order_items.length > 0 && (
+          <div className="bg-white border-2 border-nubia-gold/20 rounded-lg p-8 mb-8">
+            <h2 className="font-playfair text-2xl font-bold text-nubia-black mb-6">
+              {t('merci.items_summary', 'Résumé de votre commande')}
+            </h2>
+            
+            <div className="space-y-4">
+              {orderDetails.order_items.map((item) => (
+                <div key={item.id} className="flex gap-4 p-4 bg-nubia-cream/30 rounded-lg border border-nubia-gold/20">
+                  {/* Item Image */}
+                  {item.products?.image_url && (
+                    <div className="w-20 h-20 flex-shrink-0 bg-nubia-gold/10 rounded-lg overflow-hidden">
+                      <img
+                        src={item.products.image_url}
+                        alt={item.products?.name || 'Produit'}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+
+                  {/* Item Details */}
+                  <div className="flex-1">
+                    <h3 className="font-playfair font-bold text-nubia-black mb-2">
+                      {item.products?.name || 'Produit'}
+                    </h3>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-nubia-black/70 text-sm">
+                          {t('cart.quantity', 'Quantité')}: {item.quantity}
+                        </p>
+                        <p className="text-nubia-gold font-semibold">
+                          {Number(item.price).toLocaleString('fr-FR')} {t('common.currency', 'FCFA')}
+                        </p>
+                      </div>
+                      <p className="font-bold text-nubia-black">
+                        {Number(item.price * item.quantity).toLocaleString('fr-FR')} {t('common.currency', 'FCFA')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Items Total */}
+            <div className="border-t-2 border-nubia-gold/20 mt-6 pt-6">
+              <div className="flex justify-between items-center">
+                <span className="font-playfair text-xl font-bold text-nubia-black">
+                  {t('merci.items_total', 'Total des articles')}
+                </span>
+                <span className="font-playfair text-2xl font-bold text-nubia-gold">
+                  {orderDetails.order_items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString('fr-FR')} {t('common.currency', 'FCFA')}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* No Order ID */}
         {!orderId && (
           <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 mb-8 text-center">
@@ -200,19 +273,26 @@ function ThankYouContent() {
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-4 justify-center">
-          <button
-            onClick={() => router.push(`/${locale}/catalogue`)}
-            className="px-8 py-4 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-gold/90 transition-all"
-          >
-            {t('merci.back_to_catalog', 'Retour au Catalogue')}
-          </button>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button
             onClick={() => router.push(`/${locale}/commandes`)}
-            className="px-8 py-4 border-2 border-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-gold/10 transition-all"
+            className="px-8 py-4 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white border-2 border-nubia-gold transition-all text-center"
           >
             {t('merci.view_orders', 'Voir mes commandes')}
           </button>
+          <button
+            onClick={() => router.push(`/${locale}/catalogue`)}
+            className="px-8 py-4 border-2 border-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-gold/10 transition-all text-center"
+          >
+            {t('merci.back_to_catalog', 'Continuer mes achats')}
+          </button>
+        </div>
+        
+        {/* Additional Info */}
+        <div className="mt-8 text-center">
+          <p className="text-nubia-black/60 text-sm">
+            {t('merci.support_info', 'Pour toute question concernant votre commande, contactez notre service client à service@nubia-aura.com ou appelez-nous au +221 33 123 45 67')}
+          </p>
         </div>
       </div>
     </section>

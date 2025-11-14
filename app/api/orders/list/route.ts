@@ -25,10 +25,22 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Récupérer les commandes de l'utilisateur
+    // Récupérer les commandes de l'utilisateur avec leurs items
     const { data: orders, error: ordersError } = await supabase
       .from('orders')
-      .select('*')
+      .select(`
+        *,
+        order_items (
+          id,
+          product_id,
+          quantity,
+          price,
+          products (
+            name,
+            image_url
+          )
+        )
+      `)
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 

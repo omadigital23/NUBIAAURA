@@ -199,18 +199,43 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+      <div className="grid grid-cols-1 md:grid-cols-3 tablet:grid-cols-2 gap-6 md:gap-10">
         {/* Image Gallery */}
-        <div className="md:col-span-2">
-          <div className="flex gap-4">
+        <div className="md:col-span-2 tablet:col-span-1">
+          {/* Mobile thumbnails - Horizontal */}
+          {gallery.length > 1 && (
+            <div className="flex md:hidden gap-2 mb-4 overflow-x-auto pb-2">
+              {gallery.map((img, idx) => (
+                <button
+                  key={`${img}-${idx}`}
+                  onClick={() => setActiveImageIndex(idx)}
+                  className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${
+                    activeImageIndex === idx ? 'border-nubia-gold' : 'border-nubia-gold/30'
+                  }`}
+                >
+                  <Image
+                    src={withImageParams('thumbnail', img)}
+                    alt={`${name} - ${idx + 1}`}
+                    fill
+                    sizes={sizesFor('thumbnail')}
+                    quality={60}
+                    loading="lazy"
+                    className="object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="flex gap-2 md:gap-4">
             {/* Thumbnails - Vertical on the left */}
             {gallery.length > 1 && (
-              <div className="flex flex-col gap-2 order-first">
+              <div className="hidden md:flex flex-col gap-2 order-first">
                 {gallery.map((img, idx) => (
                   <button
                     key={`${img}-${idx}`}
                     onClick={() => setActiveImageIndex(idx)}
-                    className={`relative w-20 h-20 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${
+                    className={`relative w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${
                       activeImageIndex === idx ? 'border-nubia-gold' : 'border-nubia-gold/30'
                     }`}
                   >
@@ -230,14 +255,14 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
 
             {/* Main Image */}
             <div className="flex-1">
-              <div className="relative w-full aspect-[4/5] bg-nubia-cream/30 rounded-lg overflow-hidden">
+              <div className="relative w-full aspect-[4/5] md:aspect-[3/4] tablet:aspect-[4/5] bg-nubia-cream/30 rounded-lg overflow-hidden">
                 {currentImage && (
                   <Image
                     src={withImageParams('cover', currentImage)}
                     alt={name}
                     fill
                     priority
-                    sizes={sizesFor('cover')}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 75vw, 50vw"
                     quality={80}
                     className="object-cover"
                   />

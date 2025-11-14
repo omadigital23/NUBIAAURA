@@ -12,13 +12,13 @@ export type ImageUsage =
 
 const presets: Record<ImageUsage, { w?: number; h?: number; fit?: string; sizes?: string }> = {
   hero: { w: 1200, h: 675, fit: 'crop', sizes: '(max-width: 768px) 100vw, 50vw' },
-  catalog: { w: 500, h: 600, fit: 'crop', sizes: '(max-width: 1024px) 100vw, 33vw' },
-  cover: { w: 1200, h: 1500, fit: 'crop', sizes: '(max-width: 768px) 100vw, 50vw' },
-  gallery: { w: 800, h: 1000, fit: 'crop', sizes: '(max-width: 768px) 100vw, 50vw' },
-  variant: { w: 1000, h: 1200, fit: 'crop', sizes: '(max-width: 768px) 100vw, 50vw' },
+  catalog: { w: 500, h: 600, fit: 'crop', sizes: '(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw' },
+  cover: { w: 1200, h: 1500, fit: 'crop', sizes: '(max-width: 768px) 100vw, (max-width: 1024px) 75vw, 50vw' },
+  gallery: { w: 800, h: 1000, fit: 'crop', sizes: '(max-width: 768px) 100vw, (max-width: 1024px) 75vw, 50vw' },
+  variant: { w: 1000, h: 1200, fit: 'crop', sizes: '(max-width: 768px) 100vw, (max-width: 1024px) 75vw, 50vw' },
   category: { w: 800, h: 600, fit: 'crop', sizes: '(max-width: 1024px) 50vw, 25vw' },
   og: { w: 1200, h: 630, fit: 'crop', sizes: '100vw' },
-  thumbnail: { w: 300, h: 360, fit: 'crop', sizes: '(max-width: 768px) 50vw, 25vw' },
+  thumbnail: { w: 300, h: 360, fit: 'crop', sizes: '(max-width: 768px) 80px, 100px' },
   icon: { sizes: '48px' },
   avatar: { w: 256, h: 256, fit: 'crop', sizes: '128px' },
 };

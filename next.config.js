@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  output: 'standalone',
+  // output: 'standalone', // Temporairement désactivé pour le build
   images: {
     remotePatterns: [
       {
@@ -32,7 +32,7 @@ const nextConfig = {
   poweredByHeader: false,
   experimental: {
     optimizePackageImports: ['lucide-react', '@supabase/supabase-js'],
-    optimizeCss: true,
+    // optimizeCss: true, // Temporairement désactivé - nécessite critters
   },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? {

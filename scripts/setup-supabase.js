@@ -41,7 +41,7 @@ const testProducts = [
     inStock: true,
     sizes: ["S", "M", "L", "XL"],
     colors: ["White"],
-    image: 'https://exjtjbciznzyyqrfctsc.supabase.co/storage/v1/object/public/products/images/costumes/africains/costume-blanc.jpg',
+    image: 'https://your-project.supabase.co/storage/v1/object/public/products/images/costumes/africains/costume-blanc.jpg',
     rating: 4.5,
     reviews: 12
   },
