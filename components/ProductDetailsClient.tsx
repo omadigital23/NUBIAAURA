@@ -61,6 +61,7 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
   const [quantity, setQuantity] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
 
   if (!product) {
     return (
@@ -159,7 +160,7 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
     
     // Vérifier le stock disponible
     if (quantity > availableStock) {
-      alert(locale === 'fr' 
+      setAddError(locale === 'fr' 
         ? `Stock insuffisant. Seulement ${availableStock} articles disponibles.`
         : `Insufficient stock. Only ${availableStock} items available.`
       );
@@ -168,6 +169,7 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
 
     try {
       setAdding(true);
+      setAddError(null);
       const price = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
       await addItem({
         id: product.id,
@@ -179,12 +181,18 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
       // Show success message
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
+      setAddError(null);
     } catch (err) {
       console.error('Error adding to cart:', err);
       
       // Si erreur AUTH_REQUIRED de l'API, afficher le modal
       if (err instanceof Error && err.message.includes('Authentication required')) {
         setShowAuthModal(true);
+        setAddError(t('cart.add.auth_required', 'Veuillez vous connecter pour ajouter au panier'));
+      } else {
+        // Afficher l'erreur
+        const errorMessage = err instanceof Error ? err.message : t('cart.add.error', 'Erreur lors de l\'ajout au panier');
+        setAddError(errorMessage);
       }
     } finally {
       setAdding(false);
@@ -410,6 +418,15 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
             <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg animate-in fade-in slide-in-from-top-2 duration-300">
               <p className="text-green-700 font-semibold">
                 ✓ {quantity} {quantity === 1 ? t("product.item_added", "article ajouté") : t("product.items_added", "articles ajoutés")} au panier !
+              </p>
+            </div>
+          )}
+
+          {/* Error Message */}
+          {addError && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg animate-in fade-in slide-in-from-top-2 duration-300">
+              <p className="text-red-700 font-semibold">
+                ✕ {addError}
               </p>
             </div>
           )}

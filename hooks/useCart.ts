@@ -177,10 +177,9 @@ export function useCart(): UseCartResult {
     try {
       setLoading(true);
       
-      const response = await fetch('/api/cart', {
+      const response = await fetch('/api/cart/clear', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'clear' }),
       });
 
       if (!response.ok) {
@@ -191,6 +190,7 @@ export function useCart(): UseCartResult {
       
       setItems([]);
       setError(null);
+      console.log('[useCart] Cart cleared successfully');
     } catch (err) {
       console.error('[useCart] Clear cart error:', err);
       setError(err instanceof Error ? err.message : 'Error clearing cart');

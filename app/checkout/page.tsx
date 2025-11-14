@@ -228,10 +228,17 @@ export default function CheckoutPage() {
 
         console.log('[Checkout] COD order created:', data.order.id, '- clearing cart and redirecting');
         // Clear cart and go to thank you page
-        clearCart();
-        console.log('[Checkout] Cart cleared, redirecting to:', `/${locale}/merci?orderId=${data.order.id}`);
+        try {
+          await clearCart();
+          console.log('[Checkout] Cart cleared successfully');
+        } catch (clearError) {
+          console.error('[Checkout] Error clearing cart:', clearError);
+          // Continue anyway - order is already created
+        }
         
-        // Redirection immédiate avec window.location pour éviter les useEffect
+        console.log('[Checkout] Redirecting to:', `/${locale}/merci?orderId=${data.order.id}`);
+        
+        // Redirection avec window.location pour éviter les useEffect
         window.location.href = `/${locale}/merci?orderId=${data.order.id}`;
         return;
       }
