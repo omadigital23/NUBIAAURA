@@ -20,15 +20,6 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    // ✅ VÉRIFICATION D'AUTHENTIFICATION OBLIGATOIRE
-    const authHeader = request.cookies.get('sb-auth-token');
-    if (!authHeader) {
-      return NextResponse.json(
-        { error: 'Authentication required', code: 'AUTH_REQUIRED' },
-        { status: 401 }
-      );
-    }
-
     const parsed = CartSchema.parse(body);
 
     const supabase = createClient(
@@ -36,7 +27,17 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Récupérer l'utilisateur depuis le token
+    // ✅ AUTHENTIFICATION OBLIGATOIRE
+    let userId: string | null = null;
+    const authHeader = request.cookies.get('sb-auth-token');
+    
+    if (!authHeader) {
+      return NextResponse.json(
+        { error: 'Authentication required', code: 'AUTH_REQUIRED' },
+        { status: 401 }
+      );
+    }
+
     const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.value);
     if (authError || !user) {
       return NextResponse.json(
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userId = user.id;
+    userId = user.id;
 
     if (parsed.action === 'get') {
       // Récupérer ou créer le panier
@@ -64,7 +65,9 @@ export async function POST(request: NextRequest) {
       if (!cart) {
         const { data: newCart, error: newCartError } = await supabase
           .from('carts')
-          .insert({ user_id: userId })
+          .insert({ 
+            user_id: userId
+          })
           .select('id')
           .single();
         
@@ -133,7 +136,10 @@ export async function POST(request: NextRequest) {
       if (!cart) {
         const { data: newCart, error: newCartError } = await supabase
           .from('carts')
-          .insert({ user_id: userId })
+          .insert({ 
+            user_id: userId,
+            anonymous_id: anonymousId
+          })
           .select('id')
           .single();
         

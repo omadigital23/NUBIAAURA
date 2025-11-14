@@ -2,14 +2,13 @@
 
 import { useState, useCallback } from 'react';
 import { useEffect } from 'react';
-import { clearPersistedCart, loadCart, saveCart } from '@/lib/cartPersistence';
 import { CartItem, CartState } from '@/lib/types/cart';
 
 interface UseCartResult extends CartState {
   addItem: (item: CartItem) => Promise<void>;
   removeItem: (id: string) => Promise<void>;
   updateQuantity: (id: string, quantity: number) => Promise<void>;
-  clearCart: () => void;
+  clearCart: () => Promise<void>;
 }
 
 export function useCart(): UseCartResult {
@@ -17,14 +16,35 @@ export function useCart(): UseCartResult {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load initial cart from persistence
+  // Load initial cart from Supabase on mount
   useEffect(() => {
     let mounted = true;
-    (async () => {
-      const persisted = await loadCart();
-      if (!mounted) return;
-      setItems(persisted);
-    })();
+    const loadCartFromDB = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'get' }),
+        });
+
+        if (!response.ok) {
+          console.error('[useCart] Failed to load cart:', response.status);
+          return;
+        }
+
+        const data = await response.json();
+        if (mounted && data.items) {
+          setItems(data.items);
+        }
+      } catch (err) {
+        console.error('[useCart] Error loading cart:', err);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    loadCartFromDB();
     return () => { mounted = false; };
   }, []);
 
@@ -35,7 +55,6 @@ export function useCart(): UseCartResult {
       setLoading(true);
       console.log('[useCart] Adding item:', item);
       
-      // Appeler l'API backend
       const response = await fetch('/api/cart', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -45,56 +64,32 @@ export function useCart(): UseCartResult {
       if (!response.ok) {
         const errorData = await response.json();
         console.error('[useCart] API error:', errorData);
-        
-        // Gérer les erreurs d'authentification
-        if (errorData.code === 'AUTH_REQUIRED' || errorData.code === 'AUTH_INVALID') {
-          throw new Error('Authentication required');
-        }
-        
         throw new Error(errorData.error || 'Failed to add item');
       }
       
       const data = await response.json();
       console.log('[useCart] API response:', data);
       
-      // Mettre à jour l'état local avec la réponse de l'API
-      if (data.success && data.item) {
-        setItems(prev => {
-          const existing = prev.find(i => i.id === data.item.id);
-          if (existing) {
-            const next = prev.map(i => (i.id === data.item.id ? data.item : i));
-            saveCart(next);
-            return next;
-          }
-          const next = [...prev, data.item];
-          saveCart(next);
-          return next;
+      // Recharger le panier depuis la DB après ajout
+      if (data.success) {
+        const cartResponse = await fetch('/api/cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'get' }),
         });
+        
+        if (cartResponse.ok) {
+          const cartData = await cartResponse.json();
+          if (cartData.items) {
+            setItems(cartData.items);
+          }
+        }
       }
       
       setError(null);
     } catch (err) {
       console.error('[useCart] Add item error:', err);
       setError(err instanceof Error ? err.message : 'Error adding item');
-      
-      // En cas d'erreur API, fallback sur localStorage
-      if (err instanceof Error && err.message.includes('Authentication')) {
-        // Ne pas sauvegarder localement si erreur d'auth
-        return;
-      }
-      
-      // Fallback pour les autres erreurs
-      setItems(prev => {
-        const existing = prev.find(i => i.id === item.id);
-        if (existing) {
-          const next = prev.map(i => (i.id === item.id ? { ...i, quantity: i.quantity + item.quantity } : i));
-          saveCart(next);
-          return next;
-        }
-        const next = [...prev, item];
-        saveCart(next);
-        return next;
-      });
     } finally {
       setLoading(false);
     }
@@ -104,7 +99,6 @@ export function useCart(): UseCartResult {
     try {
       setLoading(true);
       
-      // Appeler l'API backend
       const response = await fetch('/api/cart', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -114,33 +108,27 @@ export function useCart(): UseCartResult {
       if (!response.ok) {
         const errorData = await response.json();
         console.error('[useCart] API error:', errorData);
-        
-        if (errorData.code === 'AUTH_REQUIRED' || errorData.code === 'AUTH_INVALID') {
-          throw new Error('Authentication required');
-        }
-        
         throw new Error(errorData.error || 'Failed to remove item');
       }
 
-      setItems(prev => {
-        const next = prev.filter(i => i.id !== id);
-        saveCart(next);
-        return next;
+      // Recharger le panier depuis la DB après suppression
+      const cartResponse = await fetch('/api/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get' }),
       });
+      
+      if (cartResponse.ok) {
+        const cartData = await cartResponse.json();
+        if (cartData.items) {
+          setItems(cartData.items);
+        }
+      }
       
       setError(null);
     } catch (err) {
       console.error('[useCart] Remove item error:', err);
       setError(err instanceof Error ? err.message : 'Error removing item');
-      
-      // Fallback localStorage si erreur non-auth
-      if (err instanceof Error && !err.message.includes('Authentication')) {
-        setItems(prev => {
-          const next = prev.filter(i => i.id !== id);
-          saveCart(next);
-          return next;
-        });
-      }
     } finally {
       setLoading(false);
     }
@@ -150,7 +138,6 @@ export function useCart(): UseCartResult {
     try {
       setLoading(true);
       
-      // Appeler l'API backend
       const response = await fetch('/api/cart', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -160,66 +147,27 @@ export function useCart(): UseCartResult {
       if (!response.ok) {
         const errorData = await response.json();
         console.error('[useCart] API error:', errorData);
-        
-        if (errorData.code === 'AUTH_REQUIRED' || errorData.code === 'AUTH_INVALID') {
-          throw new Error('Authentication required');
-        }
-        
         throw new Error(errorData.error || 'Failed to update quantity');
       }
       
-      const data = await response.json();
+      // Recharger le panier depuis la DB après mise à jour
+      const cartResponse = await fetch('/api/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get' }),
+      });
       
-      if (quantity <= 0) {
-        // Supprimer l'item si quantité = 0
-        setItems(prev => {
-          const next = prev.filter(i => i.id !== id);
-          saveCart(next);
-          return next;
-        });
-      } else {
-        // Mettre à jour avec la réponse de l'API ou fallback
-        const updatedItem = data.item || { id, name: '', price: 0, quantity, image: '' };
-        setItems(prev => {
-          const exists = prev.find(i => i.id === id);
-          if (!exists) {
-            const next = [...prev, updatedItem];
-            saveCart(next);
-            return next;
-          }
-          const next = prev.map(i => (i.id === id ? updatedItem : i));
-          saveCart(next);
-          return next;
-        });
+      if (cartResponse.ok) {
+        const cartData = await cartResponse.json();
+        if (cartData.items) {
+          setItems(cartData.items);
+        }
       }
       
       setError(null);
     } catch (err) {
       console.error('[useCart] Update quantity error:', err);
       setError(err instanceof Error ? err.message : 'Error updating quantity');
-      
-      // Fallback localStorage si erreur non-auth
-      if (err instanceof Error && !err.message.includes('Authentication')) {
-        if (quantity <= 0) {
-          setItems(prev => {
-            const next = prev.filter(i => i.id !== id);
-            saveCart(next);
-            return next;
-          });
-        } else {
-          setItems(prev => {
-            const exists = prev.find(i => i.id === id);
-            if (!exists) {
-              const next = [...prev, { id, name: '', price: 0, quantity, image: '' }];
-              saveCart(next);
-              return next;
-            }
-            const next = prev.map(i => (i.id === id ? { ...i, quantity } : i));
-            saveCart(next);
-            return next;
-          });
-        }
-      }
     } finally {
       setLoading(false);
     }
@@ -229,7 +177,6 @@ export function useCart(): UseCartResult {
     try {
       setLoading(true);
       
-      // Appeler l'API backend
       const response = await fetch('/api/cart', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -239,26 +186,14 @@ export function useCart(): UseCartResult {
       if (!response.ok) {
         const errorData = await response.json();
         console.error('[useCart] Clear cart API error:', errorData);
-        
-        // Continuer avec le clear local même si erreur API (sauf auth)
-        if (errorData.code !== 'AUTH_REQUIRED' && errorData.code !== 'AUTH_INVALID') {
-          setItems([]);
-          clearPersistedCart();
-          setError(null);
-          return;
-        }
+        throw new Error(errorData.error || 'Failed to clear cart');
       }
       
       setItems([]);
-      clearPersistedCart();
       setError(null);
     } catch (err) {
       console.error('[useCart] Clear cart error:', err);
       setError(err instanceof Error ? err.message : 'Error clearing cart');
-      
-      // Fallback localStorage
-      setItems([]);
-      clearPersistedCart();
     } finally {
       setLoading(false);
     }
