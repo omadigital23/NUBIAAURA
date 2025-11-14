@@ -31,6 +31,7 @@ export function useAuth(): UseAuthResult {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -68,6 +69,7 @@ export function useAuth(): UseAuthResult {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
       });
 
       setUser(null);

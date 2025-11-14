@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { X, Mail, Lock, User, AlertCircle, Loader } from 'lucide-react';
+import { useAuthToken } from '@/hooks/useAuthToken';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { saveToken } = useAuthToken();
 
   const [loginData, setLoginData] = useState({
     email: '',
@@ -45,6 +47,11 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
 
       if (!response.ok) {
         throw new Error(data.error || 'Erreur de connexion');
+      }
+
+      // Save token to localStorage
+      if (data.token) {
+        saveToken(data.token);
       }
 
       setLoginData({ email: '', password: '' });
@@ -97,6 +104,11 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
       });
 
       if (loginResponse.ok) {
+        const loginData = await loginResponse.json();
+        // Save token to localStorage
+        if (loginData.token) {
+          saveToken(loginData.token);
+        }
         setSignupData({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '' });
         onLoginSuccess?.();
         onClose();

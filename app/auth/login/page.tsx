@@ -8,6 +8,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Mail, Lock, AlertCircle, Loader } from 'lucide-react';
+import { useAuthToken } from '@/hooks/useAuthToken';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
@@ -16,6 +17,7 @@ function LoginForm() {
   const [error, setError] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { saveToken } = useAuthToken();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +35,11 @@ function LoginForm() {
 
       if (!response.ok) {
         throw new Error(data.error || 'Erreur de connexion');
+      }
+
+      // Save token to localStorage
+      if (data.token) {
+        saveToken(data.token);
       }
 
       // Redirect to target if provided, else to client dashboard
