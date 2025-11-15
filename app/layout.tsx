@@ -47,7 +47,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" />
         <GoogleAnalytics />
       </head>
-      <body className="font-inter bg-nubia-white text-nubia-black">
+      <body className="font-inter bg-nubia-white text-nubia-black antialiased">
         <CartProvider>
           {children}
         </CartProvider>
