@@ -197,7 +197,6 @@ export async function POST(request: NextRequest) {
             product_id: parsed.item.id,
             quantity: parsed.item.quantity,
             price: parsed.item.price,
-            image: parsed.item.image,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           });

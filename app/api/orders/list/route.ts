@@ -5,8 +5,15 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    // Vérifier l'authentification
-    const token = request.cookies.get('sb-auth-token')?.value;
+    // Vérifier l'authentification - Support Authorization header et cookie
+    let token: string | null = null;
+    const authHeader = request.headers.get('Authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      token = authHeader.slice(7); // Remove 'Bearer ' prefix
+    } else {
+      token = request.cookies.get('sb-auth-token')?.value || null;
+    }
+
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },
