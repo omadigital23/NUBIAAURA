@@ -5,13 +5,12 @@ export const dynamic = 'force-dynamic';
 import { useProductsFromDB } from '@/hooks/useProductsFromDB';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, Suspense } from 'react';
 import { withImageParams } from '@/lib/image-formats';
-import { getProductImageUrl } from '@/lib/media';
 import Link from 'next/link';
 import { Loader } from 'lucide-react';
 
-export default function CatalogueSearchResults() {
+function CatalogueSearchResultsContent() {
   const { t, locale } = useTranslation();
   const searchParams = useSearchParams();
   
@@ -57,13 +56,13 @@ export default function CatalogueSearchResults() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="font-playfair text-3xl font-bold text-nubia-black mb-2">
             {search || categories.length
-              ? t('catalog.search_results_for', 'Résultats pour : {query}', { query: searchQuery })
+              ? `Résultats pour : ${searchQuery}`
               : t('catalog.all_products', 'Tous les produits')}
           </h1>
           <p className="text-nubia-black/70">
             {resultCount === 0
               ? t('catalog.no_results', 'Aucun produit trouvé')
-              : t('catalog.results_count', '{count} produit(s) trouvé(s)', { count: resultCount })}
+              : `${resultCount} produit${resultCount > 1 ? 's' : ''} trouvé${resultCount > 1 ? 's' : ''}`}
           </p>
         </div>
       </div>
@@ -130,5 +129,17 @@ export default function CatalogueSearchResults() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function CatalogueSearchResults() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-nubia-white flex items-center justify-center">
+        <Loader className="animate-spin text-nubia-gold" size={40} />
+      </div>
+    }>
+      <CatalogueSearchResultsContent />
+    </Suspense>
   );
 }

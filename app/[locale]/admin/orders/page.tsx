@@ -30,6 +30,7 @@ interface EditingOrder {
   [key: string]: {
     delivery_duration_days?: number;
     shipped_at?: string;
+    estimated_delivery_date?: string;
     delivered_at?: string;
     tracking_number?: string;
     carrier?: string;
@@ -138,6 +139,7 @@ export default function AdminOrdersPage() {
       const payload: any = {};
       if (changes.delivery_duration_days !== undefined) payload.delivery_duration_days = changes.delivery_duration_days;
       if (changes.shipped_at !== undefined) payload.shipped_at = changes.shipped_at;
+      if (changes.estimated_delivery_date !== undefined) payload.estimated_delivery_date = changes.estimated_delivery_date;
       if (changes.delivered_at !== undefined) payload.delivered_at = changes.delivered_at;
       if (changes.tracking_number !== undefined) payload.tracking_number = changes.tracking_number;
       if (changes.carrier !== undefined) payload.carrier = changes.carrier;
@@ -419,17 +421,44 @@ export default function AdminOrdersPage() {
                             <label className="block text-sm font-semibold text-nubia-black mb-2">
                               Date estimée de livraison
                             </label>
-                            <p className="text-lg text-nubia-black">
-                              {order.estimated_delivery_date
-                                ? new Date(
-                                    order.estimated_delivery_date
-                                  ).toLocaleDateString('fr-FR', {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric',
-                                  })
-                                : 'À calculer'}
-                            </p>
+                            {editing[order.id] ? (
+                              <input
+                                type="date"
+                                value={
+                                  editing[order.id]?.estimated_delivery_date
+                                    ? new Date(
+                                        editing[order.id].estimated_delivery_date!
+                                      )
+                                        .toISOString()
+                                        .split('T')[0]
+                                    : order.estimated_delivery_date
+                                    ? new Date(order.estimated_delivery_date)
+                                        .toISOString()
+                                        .split('T')[0]
+                                    : ''
+                                }
+                                onChange={(e) =>
+                                  handleEdit(
+                                    order.id,
+                                    'estimated_delivery_date',
+                                    e.target.value ? new Date(e.target.value + 'T00:00:00').toISOString() : ''
+                                  )
+                                }
+                                className="w-full px-4 py-2 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"
+                              />
+                            ) : (
+                              <p className="text-lg text-nubia-black">
+                                {order.estimated_delivery_date
+                                  ? new Date(
+                                      order.estimated_delivery_date
+                                    ).toLocaleDateString('fr-FR', {
+                                      year: 'numeric',
+                                      month: 'long',
+                                      day: 'numeric',
+                                    })
+                                  : 'À calculer'}
+                              </p>
+                            )}
                           </div>
 
                           {/* Delivered At */}

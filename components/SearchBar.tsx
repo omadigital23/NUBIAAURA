@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useState, useEffect } from 'react';
@@ -8,7 +8,6 @@ import { useState, useEffect } from 'react';
 export function SearchBar({ initialSearch = '', className = '' }: { initialSearch?: string; className?: string }) {
   const { t } = useTranslation();
   const router = useRouter();
-  const pathname = usePathname();
   const [search, setSearch] = useState(initialSearch);
   const [isClient, setIsClient] = useState(false);
 
