@@ -43,9 +43,14 @@ export default function AdminReturnsPage() {
   const loadReturns = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/returns', {
+      const token = localStorage.getItem('admin_token');
+      if (!token) {
+        throw new Error('No admin token found');
+      }
+
+      const response = await fetch('/api/admin/returns/list', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
+          'Authorization': `Bearer ${token}`,
         },
       });
 

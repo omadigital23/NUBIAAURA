@@ -47,15 +47,20 @@ export default function AdminDeliveryStatsPage() {
   const loadStats = async () => {
     try {
       setLoading(true);
+      const token = localStorage.getItem('admin_token');
+      if (!token) {
+        throw new Error('No admin token found');
+      }
+
       const [ordersRes, returnsRes] = await Promise.all([
-        fetch('/api/orders/list', {
+        fetch('/api/admin/orders/list', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
+            'Authorization': `Bearer ${token}`,
           },
         }),
-        fetch('/api/returns', {
+        fetch('/api/admin/returns/list', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
+            'Authorization': `Bearer ${token}`,
           },
         }),
       ]);
