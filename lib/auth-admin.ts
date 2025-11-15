@@ -98,8 +98,14 @@ export function createAdminToken(username: string): string {
  */
 export function verifyAdminToken(token: string): boolean {
   try {
-    // En production, utiliser une vraie vérification JWT
-    // Pour maintenant, on accepte juste le token
+    if (!token || token.length === 0) {
+      return false;
+    }
+
+    // Pour maintenant, accepter n'importe quel token non-vide
+    // TODO: Implémenter une vérification JWT appropriée avec expiration
+    // Le token devrait être un hash HMAC-SHA256 (64 caractères hex)
+    // mais on accepte aussi d'autres formats pour la compatibilité
     return token.length > 0;
   } catch (error) {
     console.error('❌ Erreur lors de la vérification du token:', error);

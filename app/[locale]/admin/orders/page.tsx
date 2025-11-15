@@ -43,6 +43,7 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [editing, setEditing] = useState<EditingOrder>({});
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
 
@@ -60,6 +61,7 @@ export default function AdminOrdersPage() {
   const loadOrders = async () => {
     try {
       setLoading(true);
+      setError(null);
       const token = localStorage.getItem('admin_token');
       if (!token) {
         throw new Error('No admin token found');
@@ -76,6 +78,12 @@ export default function AdminOrdersPage() {
       }
 
       const data = await response.json();
+      console.log('[loadOrders] Received orders:', data.orders);
+      if (data.orders && data.orders.length > 0) {
+        console.log('[loadOrders] First order delivered_at:', data.orders[0].delivered_at);
+        console.log('[loadOrders] First order shipped_at:', data.orders[0].shipped_at);
+        console.log('[loadOrders] First order tracking_number:', data.orders[0].tracking_number);
+      }
       setOrders(data.orders || []);
     } catch (err: any) {
       setError(err.message);
@@ -95,10 +103,47 @@ export default function AdminOrdersPage() {
     }));
   };
 
+  const toggleEditMode = (orderId: string) => {
+    if (editing[orderId]) {
+      // Already in edit mode, cancel
+      handleCancel(orderId);
+    } else {
+      // Enter edit mode with empty changes
+      setEditing((prev) => ({
+        ...prev,
+        [orderId]: {},
+      }));
+    }
+  };
+
   const handleSave = async (orderId: string) => {
+    console.log('[handleSave] START - orderId:', orderId);
+    console.log('[handleSave] editing state:', editing);
+    
     try {
       const changes = editing[orderId];
-      if (!changes) return;
+      console.log('[handleSave] changes:', changes);
+      
+      if (!changes || Object.keys(changes).length === 0) {
+        console.log('[handleSave] No changes, returning');
+        setError(null);
+        setSuccess('Aucune modification à enregistrer.');
+        return;
+      }
+
+      setError(null);
+      setSuccess(null);
+
+      // Build payload - only send fields that were actually changed
+      const payload: any = {};
+      if (changes.delivery_duration_days !== undefined) payload.delivery_duration_days = changes.delivery_duration_days;
+      if (changes.shipped_at !== undefined) payload.shipped_at = changes.shipped_at;
+      if (changes.delivered_at !== undefined) payload.delivered_at = changes.delivered_at;
+      if (changes.tracking_number !== undefined) payload.tracking_number = changes.tracking_number;
+      if (changes.carrier !== undefined) payload.carrier = changes.carrier;
+      if (changes.status !== undefined) payload.status = changes.status;
+
+      console.log('[handleSave] payload to send:', payload);
 
       const response = await fetch(`/api/admin/orders/${orderId}/delivery`, {
         method: 'PUT',
@@ -106,22 +151,42 @@ export default function AdminOrdersPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
         },
-        body: JSON.stringify(changes),
+        body: JSON.stringify(payload),
       });
 
+      console.log('[handleSave] response status:', response.status);
+
       if (!response.ok) {
-        throw new Error('Failed to save order');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
       }
 
+      console.log('[handleSave] success, reloading orders...');
+      
       // Reload orders
       await loadOrders();
+      
+      console.log('[handleSave] orders reloaded, closing and reopening section...');
+      
+      // Close and reopen section to force re-render
+      setSelectedOrder(null);
+      await new Promise(resolve => {
+        setTimeout(() => resolve(true), 150);
+      });
+      setSelectedOrder(orderId);
+      
+      // Clear editing state
       setEditing((prev) => {
         const newEditing = { ...prev };
         delete newEditing[orderId];
         return newEditing;
       });
+
+      console.log('[handleSave] showing success message');
+      setSuccess('La livraison a été mise à jour avec succès.');
     } catch (err: any) {
-      setError(err.message);
+      console.error('[handleSave] ERROR:', err);
+      setError(`Erreur: ${err.message}`);
     }
   };
 
@@ -179,7 +244,13 @@ export default function AdminOrdersPage() {
             </div>
           </div>
 
-          {/* Error Message */}
+          {/* Messages */}
+          {success && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4">
+              {success}
+            </div>
+          )}
+
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
               {error}
@@ -493,7 +564,7 @@ export default function AdminOrdersPage() {
                           </>
                         ) : (
                           <button
-                            onClick={() => handleEdit(order.id, 'edit', true)}
+                            onClick={() => toggleEditMode(order.id)}
                             className="flex-1 flex items-center justify-center gap-2 bg-nubia-gold text-nubia-black px-6 py-3 rounded-lg hover:bg-nubia-gold/90 transition-colors font-semibold"
                           >
                             <Edit2 size={20} />

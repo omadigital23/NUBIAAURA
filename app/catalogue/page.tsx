@@ -18,7 +18,6 @@ interface Category {
 export default function CataloguePage() {
   const { locale } = useTranslation();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -38,18 +37,15 @@ export default function CataloguePage() {
     loadCategories();
   }, []);
 
-  // Charger les produits selon la catégorie sélectionnée
+  // Charger tous les produits
   useEffect(() => {
     const loadProducts = async () => {
       setLoading(true);
       try {
-        const url = selectedCategory 
-          ? `/api/products?category=${selectedCategory}`
-          : '/api/products';
-        const res = await fetch(url);
+        const res = await fetch('/api/products');
         const data = await res.json();
         setProducts(data.data || []);
-        console.log('[Catalogue] Products loaded:', data.data?.length, 'for category:', selectedCategory || 'all');
+        console.log('[Catalogue] Products loaded:', data.data?.length);
       } catch (err) {
         console.error('[Catalogue] Error loading products:', err);
         setProducts([]);
@@ -58,7 +54,7 @@ export default function CataloguePage() {
       }
     };
     loadProducts();
-  }, [selectedCategory]);
+  }, []);
 
   // Filtrer les produits par recherche
   const filteredProducts = products.filter(product =>
@@ -99,24 +95,8 @@ export default function CataloguePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="font-playfair text-2xl font-bold text-nubia-black mb-8">Parcourir par catégorie</h2>
           
-          {/* "Tous les produits" Card */}
+          {/* Category Cards with Images */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <button
-              onClick={() => setSelectedCategory('')}
-              className={`group relative h-48 rounded-lg overflow-hidden transition-all duration-300 ${
-                selectedCategory === ''
-                  ? 'ring-4 ring-nubia-gold shadow-lg'
-                  : 'hover:shadow-lg'
-              }`}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-nubia-gold/30 to-nubia-gold/10 flex items-center justify-center">
-                <span className="font-playfair text-2xl font-bold text-nubia-black text-center px-4">
-                  Tous les produits
-                </span>
-              </div>
-            </button>
-
-            {/* Category Cards with Images */}
             {categories.map((category) => {
               // Fallback images pour les catégories
               const categoryImages: Record<string, string> = {
@@ -132,14 +112,10 @@ export default function CataloguePage() {
               const imageUrl = categoryImages[category.slug] || 'https://images.unsplash.com/photo-1591195853828-11db59a44f6b?w=500&h=300&fit=crop';
               
               return (
-                <button
+                <Link
                   key={category.slug}
-                  onClick={() => setSelectedCategory(category.slug)}
-                  className={`group relative h-48 rounded-lg overflow-hidden transition-all duration-300 ${
-                    selectedCategory === category.slug
-                      ? 'ring-4 ring-nubia-gold shadow-lg'
-                      : 'hover:shadow-lg'
-                  }`}
+                  href={`/catalogue/${category.slug}`}
+                  className="group relative h-48 rounded-lg overflow-hidden transition-all duration-300 hover:shadow-lg block"
                 >
                   <Image
                     src={imageUrl}
@@ -155,7 +131,7 @@ export default function CataloguePage() {
                       </p>
                     </div>
                   </div>
-                </button>
+                </Link>
               );
             })}
           </div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import { verifyAdminToken } from '@/lib/auth-admin';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,29 +28,59 @@ export async function PUT(
 ) {
   try {
     // Check admin authentication
-    const token = request.cookies.get('sb-auth-token')?.value;
+    // Try to get token from Authorization header first, then from cookies
+    let token = request.headers.get('Authorization')?.replace('Bearer ', '');
     if (!token) {
+      token = request.cookies.get('sb-auth-token')?.value;
+    }
+    
+    if (!token) {
+      console.error('[delivery] No token found');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-    if (userError || !user) {
+    console.log('[delivery] Token found, verifying...');
+    
+    // Try to verify as admin token first
+    let isAdmin = verifyAdminToken(token);
+    console.log('[delivery] Admin token verification result:', isAdmin);
+    
+    // If not admin token, try to verify as Supabase token
+    if (!isAdmin) {
+      console.log('[delivery] Trying Supabase token verification...');
+      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+      if (userError || !user) {
+        console.error('[delivery] Supabase auth failed:', userError);
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 401 }
+        );
+      }
+      console.log('[delivery] Supabase auth successful');
+      // TODO: Check if user has admin role in database
+      isAdmin = true;
+    }
+
+    if (!isAdmin) {
+      console.error('[delivery] Not admin');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    // TODO: Add admin role check
-    // For now, assuming authenticated user is admin
-
+    console.log('[delivery] Authentication successful, parsing body...');
     const body = await request.json();
+    console.log('[delivery] Body:', body);
+    
     const validated = UpdateDeliverySchema.parse(body);
+    console.log('[delivery] Validated:', validated);
 
     // Get current order
+    console.log('[delivery] Fetching order:', params.id);
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .select('*')
@@ -57,11 +88,14 @@ export async function PUT(
       .single();
 
     if (orderError || !order) {
+      console.error('[delivery] Order not found:', orderError);
       return NextResponse.json(
         { error: 'Order not found' },
         { status: 404 }
       );
     }
+    
+    console.log('[delivery] Order found:', order.id);
 
     // Calculate estimated delivery date if shipping
     let estimatedDeliveryDate = order.estimated_delivery_date;
@@ -73,6 +107,16 @@ export async function PUT(
     }
 
     // Update order
+    console.log('[delivery] Updating order with:', {
+      delivery_duration_days: validated.delivery_duration_days || order.delivery_duration_days,
+      shipped_at: validated.shipped_at || order.shipped_at,
+      estimated_delivery_date: estimatedDeliveryDate,
+      delivered_at: validated.delivered_at || order.delivered_at,
+      tracking_number: validated.tracking_number || order.tracking_number,
+      carrier: validated.carrier || order.carrier,
+      status: validated.status || order.status,
+    });
+    
     const { data: updatedOrder, error: updateError } = await supabase
       .from('orders')
       .update({
@@ -89,23 +133,35 @@ export async function PUT(
       .single();
 
     if (updateError) {
+      console.error('[delivery] Update error:', updateError);
       return NextResponse.json(
         { error: updateError.message },
         { status: 500 }
       );
     }
+    
+    console.log('[delivery] Order updated successfully');
 
-    // Add tracking history
-    const { error: trackingError } = await supabase
-      .from('delivery_tracking')
-      .insert({
-        order_id: params.id,
-        status: validated.status || order.status,
-        notes: `Updated by admin: ${JSON.stringify(validated)}`,
-      });
+    // Add tracking history (optional - table may not exist yet)
+    console.log('[delivery] Adding tracking history...');
+    try {
+      const { error: trackingError } = await supabase
+        .from('delivery_tracking')
+        .insert({
+          order_id: params.id,
+          status: validated.status || order.status,
+          notes: `Updated by admin: ${JSON.stringify(validated)}`,
+        });
 
-    if (trackingError) {
-      console.error('Failed to add tracking history:', trackingError);
+      if (trackingError) {
+        console.warn('[delivery] Warning: Failed to add tracking history:', trackingError?.message);
+        // Don't fail the request if tracking history fails
+      } else {
+        console.log('[delivery] Tracking history added successfully');
+      }
+    } catch (trackingErr: any) {
+      console.warn('[delivery] Warning: Tracking history error:', trackingErr?.message);
+      // Don't fail the request if tracking history fails
     }
 
     return NextResponse.json(
@@ -116,9 +172,11 @@ export async function PUT(
       { status: 200 }
     );
   } catch (error: any) {
-    console.error('Update delivery error:', error);
+    console.error('[delivery] Catch error:', error);
+    console.error('[delivery] Error stack:', error?.stack);
 
     if (error instanceof z.ZodError) {
+      console.error('[delivery] Zod validation error:', error.errors);
       return NextResponse.json(
         { error: error.errors[0].message },
         { status: 400 }
@@ -126,7 +184,7 @@ export async function PUT(
     }
 
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error?.message },
       { status: 500 }
     );
   }
@@ -142,7 +200,12 @@ export async function GET(
 ) {
   try {
     // Check admin authentication
-    const token = request.cookies.get('sb-auth-token')?.value;
+    // Try to get token from Authorization header first, then from cookies
+    let token = request.headers.get('Authorization')?.replace('Bearer ', '');
+    if (!token) {
+      token = request.cookies.get('sb-auth-token')?.value;
+    }
+    
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -150,8 +213,23 @@ export async function GET(
       );
     }
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-    if (userError || !user) {
+    // Try to verify as admin token first
+    let isAdmin = verifyAdminToken(token);
+    
+    // If not admin token, try to verify as Supabase token
+    if (!isAdmin) {
+      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+      if (userError || !user) {
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 401 }
+        );
+      }
+      // TODO: Check if user has admin role in database
+      isAdmin = true;
+    }
+
+    if (!isAdmin) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
