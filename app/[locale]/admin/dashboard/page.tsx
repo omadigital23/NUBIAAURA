@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { LogOut, ShoppingCart, Users, Package, BarChart3 } from 'lucide-react';
+import { LogOut, ShoppingCart, Users, Package, BarChart3, RotateCcw } from 'lucide-react';
 
 interface DashboardStats {
   totalOrders: number;
@@ -79,7 +79,8 @@ export default function AdminDashboardPage() {
     { icon: ShoppingCart, label: t('admin.orders'), href: `/${locale}/admin/orders` },
     { icon: Package, label: t('admin.products'), href: `/${locale}/admin/products` },
     { icon: Users, label: t('admin.users'), href: `/${locale}/admin/users` },
-    { icon: BarChart3, label: t('admin.statistics'), href: `/${locale}/admin/statistics` },
+    { icon: BarChart3, label: 'Suivi Livraison', href: `/${locale}/admin/delivery-stats` },
+    { icon: RotateCcw, label: 'Gestion Retours', href: `/${locale}/admin/returns` },
   ];
 
   const statCards = [
