@@ -41,11 +41,17 @@ export default function OrdersPage() {
   const fetchOrders = async () => {
     try {
       setOrdersLoading(true);
+      const token = localStorage.getItem('sb-auth-token');
+      const headers: any = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+      
       const response = await fetch('/api/orders/list', {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
       });
 
       if (!response.ok) {

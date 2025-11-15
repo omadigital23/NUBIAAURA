@@ -5,6 +5,7 @@ import Footer from '@/components/Footer';
 import { useState, useEffect } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useRouter } from 'next/navigation';
+import { useAuthToken } from '@/hooks/useAuthToken';
 import { Package, Calendar, CreditCard, Truck, Eye, ArrowLeft } from 'lucide-react';
 import { Loader } from 'lucide-react';
 
@@ -33,25 +34,65 @@ interface OrderItem {
 export default function OrdersPage() {
   const { t, locale } = useTranslation();
   const router = useRouter();
+  const { token, isLoading: tokenLoading } = useAuthToken();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    // Wait for token to be loaded
+    if (tokenLoading) {
+      console.log('[OrdersPage] Waiting for token to load...');
+      return;
+    }
+
+    console.log('[OrdersPage] Token loading complete. Token:', token ? 'present' : 'missing');
+
+    if (token) {
+      console.log('[OrdersPage] Token available, fetching orders');
+      fetchOrders();
+    } else {
+      console.log('[OrdersPage] No token available, redirecting to login');
+      setLoading(false);
+      router.push(`/${locale}/auth/login?callbackUrl=/${locale}/commandes`);
+    }
+  }, [token, tokenLoading, locale, router]);
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch('/api/orders/list');
+      const headers: any = { 'Content-Type': 'application/json' };
+      
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+        console.log('[OrdersPage] Auth header set with token');
+      } else {
+        console.warn('[OrdersPage] No auth token available for fetch');
+        setError(t('orders.error_loading', 'Impossible de charger vos commandes'));
+        setLoading(false);
+        return;
+      }
+      
+      console.log('[OrdersPage] Fetching orders from /api/orders/list');
+      const response = await fetch('/api/orders/list', {
+        method: 'GET',
+        headers,
+        credentials: 'include', // Include cookies
+      });
+      
+      console.log('[OrdersPage] Response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('[OrdersPage] Orders received:', data.orders?.length || 0);
         setOrders(data.orders || []);
       } else {
-        setError('Impossible de charger vos commandes');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('[OrdersPage] API error:', response.status, errorData);
+        setError(t('orders.error_loading', 'Impossible de charger vos commandes'));
       }
     } catch (err) {
-      setError('Erreur lors du chargement des commandes');
+      console.error('[OrdersPage] Fetch error:', err);
+      setError(t('orders.error', 'Erreur lors du chargement des commandes'));
     } finally {
       setLoading(false);
     }
@@ -158,8 +199,8 @@ export default function OrdersPage() {
             <div className="space-y-6">
               {orders.map((order) => (
                 <div key={order.id} className="bg-white border-2 border-nubia-gold/20 rounded-lg p-6">
-                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4">
-                    <div>
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4 gap-4">
+                    <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <Package className="text-nubia-gold" size={20} />
                         <span className="font-mono text-sm text-nubia-black/60">
@@ -169,7 +210,7 @@ export default function OrdersPage() {
                           {getStatusText(order.status)}
                         </span>
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-nubia-black/60">
+                      <div className="flex flex-wrap items-center gap-4 text-sm text-nubia-black/60">
                         <div className="flex items-center gap-1">
                           <Calendar size={16} />
                           {new Date(order.created_at).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', {
@@ -193,7 +234,7 @@ export default function OrdersPage() {
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-4 mt-4 lg:mt-0">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 lg:gap-6">
                       <div className="text-right">
                         <p className="text-sm text-nubia-black/60">{t('orders.total', 'Total')}</p>
                         <p className="font-playfair text-2xl font-bold text-nubia-gold">
@@ -201,8 +242,12 @@ export default function OrdersPage() {
                         </p>
                       </div>
                       <button
-                        onClick={() => router.push(`/${locale}/commandes/${order.id}`)}
-                        className="px-4 py-2 border-2 border-nubia-gold text-nubia-black font-medium rounded-lg hover:bg-nubia-gold/10 transition-all flex items-center gap-2"
+                        onClick={() => {
+                          console.log('[OrdersPage] Navigating to order details:', order.id);
+                          router.push(`/${locale}/commandes/${order.id}`);
+                        }}
+                        type="button"
+                        className="px-6 py-2 border-2 border-nubia-gold text-nubia-black font-medium rounded-lg hover:bg-nubia-gold/10 active:bg-nubia-gold/20 transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap"
                       >
                         <Eye size={16} />
                         {t('orders.view_details', 'Voir détails')}

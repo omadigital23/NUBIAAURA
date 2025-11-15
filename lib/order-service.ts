@@ -34,10 +34,12 @@ export async function createOrder(
       .from('orders')
       .insert({
         user_id: userId,
+        order_number: `ORD-${Date.now()}`,
         total,
         status: 'pending',
+        payment_status: 'pending',
         shipping_method: checkoutData.shippingMethod,
-        address: JSON.stringify(checkoutData.address),
+        shipping_address: checkoutData.address,
         created_at: new Date().toISOString(),
       })
       .select()
@@ -166,10 +168,12 @@ export async function createCODOrder(
       .from('orders')
       .insert({
         user_id: userId,
+        order_number: `ORD-${Date.now()}`,
         total,
         status: 'pending',
+        payment_status: 'pending',
         shipping_method: codData.shippingMethod,
-        address: JSON.stringify({
+        shipping_address: {
           firstName: codData.firstName,
           lastName: codData.lastName,
           email: codData.email,
@@ -178,7 +182,7 @@ export async function createCODOrder(
           city: codData.city,
           zipCode: codData.zipCode,
           country: codData.country,
-        }),
+        },
         created_at: new Date().toISOString(),
       })
       .select()

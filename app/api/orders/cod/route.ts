@@ -58,6 +58,23 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
+    // Get user from auth token
+    let userId: string | null = null;
+    let token: string | null = null;
+    const authHeader = request.headers.get('Authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      token = authHeader.slice(7);
+    } else {
+      token = request.cookies.get('sb-auth-token')?.value || null;
+    }
+
+    if (token) {
+      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+      if (!userError && user) {
+        userId = user.id;
+      }
+    }
+
     const { items, shippingMethod } = parsed.data;
     const { data: products, error: prodErr } = await supabase
       .from('products')
@@ -130,6 +147,7 @@ export async function POST(request: NextRequest) {
     const { data: order, error: orderErr } = await supabase
       .from('orders')
       .insert({
+        user_id: userId,
         order_number: `ORD-${Date.now()}`,
         total: quote.total,
         shipping_address: {
