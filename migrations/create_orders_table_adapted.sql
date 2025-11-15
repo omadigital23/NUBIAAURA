@@ -77,6 +77,17 @@ CREATE POLICY "Users can update their own orders" ON public.orders
   FOR UPDATE
   USING (auth.uid() = user_id);
 
+-- Admin policies (bypass RLS for service role)
+DROP POLICY IF EXISTS "Admins can view all orders" ON public.orders;
+CREATE POLICY "Admins can view all orders" ON public.orders
+  FOR SELECT
+  USING (true);
+
+DROP POLICY IF EXISTS "Admins can update all orders" ON public.orders;
+CREATE POLICY "Admins can update all orders" ON public.orders
+  FOR UPDATE
+  USING (true);
+
 -- RLS Policies for delivery_tracking
 DROP POLICY IF EXISTS "Users can view their order delivery tracking" ON public.delivery_tracking;
 CREATE POLICY "Users can view their order delivery tracking" ON public.delivery_tracking
