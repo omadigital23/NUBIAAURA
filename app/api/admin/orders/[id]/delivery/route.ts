@@ -12,6 +12,7 @@ const supabase = createClient(
 const UpdateDeliverySchema = z.object({
   delivery_duration_days: z.number().min(1).max(30).optional(),
   shipped_at: z.string().datetime().optional(),
+  estimated_delivery_date: z.string().datetime().nullable().optional(),
   delivered_at: z.string().datetime().optional(),
   tracking_number: z.string().optional(),
   carrier: z.string().optional(),
@@ -97,9 +98,13 @@ export async function PUT(
     
     console.log('[delivery] Order found:', order.id);
 
-    // Calculate estimated delivery date if shipping
+    // Calculate estimated delivery date if shipping (only if not manually set)
     let estimatedDeliveryDate = order.estimated_delivery_date;
-    if (validated.shipped_at && validated.delivery_duration_days) {
+    // If manually set, use the provided value
+    if (validated.estimated_delivery_date !== undefined) {
+      estimatedDeliveryDate = validated.estimated_delivery_date;
+    } else if (validated.shipped_at && validated.delivery_duration_days) {
+      // Otherwise, calculate from shipped_at + duration
       const shippedDate = new Date(validated.shipped_at);
       const deliveryDate = new Date(shippedDate);
       deliveryDate.setDate(deliveryDate.getDate() + validated.delivery_duration_days);
@@ -107,27 +112,25 @@ export async function PUT(
     }
 
     // Update order
-    console.log('[delivery] Updating order with:', {
-      delivery_duration_days: validated.delivery_duration_days || order.delivery_duration_days,
-      shipped_at: validated.shipped_at || order.shipped_at,
-      estimated_delivery_date: estimatedDeliveryDate,
-      delivered_at: validated.delivered_at || order.delivered_at,
-      tracking_number: validated.tracking_number || order.tracking_number,
-      carrier: validated.carrier || order.carrier,
-      status: validated.status || order.status,
-    });
+    const updateData: any = {};
+    if (validated.delivery_duration_days !== undefined) updateData.delivery_duration_days = validated.delivery_duration_days;
+    if (validated.shipped_at !== undefined) updateData.shipped_at = validated.shipped_at;
+    if (validated.estimated_delivery_date !== undefined) {
+      // Handle empty string as null
+      updateData.estimated_delivery_date = validated.estimated_delivery_date === '' ? null : validated.estimated_delivery_date;
+    } else if (estimatedDeliveryDate) {
+      updateData.estimated_delivery_date = estimatedDeliveryDate;
+    }
+    if (validated.delivered_at !== undefined) updateData.delivered_at = validated.delivered_at;
+    if (validated.tracking_number !== undefined) updateData.tracking_number = validated.tracking_number;
+    if (validated.carrier !== undefined) updateData.carrier = validated.carrier;
+    if (validated.status !== undefined) updateData.status = validated.status;
+    
+    console.log('[delivery] Updating order with:', updateData);
     
     const { data: updatedOrder, error: updateError } = await supabase
       .from('orders')
-      .update({
-        delivery_duration_days: validated.delivery_duration_days || order.delivery_duration_days,
-        shipped_at: validated.shipped_at || order.shipped_at,
-        estimated_delivery_date: estimatedDeliveryDate,
-        delivered_at: validated.delivered_at || order.delivered_at,
-        tracking_number: validated.tracking_number || order.tracking_number,
-        carrier: validated.carrier || order.carrier,
-        status: validated.status || order.status,
-      })
+      .update(updateData)
       .eq('id', params.id)
       .select()
       .single();

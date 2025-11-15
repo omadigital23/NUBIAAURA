@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -18,7 +18,6 @@ interface Category {
 
 export default function CategoryPage() {
   const params = useParams();
-  const router = useRouter();
   const { locale } = useTranslation();
   const categorySlug = params.category as string;
   const [category, setCategory] = useState<Category | null>(null);
