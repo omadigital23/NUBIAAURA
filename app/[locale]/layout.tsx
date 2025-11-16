@@ -149,7 +149,7 @@ export default function LocaleLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
       </head>
-      <body className="font-inter bg-nubia-white text-nubia-black antialiased">{children}</body>
+      <body className="font-inter bg-nubia-white text-nubia-black antialiased" suppressHydrationWarning={true}>{children}</body>
     </html>
   );
 }
