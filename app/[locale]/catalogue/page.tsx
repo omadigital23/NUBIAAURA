@@ -240,7 +240,7 @@ function CatalogueContent() {
                       const imageUrl = firstProductImage || product.image || (product as any).image_url;
                       
                       return imageUrl ? (
-                        <div className="relative w-full h-64 sm:h-80 md:h-96 lg:h-[420px] bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5 overflow-hidden flex-shrink-0">
+                        <div className="relative w-full h-72 sm:h-80 md:h-96 lg:h-[480px] bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5 overflow-hidden flex-shrink-0">
                           <img
                             src={withImageParams('catalog', imageUrl as string)}
                             alt={(locale === 'fr' ? (product as any).name_fr : (product as any).name_en) || product.name}
