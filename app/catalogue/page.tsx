@@ -103,6 +103,7 @@ export default function CataloguePage() {
                 'chemises-wax': 'https://images.unsplash.com/photo-1591195853828-11db59a44f6b?w=500&h=300&fit=crop',
                 'costumes-africains': 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=500&h=300&fit=crop',
                 'robes-mariage': 'https://images.unsplash.com/photo-1595777707802-221b2eef5ffd?w=500&h=300&fit=crop',
+                'robes-ceremonie': 'https://images.unsplash.com/photo-1595777707802-221b2eef5ffd?w=500&h=300&fit=crop',
                 'robes-soiree': 'https://images.unsplash.com/photo-1595777707802-221b2eef5ffd?w=500&h=300&fit=crop',
                 'robes-ville': 'https://images.unsplash.com/photo-1591195853828-11db59a44f6b?w=500&h=300&fit=crop',
                 'robes-wax': 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=500&h=300&fit=crop',

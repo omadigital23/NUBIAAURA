@@ -10,7 +10,7 @@ export async function POST() {
       { slug: 'chemises-wax', name: 'Chemises Wax', name_fr: 'Chemises Wax', name_en: 'Wax Shirts' },
       { slug: 'costumes-africains', name: 'Costumes Africains', name_fr: 'Costumes Africains', name_en: 'African Costumes' },
       { slug: 'robes-mariage', name: 'Robes de Mariage', name_fr: 'Robes de Mariage', name_en: 'Wedding Dresses' },
-    { slug: 'robes-soiree', name: 'Robes de cérémonie', name_fr: 'Robes de cérémonie', name_en: 'Ceremony Dresses' },
+    { slug: 'robes-ceremonie', name: 'Robes de cérémonie', name_fr: 'Robes de cérémonie', name_en: 'Ceremony Dresses' },
       { slug: 'robes-ville', name: 'Robes de Ville', name_fr: 'Robes de Ville', name_en: 'City Dresses' },
       { slug: 'robes-wax', name: 'Robes Wax', name_fr: 'Robes Wax', name_en: 'Wax Dresses' },
       { slug: 'super100', name: 'Super 100', name_fr: 'Super 100', name_en: 'Super 100' },

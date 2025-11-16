@@ -17,6 +17,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(`/${defaultLocale}${pathname}`, request.url));
   }
 
+  // Redirect old category URLs to new ones
+  if (pathname.includes('/catalogue/robes-soiree')) {
+    const newPathname = pathname.replace('/catalogue/robes-soiree', '/catalogue/robes-ceremonie');
+    return NextResponse.redirect(new URL(newPathname, request.url));
+  }
+
   // Protected routes
   const protectedRoutes = ['/client', '/admin', '/checkout'];
   const isProtectedRoute = protectedRoutes.some((route) =>

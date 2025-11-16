@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
         name_en: 'Wedding Dresses',
       },
       {
-        slug: 'robes-soiree',
+        slug: 'robes-ceremonie',
         name: 'Robes de cérémonie',
         name_fr: 'Robes de cérémonie',
         name_en: 'Ceremony Dresses',
