@@ -1,11 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks/useTranslation';
 import { supabase } from '@/lib/supabase';
-import { withImageParams, sizesFor } from '@/lib/image-formats';
+import { withImageParams } from '@/lib/image-formats';
+
+type ProductImage = {
+  url: string;
+  alt?: string | null;
+  position?: number | null;
+};
 
 type DBProduct = {
   id: string;
@@ -18,6 +23,7 @@ type DBProduct = {
   price: number;
   rating: number | null;
   reviews: number | null;
+  product_images?: ProductImage[] | null;
 };
 
 export default function FeaturedProducts() {
@@ -31,7 +37,7 @@ export default function FeaturedProducts() {
       setLoading(true);
       const { data, error } = await supabase
         .from('products')
-        .select('id, slug, name, name_fr, name_en, image, image_url, price, rating, reviews')
+        .select('id, slug, name, name_fr, name_en, image, image_url, price, rating, reviews, product_images(url, alt, position)')
         .eq('inStock', true)
         .order('rating', { ascending: false, nullsFirst: false })
         .order('reviews', { ascending: false, nullsFirst: false })
@@ -74,7 +80,12 @@ export default function FeaturedProducts() {
               const name = locale === 'fr'
                 ? (p.name_fr || p.name || '')
                 : (p.name_en || '');
-              const imageSrc = p.image || p.image_url || '';
+              // Priorité 1: Utiliser la première image de product_images
+              const firstProductImage = p.product_images && p.product_images.length > 0 
+                ? p.product_images[0]?.url 
+                : null;
+              // Priorité 2: Utiliser product.image ou product.image_url
+              const imageSrc = firstProductImage || p.image || p.image_url || '';
               return (
                 <Link 
                   key={p.id} 
@@ -84,14 +95,11 @@ export default function FeaturedProducts() {
                 >
                   <div className="relative w-full h-96 bg-nubia-cream/30 overflow-hidden">
                     {imageSrc && (
-                      <Image
+                      <img
                         src={withImageParams('thumbnail', imageSrc)}
                         alt={name}
-                        quality={70}
                         loading="lazy"
-                        fill
-                        sizes={sizesFor('thumbnail')}
-                        className="object-cover group-hover:scale-110 transition-transform duration-500"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />)
                     }
                   </div>

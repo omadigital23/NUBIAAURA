@@ -5,8 +5,8 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Search } from 'lucide-react';
-import Image from 'next/image';
 import { useTranslation } from '@/hooks/useTranslation';
+import { withImageParams } from '@/lib/image-formats';
 
 interface Category {
   slug: string;
@@ -118,12 +118,11 @@ export default function CataloguePage() {
                   href={`/catalogue/${category.slug}`}
                   className="group relative h-48 rounded-lg overflow-hidden transition-all duration-300 hover:shadow-lg block"
                 >
-                  <Image
+                  <img
                     src={imageUrl}
                     alt={category.name_fr}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                    className="object-cover group-hover:scale-110 transition-transform duration-300"
+                    loading="lazy"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors duration-300 flex items-end">
                     <div className="w-full p-4 bg-gradient-to-t from-black to-transparent">
@@ -155,45 +154,47 @@ export default function CataloguePage() {
               {filteredProducts.map((product) => (
               <div
                 key={product.id}
-                className="group bg-nubia-white border border-nubia-gold/20 rounded-lg overflow-hidden hover:shadow-gold transition-all duration-300 flex flex-col h-full"
+                className="group bg-nubia-white border border-nubia-gold/20 rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col min-h-[500px] md:min-h-[550px] lg:min-h-[600px]"
               >
                 {/* Image */}
-                <div className="relative h-48 sm:h-56 md:h-64 bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300 flex-shrink-0">
-                  <Image
-                    src={product.image_url || product.image || '/placeholder-evening-dress.svg'}
+                <div className="relative w-full h-56 sm:h-64 md:h-72 bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5 overflow-hidden flex-shrink-0 group-hover:shadow-inner transition-shadow duration-300">
+                  <img
+                    src={withImageParams('catalog', product.image_url || product.image || '/placeholder-evening-dress.svg')}
                     alt={product.name}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw"
-                    className="object-cover"
-                    priority={false}
+                    loading="lazy"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 </div>
 
                 {/* Content */}
-                <div className="p-4 sm:p-6 flex flex-col flex-1">
-                  <h3 className="font-playfair text-lg sm:text-xl font-bold text-nubia-black mb-2">
-                    {locale === 'en' && product.name_en ? product.name_en : product.name}
-                  </h3>
+                <div className="p-4 sm:p-5 md:p-6 flex flex-col flex-1 justify-between">
+                  <div>
+                    <h3 className="font-playfair text-base sm:text-lg md:text-xl font-bold text-nubia-black mb-2 line-clamp-2">
+                      {locale === 'en' && product.name_en ? product.name_en : product.name}
+                    </h3>
 
-                  <p className="text-xs sm:text-sm text-nubia-black/70 mb-3 sm:mb-4 line-clamp-2 flex-1">
-                    {locale === 'en' && product.description_en ? product.description_en : product.description}
-                  </p>
-
-                  <div className="flex items-center justify-between mb-3 sm:mb-4">
-                    <span className="text-xl sm:text-2xl font-bold text-nubia-gold">
-                      {product.price.toLocaleString('fr-FR')} FCFA
-                    </span>
-                    <span className="text-xs sm:text-sm text-nubia-white bg-nubia-gold px-2 sm:px-3 py-1 rounded-full">
-                      {'⭐'.repeat(product.rating)}
-                    </span>
+                    <p className="text-xs sm:text-sm text-nubia-black/70 mb-4 line-clamp-3">
+                      {locale === 'en' && product.description_en ? product.description_en : product.description}
+                    </p>
                   </div>
 
-                  <Link 
-                    href={`/produit/${product.name.toLowerCase().replace(/\s+/g, '-')}`}
-                    className="block w-full py-2 sm:py-3 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white border-2 border-nubia-gold transition-all duration-300 text-center text-sm sm:text-base"
-                  >
-                    Voir les détails
-                  </Link>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg sm:text-xl md:text-2xl font-bold text-nubia-gold">
+                        {product.price.toLocaleString('fr-FR')} FCFA
+                      </span>
+                      <span className="text-xs sm:text-sm text-nubia-white bg-nubia-gold px-2 sm:px-3 py-1 rounded-full">
+                        {'⭐'.repeat(product.rating)}
+                      </span>
+                    </div>
+
+                    <Link 
+                      href={`/produit/${product.name.toLowerCase().replace(/\s+/g, '-')}`}
+                      className="block w-full py-2.5 sm:py-3 md:py-3 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white border-2 border-nubia-gold transition-all duration-300 text-center text-sm sm:text-base"
+                    >
+                      Voir les détails
+                    </Link>
+                  </div>
                 </div>
               </div>
               ))}

@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
       // Vérifier que le produit existe et est en stock
       const { data: product, error: productError } = await supabase
         .from('products')
-        .select('id, inStock, name, name_fr, name_en, price, image')
+        .select('id, inStock, name, name_fr, name_en, price, image, stock')
         .eq('id', parsed.item.id)
         .single();
 
@@ -206,6 +206,20 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // Décrémenter le stock du produit
+      const quantityToDeduct = existingItem ? parsed.item.quantity : parsed.item.quantity;
+      const { error: stockError } = await supabase
+        .from('products')
+        .update({ 
+          stock: product.stock ? product.stock - quantityToDeduct : 0
+        })
+        .eq('id', parsed.item.id);
+
+      if (stockError) {
+        console.error('[Cart API] Stock update error:', stockError);
+        // Ne pas retourner une erreur, juste logger
+      }
+
       // Retourner l'item mis à jour
       const transformedItem = {
         id: parsed.item.id,
@@ -219,7 +233,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (parsed.action === 'remove' && parsed.item) {
-      // Récupérer le panier
+      // Récupérer le panier et l'item à supprimer
       const { data: cart } = await supabase
         .from('carts')
         .select('id')
@@ -230,6 +244,14 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
       }
 
+      // Récupérer la quantité de l'item avant suppression
+      const { data: cartItem } = await supabase
+        .from('cart_items')
+        .select('quantity')
+        .eq('cart_id', cart.id)
+        .eq('product_id', parsed.item.id)
+        .single();
+
       // Supprimer l'item du panier
       const { error: deleteError } = await supabase
         .from('cart_items')
@@ -239,6 +261,23 @@ export async function POST(request: NextRequest) {
 
       if (deleteError) {
         return NextResponse.json({ error: deleteError.message }, { status: 500 });
+      }
+
+      // Restaurer le stock du produit
+      if (cartItem && cartItem.quantity > 0) {
+        const { data: product } = await supabase
+          .from('products')
+          .select('stock')
+          .eq('id', parsed.item.id)
+          .single();
+
+        if (product) {
+          const newStock = (product.stock || 0) + cartItem.quantity;
+          await supabase
+            .from('products')
+            .update({ stock: newStock })
+            .eq('id', parsed.item.id);
+        }
       }
 
       return NextResponse.json({ success: true });

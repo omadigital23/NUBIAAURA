@@ -141,15 +141,26 @@ function CategoryContent() {
                     className="group bg-nubia-white border border-nubia-gold/20 rounded-lg overflow-hidden hover:shadow-2xl hover:border-nubia-gold/60 transition-all duration-300 transform hover:-translate-y-2 flex flex-col min-h-[600px]"
                   >
                     {/* Image */}
-                    {(product.image || (product as any).image_url) && (
-                      <div className="relative w-full h-64 sm:h-80 md:h-96 lg:h-[420px] bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5 overflow-hidden flex-shrink-0">
-                        <img
-                          src={withImageParams('catalog', (product.image || (product as any).image_url) as string)}
-                          alt={(locale === 'fr' ? (product as any).name_fr : (product as any).name_en) || product.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
-                      </div>
-                    )}
+                    {(() => {
+                      // Priorité 1: Utiliser la première image de product_images
+                      const productImages = (product as any).product_images;
+                      const firstProductImage = productImages && productImages.length > 0 
+                        ? productImages[0]?.url 
+                        : null;
+                      
+                      // Priorité 2: Utiliser product.image ou product.image_url
+                      const imageUrl = firstProductImage || product.image || (product as any).image_url;
+                      
+                      return imageUrl ? (
+                        <div className="relative w-full h-64 sm:h-80 md:h-96 lg:h-[420px] bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5 overflow-hidden flex-shrink-0">
+                          <img
+                            src={withImageParams('catalog', imageUrl as string)}
+                            alt={(locale === 'fr' ? (product as any).name_fr : (product as any).name_en) || product.name}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
+                        </div>
+                      ) : null;
+                    })()}
 
                     {/* Content */}
                     <div className="p-4 flex flex-col flex-1 overflow-hidden">

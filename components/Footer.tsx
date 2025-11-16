@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getProductImageUrl } from '@/lib/media';
@@ -117,11 +116,10 @@ export default function Footer() {
               {paymentMethods.map((method) => (
                 <div key={method.name} className="flex flex-col items-center group cursor-pointer">
                   <div className="w-20 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 border border-nubia-gold/20 p-2 overflow-hidden">
-                    <Image 
+                    <img 
                       src={method.src} 
                       alt={method.name} 
-                      width={80} 
-                      height={48} 
+                      loading="lazy"
                       className="object-contain w-full h-full"
                     />
                   </div>

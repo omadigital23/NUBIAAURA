@@ -86,26 +86,23 @@ export function useCart(): UseCartResult {
       const data = await response.json();
       console.log('[useCart] API response:', data);
       
-      // Recharger le panier depuis la DB après ajout
-      if (data.success) {
-        const cartHeaders: any = { 'Content-Type': 'application/json' };
-        if (getAuthHeaders.Authorization) {
-          cartHeaders.Authorization = getAuthHeaders.Authorization;
-        }
-        
-        const cartResponse = await fetch('/api/cart', {
-          method: 'POST',
-          headers: cartHeaders,
-          body: JSON.stringify({ action: 'get' }),
-          credentials: 'include',
-        });
-        
-        if (cartResponse.ok) {
-          const cartData = await cartResponse.json();
-          if (cartData.items) {
-            setItems(cartData.items);
+      // Mettre à jour l'état local immédiatement
+      if (data.success && data.item) {
+        setItems(prevItems => {
+          const existingIndex = prevItems.findIndex(i => i.id === data.item.id);
+          if (existingIndex >= 0) {
+            // Mettre à jour la quantité si l'item existe déjà
+            const updatedItems = [...prevItems];
+            updatedItems[existingIndex] = {
+              ...updatedItems[existingIndex],
+              quantity: data.item.quantity
+            };
+            return updatedItems;
+          } else {
+            // Ajouter le nouvel item
+            return [...prevItems, data.item];
           }
-        }
+        });
       }
       
       setError(null);

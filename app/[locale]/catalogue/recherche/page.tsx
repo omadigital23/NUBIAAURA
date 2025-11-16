@@ -91,11 +91,24 @@ function CatalogueSearchResultsContent() {
                     >
                       {/* Image du produit */}
                       <div className="relative w-full h-64 overflow-hidden">
-                        <img
-                          src={withImageParams('catalog', (product.image || (product as any).image_url) as string)}
-                          alt={(locale === 'fr' ? (product as any).name_fr : (product as any).name_en) || product.name}
-                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                        />
+                        {(() => {
+                          // Priorité 1: Utiliser la première image de product_images
+                          const productImages = (product as any).product_images;
+                          const firstProductImage = productImages && productImages.length > 0 
+                            ? productImages[0]?.url 
+                            : null;
+                          
+                          // Priorité 2: Utiliser product.image ou product.image_url
+                          const imageUrl = firstProductImage || product.image || (product as any).image_url;
+                          
+                          return imageUrl ? (
+                            <img
+                              src={withImageParams('catalog', imageUrl as string)}
+                              alt={(locale === 'fr' ? (product as any).name_fr : (product as any).name_en) || product.name}
+                              className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                            />
+                          ) : null;
+                        })()}
                       </div>
 
                       {/* Détails du produit */}

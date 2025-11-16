@@ -3,10 +3,9 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
-import Image from 'next/image';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import { withImageParams, sizesFor } from '@/lib/image-formats';
+import { withImageParams } from '@/lib/image-formats';
 
 type DBProduct = {
   id: string;
@@ -115,15 +114,11 @@ export default function HeroSlider() {
       {/* Main Image */}
       <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
         {imageSrc ? (
-          <Image
+          <img
             src={withImageParams('hero', imageSrc)}
             alt={displayName}
-            fill
-            priority={currentIndex === 0}
-            sizes={sizesFor('hero')}
-            quality={75}
             loading={currentIndex === 0 ? 'eager' : 'lazy'}
-            className="object-cover transition-opacity duration-500"
+            className="w-full h-full object-cover transition-opacity duration-500"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-nubia-cream/40" />

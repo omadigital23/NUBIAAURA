@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useCartContext } from "@/contexts/CartContext";
 import { useAuth } from "@/hooks/useAuth";
 import AuthModal from "@/components/AuthModal";
-import { withImageParams, sizesFor } from "@/lib/image-formats";
+import { withImageParams } from "@/lib/image-formats";
 
 type ProductImage = {
   url: string;
@@ -62,6 +61,11 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
   const [showSuccess, setShowSuccess] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   if (!product) {
     return (
@@ -130,17 +134,23 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
     return t(`colors.${key}`, raw);
   };
 
-  // Build gallery: main image first, then product_images sorted by position
+  // Build gallery: only product_images sorted by position, filtered to "grande" size
+  // This ensures exactly 3 images (01-main, 02-back, 03-detail)
   const gallery = useMemo(() => {
     const images: string[] = [];
-    if (imageSrc) images.push(imageSrc);
     if (product.product_images && Array.isArray(product.product_images)) {
-      const sorted = [...product.product_images].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+      // Filter to only include "grande" size images to avoid duplicates
+      const grandeImages = product.product_images.filter(img => img.url && img.url.includes('/grande/'));
+      const sorted = [...grandeImages].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
       sorted.forEach((img) => {
         if (img.url && !images.includes(img.url)) {
           images.push(img.url);
         }
       });
+    }
+    // Fallback to imageSrc if no product_images
+    if (images.length === 0 && imageSrc) {
+      images.push(imageSrc);
     }
     return images;
   }, [imageSrc, product.product_images]);
@@ -207,11 +217,11 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10 auto-rows-max">
         {/* Image Gallery */}
         <div className="md:col-span-2">
           {/* Mobile thumbnails - Horizontal */}
-          {gallery.length > 1 && (
+          {isMounted && gallery.length > 1 && (
             <div className="flex md:hidden gap-2 mb-4 overflow-x-auto pb-2">
               {gallery.map((img, idx) => (
                 <button
@@ -221,23 +231,20 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
                     activeImageIndex === idx ? 'border-nubia-gold' : 'border-nubia-gold/30'
                   }`}
                 >
-                  <Image
+                  <img
                     src={withImageParams('thumbnail', img)}
                     alt={`${name} - ${idx + 1}`}
-                    fill
-                    sizes={sizesFor('thumbnail')}
-                    quality={60}
                     loading="lazy"
-                    className="object-cover"
+                    className="w-full h-full object-cover"
                   />
                 </button>
               ))}
             </div>
           )}
 
-          <div className="flex gap-2 md:gap-4">
+          <div className="flex gap-2 md:gap-4 h-auto md:h-screen md:max-h-screen">
             {/* Thumbnails - Vertical on the left */}
-            {gallery.length > 1 && (
+            {isMounted && gallery.length > 1 && (
               <div className="hidden md:flex flex-col gap-2 order-first">
                 {gallery.map((img, idx) => (
                   <button
@@ -247,14 +254,11 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
                       activeImageIndex === idx ? 'border-nubia-gold' : 'border-nubia-gold/30'
                     }`}
                   >
-                    <Image
+                    <img
                       src={withImageParams('thumbnail', img)}
                       alt={`${name} - ${idx + 1}`}
-                      fill
-                      sizes={sizesFor('thumbnail')}
-                      quality={60}
                       loading="lazy"
-                      className="object-cover"
+                      className="w-full h-full object-cover"
                     />
                   </button>
                 ))}
@@ -262,17 +266,14 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
             )}
 
             {/* Main Image */}
-            <div className="flex-1 min-h-96 md:min-h-full">
-              <div className="relative w-full h-full aspect-[4/5] md:aspect-[3/4] bg-nubia-cream/30 rounded-lg overflow-hidden">
+            <div className="flex-1 min-h-96 md:min-h-0">
+              <div className="relative w-full h-96 md:h-full aspect-auto md:aspect-[3/4] bg-nubia-cream/30 rounded-lg overflow-hidden">
                 {currentImage && (
-                  <Image
+                  <img
                     src={withImageParams('cover', currentImage)}
                     alt={name}
-                    fill
-                    priority
-                    sizes="(max-width: 640px) 100vw, (max-width: 768px) 100vw, (max-width: 1024px) 75vw, 50vw"
-                    quality={80}
-                    className="object-cover"
+                    loading="eager"
+                    className="w-full h-full object-cover"
                   />
                 )}
               </div>

@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ShoppingBag, Menu, X, Search, User as UserIcon } from 'lucide-react';
 import { useState } from 'react';
@@ -35,16 +34,12 @@ export default function Header() {
         <div className="flex justify-between items-center h-16 md:h-20 lg:h-24">
           {/* Logo */}
           <Link href={`/${locale}`} className="flex items-center space-x-2 flex-shrink-0">
-            <div className="w-[120px] h-12 relative sm:w-[148px] sm:h-14 md:w-[180px] md:h-16 lg:h-20">
-              <Image
-                src={getProductImageUrl('images/logo.png')}
-                alt="Nubia Aura Logo"
-                fill
-                sizes="(max-width: 640px) 120px, (max-width: 768px) 148px, 180px"
-                className="object-contain"
-                priority
-              />
-            </div>
+            <img 
+              src={getProductImageUrl('images/logo.png')}
+              alt="Nubia Aura Logo"
+              loading="eager"
+              className="w-[120px] h-12 sm:w-[148px] sm:h-14 md:w-[180px] md:h-16 lg:h-20 object-contain"
+            />
           </Link>
 
           {/* Desktop Navigation */}

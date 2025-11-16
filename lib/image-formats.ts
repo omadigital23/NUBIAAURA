@@ -53,8 +53,19 @@ function adjustLocalPathForUsage(usage: ImageUsage, src: string) {
 
 export function withImageParams(usage: ImageUsage, src: string) {
   if (!src) return src;
+  
+  // Fix protocol-relative URLs (// -> https://)
+  if (src.startsWith('//')) {
+    src = 'https:' + src;
+  }
+  
   const base = process.env.NEXT_PUBLIC_IMAGE_BASE; // e.g. https://<proj>.supabase.co/storage/v1/object/public
   const bucket = process.env.NEXT_PUBLIC_IMAGE_BUCKET || 'products';
+  
+  // Supabase Storage URLs: return as-is (don't add params)
+  if (src.includes('supabase.co')) {
+    return src;
+  }
   
   // Local public/ images: rewrite size folder according to usage, and optionally prefix with Supabase public URL
   if (!isExternal(src)) {
@@ -67,14 +78,12 @@ export function withImageParams(usage: ImageUsage, src: string) {
       } else if (path.startsWith('images/')) {
         // Map images/... (without leading slash) as well
         path = `${cleanedBase}/${bucket}/${path}`;
+      } else if (path.startsWith('products/')) {
+        // Map products/... directly to <base>/products/...
+        path = `${cleanedBase}/${path}`;
       }
     }
     return path;
-  }
-  
-  // Supabase Storage URLs: return as-is (don't add params)
-  if (src.includes('supabase.co')) {
-    return src;
   }
   
   // External images (Unsplash, etc): apply URL params

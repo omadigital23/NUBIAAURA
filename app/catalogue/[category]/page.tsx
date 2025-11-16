@@ -6,8 +6,8 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Search, ArrowLeft } from 'lucide-react';
-import Image from 'next/image';
 import { useTranslation } from '@/hooks/useTranslation';
+import { withImageParams } from '@/lib/image-formats';
 
 interface Category {
   slug: string;
@@ -136,13 +136,11 @@ export default function CategoryPage() {
                   >
                     {/* Image */}
                     <div className="relative h-48 sm:h-56 md:h-64 bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300 flex-shrink-0">
-                      <Image
-                        src={product.image}
+                      <img
+                        src={withImageParams('catalog', product.image)}
                         alt={product.name}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw"
-                        className="object-cover"
-                        priority={false}
+                        loading="lazy"
+                        className="w-full h-full object-cover"
                       />
                     </div>
 

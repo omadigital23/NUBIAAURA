@@ -1,11 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useTranslation } from '@/hooks/useTranslation';
-import { withImageParams, sizesFor } from '@/lib/image-formats';
+import { withImageParams } from '@/lib/image-formats';
+
+type ProductImage = {
+  url: string;
+  alt?: string | null;
+  position?: number | null;
+};
 
 type Item = {
   id: string;
@@ -17,6 +22,7 @@ type Item = {
   image_url: string | null;
   price: number;
   rating: number | null;
+  product_images?: ProductImage[] | null;
 };
 
 export default function RelatedProducts({ category, excludeId, locale }: { category?: string | null; excludeId: string; locale: string }) {
@@ -30,7 +36,7 @@ export default function RelatedProducts({ category, excludeId, locale }: { categ
       setLoading(true);
       let q = supabase
         .from('products')
-        .select('id, slug, name, name_fr, name_en, image, image_url, price, rating')
+        .select('id, slug, name, name_fr, name_en, image, image_url, price, rating, product_images(url, alt, position)')
         .neq('id', excludeId)
         .order('rating', { ascending: false, nullsFirst: false })
         .limit(4);
@@ -64,12 +70,17 @@ export default function RelatedProducts({ category, excludeId, locale }: { categ
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {items.map((p) => {
             const name = locale === 'fr' ? (p.name_fr || p.name || '') : (p.name_en || '');
-            const imageSrc = p.image || p.image_url || '';
+            // Priorité 1: Utiliser la première image de product_images
+            const firstProductImage = p.product_images && p.product_images.length > 0 
+              ? p.product_images[0]?.url 
+              : null;
+            // Priorité 2: Utiliser product.image ou product.image_url
+            const imageSrc = firstProductImage || p.image || p.image_url || '';
             return (
               <Link href={`/${locale}/produit/${p.slug}`} key={p.id} className="group border border-nubia-gold/20 rounded-xl overflow-hidden bg-white hover:shadow-md transition-shadow">
-                <div className="relative w-full h-40 bg-nubia-cream/30">
+                <div className="relative w-full h-40 bg-nubia-cream/30 overflow-hidden">
                   {imageSrc && (
-                    <Image src={withImageParams('thumbnail', imageSrc)} alt={name} fill sizes={sizesFor('thumbnail')} quality={65} loading="lazy" className="object-cover" />
+                    <img src={withImageParams('thumbnail', imageSrc)} alt={name} loading="lazy" className="w-full h-full object-cover" />
                   )}
                 </div>
                 <div className="p-3">
