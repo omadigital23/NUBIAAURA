@@ -40,9 +40,9 @@ export async function POST(request: NextRequest) {
       },
       {
         slug: 'robes-soiree',
-        name: 'Robes de Soirée',
-        name_fr: 'Robes de Soirée',
-        name_en: 'Evening Dresses',
+        name: 'Robes de cérémonie',
+        name_fr: 'Robes de cérémonie',
+        name_en: 'Ceremony Dresses',
       },
       {
         slug: 'robes-ville',

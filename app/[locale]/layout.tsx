@@ -29,9 +29,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'Nubia Aura - Mode Africaine à Dakar | Robes de Soirée, Mariage & Costumes',
+    title: 'Nubia Aura - Mode Africaine à Dakar | Robes de cérémonie, Mariage & Costumes',
   description:
-    "Boutique de mode africaine à Dakar, Sénégal. Robes de soirée, robes de mariage, chemises wax, costumes africains, robes en wax. Prêt-à-porter et sur-mesure.",
+      "Boutique de mode africaine à Dakar, Sénégal. Robes de cérémonie, robes de mariage, chemises wax, costumes africains, robes en wax. Prêt-à-porter et sur-mesure.",
   keywords: 'mode africaine Dakar, robe de soirée Dakar, robe de mariage Sénégal, chemise wax, costume africain, robe en wax, robe de ville, prêt-à-porter Dakar, sur-mesure Sénégal, Nubia Aura, fashion africaine',
   authors: [{ name: 'OMA Digital' }],
   creator: 'OMA Digital',

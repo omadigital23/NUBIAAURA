@@ -207,9 +207,9 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 tablet:grid-cols-2 gap-6 md:gap-10">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10">
         {/* Image Gallery */}
-        <div className="md:col-span-2 tablet:col-span-1">
+        <div className="md:col-span-2">
           {/* Mobile thumbnails - Horizontal */}
           {gallery.length > 1 && (
             <div className="flex md:hidden gap-2 mb-4 overflow-x-auto pb-2">
@@ -262,15 +262,15 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
             )}
 
             {/* Main Image */}
-            <div className="flex-1">
-              <div className="relative w-full aspect-[4/5] md:aspect-[3/4] tablet:aspect-[4/5] bg-nubia-cream/30 rounded-lg overflow-hidden">
+            <div className="flex-1 min-h-96 md:min-h-full">
+              <div className="relative w-full h-full aspect-[4/5] md:aspect-[3/4] bg-nubia-cream/30 rounded-lg overflow-hidden">
                 {currentImage && (
                   <Image
                     src={withImageParams('cover', currentImage)}
                     alt={name}
                     fill
                     priority
-                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 75vw, 50vw"
+                    sizes="(max-width: 640px) 100vw, (max-width: 768px) 100vw, (max-width: 1024px) 75vw, 50vw"
                     quality={80}
                     className="object-cover"
                   />
