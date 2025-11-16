@@ -93,14 +93,31 @@ function OrdersPanel({ token }: { token: string }) {
     setLoading(true);
     setError(null);
     try {
+      // Force no-cache par les headers
       const res = await fetch("/api/admin/orders", {
-        headers: { Authorization: `Bearer ${token}` },
+        method: 'GET',
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+        },
+        cache: 'no-store'
       });
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`API Error (${res.status}): ${errorText}`);
+      }
       const data = await res.json();
+      console.log('Orders loaded:', data);
       setOrders(data.orders || []);
+      if (!data.orders || data.orders.length === 0) {
+        setError('Aucune commande trouvée');
+      } else {
+        setError(null); // Effacer l'erreur si les données sont là
+      }
     } catch (e: any) {
-      setError(e.message || "Failed to load");
+      console.error('Error loading orders:', e);
+      setError(e.message || "Erreur lors du chargement des commandes");
     } finally {
       setLoading(false);
     }
@@ -108,60 +125,110 @@ function OrdersPanel({ token }: { token: string }) {
 
   useEffect(() => {
     if (token) load();
+    
+    // Charger les données chaque 5 secondes pour un refresh automatique
+    const interval = setInterval(() => {
+      if (token) load();
+    }, 5000);
+    
+    return () => clearInterval(interval);
   }, [token]);
 
   const updateStatus = async (id: string, status: string) => {
     const res = await fetch("/api/admin/orders", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { 
+        "Content-Type": "application/json", 
+        Authorization: `Bearer ${token}`,
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+      },
       body: JSON.stringify({ action: "update_status", id, status }),
     });
-    if (res.ok) load();
+    if (res.ok) {
+      await load(); // Recharger immédiatement
+    }
+    else {
+      const errorText = await res.text();
+      setError(`Erreur: ${errorText}`);
+    }
   };
 
   const deleteOrder = async (id: string) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette commande ?')) {
+      return;
+    }
     const res = await fetch("/api/admin/orders", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { 
+        "Content-Type": "application/json", 
+        Authorization: `Bearer ${token}`,
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+      },
       body: JSON.stringify({ action: "delete", id }),
     });
-    if (res.ok) load();
+    if (res.ok) {
+      // Recharger IMMÉDIATEMENT après suppression
+      await load();
+    }
+    else {
+      const errorText = await res.text();
+      setError(`Erreur: ${errorText}`);
+    }
   };
 
   return (
     <div>
-      {loading && <div className="py-10">Loading...</div>}
-      {error && <div className="py-4 text-red-600">{error}</div>}
-      {!loading && (
-        <div className="overflow-x-auto border rounded">
-          <table className="min-w-full text-sm">
-            <thead className="bg-nubia-cream">
-              <tr>
-                <th className="text-left p-3">Order #</th>
-                <th className="text-left p-3">Status</th>
-                <th className="text-left p-3">Payment</th>
-                <th className="text-left p-3">Total</th>
-                <th className="text-left p-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((o) => (
-                <tr key={o.id} className="border-t">
-                  <td className="p-3">{o.order_number}</td>
-                  <td className="p-3">{o.status}</td>
-                  <td className="p-3">{o.payment_status}</td>
-                  <td className="p-3">{o.total?.toLocaleString("fr-FR")}</td>
-                  <td className="p-3 flex gap-2">
-                    <button className="px-2 py-1 border rounded" onClick={() => updateStatus(o.id, "processing")}>Process</button>
-                    <button className="px-2 py-1 border rounded" onClick={() => updateStatus(o.id, "shipped")}>Ship</button>
-                    <button className="px-2 py-1 border rounded" onClick={() => updateStatus(o.id, "delivered")}>Complete</button>
-                    <button className="px-2 py-1 border rounded text-red-600" onClick={() => updateStatus(o.id, "cancelled")}>Cancel</button>
-                    <button className="px-2 py-1 border rounded text-red-700" onClick={() => deleteOrder(o.id)}>Delete</button>
-                  </td>
+      <div className="mb-4 flex justify-between items-center">
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-gray-600">
+            {loading ? '⏳ Chargement...' : `Total: ${orders.length} commande(s)`}
+          </span>
+        </div>
+        <button
+          onClick={() => load()}
+          disabled={loading}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+          title="Rafraîchir les données"
+        >
+          {loading ? '⏳ Chargement...' : '🔄 Rafraîchir'}
+        </button>
+      </div>
+      
+      {loading && <div className="py-10 text-center">⏳ Chargement des commandes...</div>}
+      {error && <div className="py-4 bg-red-100 text-red-800 rounded p-3 mb-4">{error}</div>}
+      {!loading && orders.length === 0 && !error && <div className="py-10 text-center text-gray-500">Aucune commande disponible</div>}
+      {!loading && orders.length > 0 && (
+        <div>
+          <div className="overflow-x-auto border rounded">
+            <table className="min-w-full text-sm">
+              <thead className="bg-nubia-cream">
+                <tr>
+                  <th className="text-left p-3">Order #</th>
+                  <th className="text-left p-3">Status</th>
+                  <th className="text-left p-3">Payment</th>
+                  <th className="text-left p-3">Total</th>
+                  <th className="text-left p-3">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {orders.map((o) => (
+                  <tr key={o.id} className="border-t hover:bg-gray-50">
+                    <td className="p-3 font-medium">{o.order_number || 'N/A'}</td>
+                    <td className="p-3"><span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">{o.status || 'unknown'}</span></td>
+                    <td className="p-3"><span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">{o.payment_status || 'pending'}</span></td>
+                    <td className="p-3">{o.total ? o.total.toLocaleString("fr-FR") + " €" : 'N/A'}</td>
+                    <td className="p-3 flex gap-1 flex-wrap">
+                      <button className="px-2 py-1 border border-blue-300 bg-blue-50 rounded text-xs hover:bg-blue-100" onClick={() => updateStatus(o.id, "processing")}>Process</button>
+                      <button className="px-2 py-1 border border-orange-300 bg-orange-50 rounded text-xs hover:bg-orange-100" onClick={() => updateStatus(o.id, "shipped")}>Ship</button>
+                      <button className="px-2 py-1 border border-green-300 bg-green-50 rounded text-xs hover:bg-green-100" onClick={() => updateStatus(o.id, "delivered")}>Complete</button>
+                      <button className="px-2 py-1 border border-red-300 bg-red-50 text-red-700 rounded text-xs hover:bg-red-100" onClick={() => updateStatus(o.id, "cancelled")}>Cancel</button>
+                      <button className="px-2 py-1 border border-red-500 bg-red-100 text-red-700 rounded text-xs hover:bg-red-200" onClick={() => deleteOrder(o.id)}>Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

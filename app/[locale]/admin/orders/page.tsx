@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { ArrowLeft, Truck, Package, Eye, Edit2, Save, X } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
 
 interface Order {
   id: string;
@@ -47,6 +48,38 @@ export default function AdminOrdersPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [editing, setEditing] = useState<EditingOrder>({});
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
+  const [forceUpdate, setForceUpdate] = useState(0);
+  const subscriptionRef = useRef<any>(null);
+  const selectedOrderRef = useRef<string | null>(null);
+  
+  // Normalize order data to ensure all fields are properly mapped
+  // IMPORTANT: Preserve exact values from database, don't convert to null
+  const normalizeOrder = (order: any): Order => {
+    return {
+      id: order.id ?? '',
+      order_number: order.order_number ?? '',
+      user_id: order.user_id ?? '',
+      total: typeof order.total === 'string' ? parseFloat(order.total) : (order.total ?? 0),
+      status: order.status ?? 'pending',
+      payment_status: order.payment_status ?? 'pending',
+      shipping_method: order.shipping_method ?? '',
+      shipping_address: order.shipping_address ?? {},
+      delivery_duration_days: order.delivery_duration_days ?? 3,
+      // Preserve exact values - only use null if truly undefined, not if empty string
+      shipped_at: order.shipped_at !== undefined ? order.shipped_at : null,
+      estimated_delivery_date: order.estimated_delivery_date !== undefined ? order.estimated_delivery_date : null,
+      delivered_at: order.delivered_at !== undefined ? order.delivered_at : null,
+      tracking_number: order.tracking_number !== undefined ? order.tracking_number : null,
+      carrier: order.carrier !== undefined ? order.carrier : null,
+      created_at: order.created_at ?? new Date().toISOString(),
+      updated_at: order.updated_at ?? new Date().toISOString(),
+    };
+  };
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    selectedOrderRef.current = selectedOrder;
+  }, [selectedOrder]);
 
   useEffect(() => {
     // Vérifier l'authentification
@@ -57,6 +90,127 @@ export default function AdminOrdersPage() {
     }
 
     loadOrders();
+
+    // Set up Supabase Realtime subscription to listen for order updates
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (supabaseUrl && supabaseAnonKey) {
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+      console.log('[Realtime] Setting up subscription for orders table');
+      
+      const channel = supabase
+        .channel('orders-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'orders',
+          },
+          (payload) => {
+            console.log('[Realtime] Order updated:', payload);
+            console.log('[Realtime] New delivered_at:', payload.new.delivered_at);
+            console.log('[Realtime] Old delivered_at:', payload.old?.delivered_at);
+            
+            // Update the order in local state
+            setOrders((prevOrders) => {
+              const orderIndex = prevOrders.findIndex(o => o.id === payload.new.id);
+              if (orderIndex === -1) {
+                console.log('[Realtime] Order not found in local state, reloading...');
+                // Order not in local state, reload all orders
+                setTimeout(() => loadOrders(), 100);
+                return prevOrders;
+              }
+
+              // Create a completely new array and new order object to force React to detect the change
+              const updatedOrders = prevOrders.map((order, index) => {
+                if (index === orderIndex) {
+                  // Normalize the payload data and merge with existing order
+                  const payloadOrder = normalizeOrder(payload.new);
+                  
+                  // Create a completely new object with all fields properly mapped
+                  const updatedOrder: Order = {
+                    ...order, // Keep existing fields
+                    ...payloadOrder, // Override with normalized new values from database
+                    // Explicitly ensure all date fields are properly set
+                    delivered_at: payloadOrder.delivered_at,
+                    shipped_at: payloadOrder.shipped_at,
+                    estimated_delivery_date: payloadOrder.estimated_delivery_date,
+                    tracking_number: payloadOrder.tracking_number,
+                    carrier: payloadOrder.carrier,
+                    delivery_duration_days: payloadOrder.delivery_duration_days,
+                    // Ensure updated_at is set
+                    updated_at: payloadOrder.updated_at || order.updated_at,
+                  };
+                  
+                  console.log('[Realtime] Order before update:', {
+                    id: order.id,
+                    delivered_at: order.delivered_at,
+                    shipped_at: order.shipped_at,
+                    updated_at: order.updated_at,
+                  });
+                  console.log('[Realtime] Payload new (raw):', {
+                    id: payload.new.id,
+                    delivered_at: payload.new.delivered_at,
+                    shipped_at: payload.new.shipped_at,
+                  });
+                  console.log('[Realtime] Payload new (normalized):', {
+                    id: payloadOrder.id,
+                    delivered_at: payloadOrder.delivered_at,
+                    shipped_at: payloadOrder.shipped_at,
+                  });
+                  console.log('[Realtime] Order after update:', {
+                    id: updatedOrder.id,
+                    delivered_at: updatedOrder.delivered_at,
+                    shipped_at: updatedOrder.shipped_at,
+                    updated_at: updatedOrder.updated_at,
+                  });
+                  
+                  return updatedOrder;
+                }
+                return { ...order }; // Create new object for other orders too
+              });
+              
+              return updatedOrders;
+            });
+
+            // Force re-render
+            setForceUpdate(prev => prev + 1);
+            
+            // If the updated order is currently selected, keep it selected
+            // Use ref to get the current value
+            if (selectedOrderRef.current === payload.new.id) {
+              // Force re-render of the selected section
+              setSelectedOrder(null);
+              setTimeout(() => {
+                setSelectedOrder(payload.new.id);
+              }, 50);
+            }
+          }
+        )
+        .subscribe((status) => {
+          console.log('[Realtime] Subscription status:', status);
+          if (status === 'SUBSCRIBED') {
+            console.log('[Realtime] Successfully subscribed to orders changes');
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('[Realtime] Channel error - Realtime may not be enabled for orders table');
+          }
+        });
+
+      subscriptionRef.current = channel;
+
+      return () => {
+        console.log('[Realtime] Cleaning up subscription');
+        if (subscriptionRef.current) {
+          supabase.removeChannel(subscriptionRef.current);
+        }
+      };
+    } else {
+      console.warn('[Realtime] Supabase environment variables not found, Realtime disabled');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale, router]);
 
   const loadOrders = async () => {
@@ -68,10 +222,17 @@ export default function AdminOrdersPage() {
         throw new Error('No admin token found');
       }
 
-      const response = await fetch('/api/admin/orders/list', {
+      // Force no cache - multiple cache busting techniques
+      const cacheBuster = Date.now();
+      const response = await fetch(`/api/admin/orders/list?t=${cacheBuster}&_=${cacheBuster}`, {
+        method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
         },
+        cache: 'no-store', // Next.js cache control
       });
 
       if (!response.ok) {
@@ -79,13 +240,81 @@ export default function AdminOrdersPage() {
       }
 
       const data = await response.json();
-      console.log('[loadOrders] Received orders:', data.orders);
-      if (data.orders && data.orders.length > 0) {
-        console.log('[loadOrders] First order delivered_at:', data.orders[0].delivered_at);
-        console.log('[loadOrders] First order shipped_at:', data.orders[0].shipped_at);
-        console.log('[loadOrders] First order tracking_number:', data.orders[0].tracking_number);
+      console.log('[loadOrders] Raw response from API:', {
+        success: data.success,
+        ordersCount: data.orders?.length,
+      });
+      
+      // Log specific order to debug
+      const debugOrder = data.orders?.find((o: any) => o.id === 'aa86dcc2-f684-4fe6-a205-46a3f21edcaa');
+      if (debugOrder) {
+        console.log('[loadOrders] DEBUG ORDER from API:', {
+          id: debugOrder.id,
+          delivered_at: debugOrder.delivered_at,
+          shipped_at: debugOrder.shipped_at,
+          updated_at: debugOrder.updated_at,
+          raw: debugOrder,
+        });
       }
-      setOrders(data.orders || []);
+      
+      // Normalize all orders to ensure proper mapping
+      const normalizedOrders = (data.orders || []).map((order: any) => {
+        const normalized = normalizeOrder(order);
+        // Log normalization for debug order
+        if (order.id === 'aa86dcc2-f684-4fe6-a205-46a3f21edcaa') {
+          console.log('[loadOrders] DEBUG ORDER after normalization:', {
+            id: normalized.id,
+            delivered_at: normalized.delivered_at,
+            shipped_at: normalized.shipped_at,
+            updated_at: normalized.updated_at,
+          });
+        }
+        return normalized;
+      });
+      
+      if (normalizedOrders.length > 0) {
+        console.log('[loadOrders] First order after normalization:', {
+          id: normalizedOrders[0].id,
+          delivered_at: normalizedOrders[0].delivered_at,
+          shipped_at: normalizedOrders[0].shipped_at,
+          tracking_number: normalizedOrders[0].tracking_number,
+        });
+      }
+      
+      // Create completely new array with explicit object creation to force React update
+      const freshOrders = normalizedOrders.map((o: Order) => ({
+        id: o.id,
+        order_number: o.order_number,
+        user_id: o.user_id,
+        total: o.total,
+        status: o.status,
+        payment_status: o.payment_status,
+        shipping_method: o.shipping_method,
+        shipping_address: o.shipping_address,
+        delivery_duration_days: o.delivery_duration_days,
+        shipped_at: o.shipped_at,
+        estimated_delivery_date: o.estimated_delivery_date,
+        delivered_at: o.delivered_at,
+        tracking_number: o.tracking_number,
+        carrier: o.carrier,
+        created_at: o.created_at,
+        updated_at: o.updated_at,
+      }));
+      
+      console.log('[loadOrders] Setting orders state, count:', freshOrders.length);
+      const debugOrderInState = freshOrders.find(o => o.id === 'aa86dcc2-f684-4fe6-a205-46a3f21edcaa');
+      if (debugOrderInState) {
+        console.log('[loadOrders] DEBUG ORDER in state being set:', {
+          id: debugOrderInState.id,
+          delivered_at: debugOrderInState.delivered_at,
+          shipped_at: debugOrderInState.shipped_at,
+          updated_at: debugOrderInState.updated_at,
+        });
+      }
+      
+      // Force state update and re-render
+      setOrders(freshOrders);
+      setForceUpdate(prev => prev + 1);
     } catch (err: any) {
       setError(err.message);
       console.error('Error loading orders:', err);
@@ -163,26 +392,145 @@ export default function AdminOrdersPage() {
         throw new Error(errorData.error || `HTTP ${response.status}`);
       }
 
-      console.log('[handleSave] success, reloading orders...');
-      
-      // Reload orders
-      await loadOrders();
-      
-      console.log('[handleSave] orders reloaded, closing and reopening section...');
-      
-      // Close and reopen section to force re-render
-      setSelectedOrder(null);
-      await new Promise(resolve => {
-        setTimeout(() => resolve(true), 150);
-      });
-      setSelectedOrder(orderId);
-      
-      // Clear editing state
+      const responseData = await response.json();
+      console.log('[handleSave] response data:', responseData);
+      console.log('[handleSave] response order delivered_at:', responseData.order?.delivered_at);
+
+      // Clear editing state first
       setEditing((prev) => {
         const newEditing = { ...prev };
         delete newEditing[orderId];
         return newEditing;
       });
+
+      // Close the section temporarily to force re-render
+      const wasOpen = selectedOrder === orderId;
+      if (wasOpen) {
+        setSelectedOrder(null);
+      }
+
+      // Reload orders to ensure we have the latest data (with cache busting)
+      console.log('[handleSave] Reloading orders with cache busting...');
+      const token = localStorage.getItem('admin_token');
+      const reloadResponse = await fetch(`/api/admin/orders/list?t=${Date.now()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache',
+        },
+      });
+
+      if (reloadResponse.ok) {
+        const reloadData = await reloadResponse.json();
+        console.log('[handleSave] Reloaded orders (raw):', reloadData.orders);
+        if (reloadData.orders) {
+          // Normalize all orders to ensure proper mapping
+          const normalizedOrders = reloadData.orders.map((o: any) => normalizeOrder(o));
+          
+          // Find the updated order in the reloaded data to verify
+          const updatedOrderInReload = normalizedOrders.find((o: Order) => o.id === orderId);
+          console.log('[handleSave] Updated order in reloaded data (normalized):', updatedOrderInReload);
+          console.log('[handleSave] delivered_at value:', updatedOrderInReload?.delivered_at);
+          console.log('[handleSave] updated_at value:', updatedOrderInReload?.updated_at);
+          
+          // CRITICAL: Create completely new objects with all properties explicitly set
+          // This ensures React detects the change even if values are the same
+          const freshOrders = normalizedOrders.map((o: Order) => ({
+            id: o.id,
+            order_number: o.order_number,
+            user_id: o.user_id,
+            total: o.total,
+            status: o.status,
+            payment_status: o.payment_status,
+            shipping_method: o.shipping_method,
+            shipping_address: o.shipping_address,
+            delivery_duration_days: o.delivery_duration_days,
+            shipped_at: o.shipped_at,
+            estimated_delivery_date: o.estimated_delivery_date,
+            delivered_at: o.delivered_at,
+            tracking_number: o.tracking_number,
+            carrier: o.carrier,
+            created_at: o.created_at,
+            updated_at: o.updated_at,
+          }));
+          
+          console.log('[handleSave] Setting new orders state, count:', freshOrders.length);
+          console.log('[handleSave] Order to update in state:', freshOrders.find(o => o.id === orderId));
+          
+          // Update state with fresh normalized data
+          setOrders(freshOrders);
+          
+          // Force multiple re-renders to ensure UI updates
+          setForceUpdate(prev => prev + 1);
+          
+          // Verify the update was successful by checking state after a delay
+          setTimeout(() => {
+            setOrders((currentOrders) => {
+              const verifyOrder = currentOrders.find(o => o.id === orderId);
+              console.log('[handleSave] Verification - Order in state after update:', {
+                id: verifyOrder?.id,
+                delivered_at: verifyOrder?.delivered_at,
+                updated_at: verifyOrder?.updated_at,
+              });
+              
+              // If the order still has old data, force a complete reload
+              if (verifyOrder && updatedOrderInReload) {
+                const stateUpdatedAt = verifyOrder.updated_at;
+                const dbUpdatedAt = updatedOrderInReload.updated_at;
+                if (stateUpdatedAt !== dbUpdatedAt) {
+                  console.warn('[handleSave] State mismatch detected, forcing complete reload');
+                  setTimeout(() => loadOrders(), 100);
+                }
+              }
+              
+              return currentOrders;
+            });
+            
+            setForceUpdate(prev => prev + 1);
+            if (wasOpen) {
+              setSelectedOrder(null);
+              setTimeout(() => {
+                setSelectedOrder(orderId);
+                setForceUpdate(prev => prev + 1);
+              }, 100);
+            }
+          }, 200);
+        }
+      } else {
+        // Fallback: update with response data if reload fails
+        if (responseData.order) {
+          console.log('[handleSave] Fallback: Updating local state with returned order data');
+          const normalizedOrder = normalizeOrder(responseData.order);
+          
+          setOrders((prevOrders) => {
+            const updatedOrders = prevOrders.map((order) => {
+              if (order.id === orderId) {
+                const updated = { ...order, ...normalizedOrder };
+                console.log('[handleSave] Order before update:', {
+                  delivered_at: order.delivered_at,
+                  updated_at: order.updated_at,
+                });
+                console.log('[handleSave] Order after update:', {
+                  delivered_at: updated.delivered_at,
+                  updated_at: updated.updated_at,
+                });
+                return updated;
+              }
+              return { ...order }; // Create new object for other orders
+            });
+            return updatedOrders;
+          });
+          
+          // Force re-render by updating forceUpdate counter
+          setForceUpdate(prev => prev + 1);
+          
+          if (wasOpen) {
+            setTimeout(() => {
+              setSelectedOrder(orderId);
+              setForceUpdate(prev => prev + 1);
+            }, 100);
+          }
+        }
+      }
 
       console.log('[handleSave] showing success message');
       setSuccess('La livraison a été mise à jour avec succès.');
@@ -268,7 +616,7 @@ export default function AdminOrdersPage() {
             <div className="space-y-6">
               {orders.map((order) => (
                 <div
-                  key={order.id}
+                  key={`${order.id}-${order.updated_at}-${forceUpdate}`}
                   className="bg-white border-2 border-nubia-gold/20 rounded-lg overflow-hidden"
                 >
                   {/* Order Header */}
@@ -492,20 +840,60 @@ export default function AdminOrdersPage() {
                                 className="w-full px-4 py-2 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"
                               />
                             ) : (
-                              <p className="text-lg text-nubia-black">
-                                {order.delivered_at
-                                  ? new Date(order.delivered_at).toLocaleDateString(
-                                      'fr-FR',
-                                      {
+                              <div 
+                                key={`delivered-at-${order.id}-${order.updated_at}-${forceUpdate}`}
+                                className="text-lg text-nubia-black"
+                              >
+                                {(() => {
+                                  // CRITICAL: Always read from current state, not from the order prop
+                                  const currentOrder = orders.find(o => o.id === order.id);
+                                  if (!currentOrder) {
+                                    console.warn('[Display] Order not found in state:', order.id);
+                                    return <span>Non livrée</span>;
+                                  }
+                                  
+                                  const deliveredAtValue = currentOrder.delivered_at;
+                                  
+                                  // Debug logging for specific order
+                                  if (order.id === 'aa86dcc2-f684-4fe6-a205-46a3f21edcaa' || order.id === selectedOrder) {
+                                    console.log('[Display] Rendering delivered_at:', {
+                                      orderId: order.id,
+                                      orderPropDeliveredAt: order.delivered_at,
+                                      stateDeliveredAt: currentOrder.delivered_at,
+                                      deliveredAtValue: deliveredAtValue,
+                                      updated_at: currentOrder.updated_at,
+                                      forceUpdate: forceUpdate,
+                                    });
+                                  }
+                                  
+                                  if (deliveredAtValue) {
+                                    try {
+                                      const date = new Date(deliveredAtValue);
+                                      if (isNaN(date.getTime())) {
+                                        console.error('[Display] Invalid date:', deliveredAtValue, 'for order:', order.id);
+                                        return <span>Date invalide: {String(deliveredAtValue)}</span>;
+                                      }
+                                      const formatted = date.toLocaleDateString('fr-FR', {
                                         year: 'numeric',
                                         month: 'long',
                                         day: 'numeric',
                                         hour: '2-digit',
                                         minute: '2-digit',
+                                      });
+                                      
+                                      if (order.id === 'aa86dcc2-f684-4fe6-a205-46a3f21edcaa' || order.id === selectedOrder) {
+                                        console.log('[Display] Formatted date:', formatted, 'from value:', deliveredAtValue);
                                       }
-                                    )
-                                  : 'Non livrée'}
-                              </p>
+                                      
+                                      return <span>{formatted}</span>;
+                                    } catch (e) {
+                                      console.error('[Display] Date parsing error:', e, deliveredAtValue, 'for order:', order.id);
+                                      return <span>Erreur: {String(deliveredAtValue)}</span>;
+                                    }
+                                  }
+                                  return <span>Non livrée</span>;
+                                })()}
+                              </div>
                             )}
                           </div>
 

@@ -132,7 +132,7 @@ export async function PUT(
       .from('orders')
       .update(updateData)
       .eq('id', params.id)
-      .select()
+      .select('*')
       .single();
 
     if (updateError) {

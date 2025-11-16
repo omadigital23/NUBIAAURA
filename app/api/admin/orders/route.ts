@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase';
+import { verifyAdminToken } from '@/lib/auth-admin';
+
+// Force pas de cache pour avoir les données en temps réel
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 function verify(req: NextRequest) {
   const header = req.headers.get('authorization') || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : '';
-  const expected = process.env.ADMIN_TOKEN || '';
-  if (!expected || token !== expected) return false;
+  
+  // Utiliser la fonction de vérification PBKDF2 au lieu d'une simple comparaison
+  if (!verifyAdminToken(token)) return false;
   return true;
 }
 
@@ -32,7 +38,13 @@ export async function GET(req: NextRequest) {
 
   const { data, error, count } = await query.range(from, to);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ orders: data || [], count: count ?? 0, page, limit });
+  
+  // Ajouter les headers pour forcer pas de cache
+  const response = NextResponse.json({ orders: data || [], count: count ?? 0, page, limit });
+  response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+  response.headers.set('Pragma', 'no-cache');
+  response.headers.set('Expires', '0');
+  return response;
 }
 
 export async function POST(req: NextRequest) {
