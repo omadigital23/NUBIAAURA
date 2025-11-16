@@ -128,14 +128,14 @@ export default function CategoryPage() {
               <p className="text-nubia-black/70 mb-6">
                 {filteredProducts.length} produit{filteredProducts.length > 1 ? 's' : ''} trouvé{filteredProducts.length > 1 ? 's' : ''}
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
                 {filteredProducts.map((product) => (
                   <div
                     key={product.id}
-                    className="group bg-nubia-white border border-nubia-gold/20 rounded-lg overflow-hidden hover:shadow-gold transition-all duration-300"
+                    className="group bg-nubia-white border border-nubia-gold/20 rounded-lg overflow-hidden hover:shadow-gold transition-all duration-300 flex flex-col h-full"
                   >
                     {/* Image */}
-                    <div className="relative h-64 bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300">
+                    <div className="relative h-48 sm:h-56 md:h-64 bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300 flex-shrink-0">
                       <Image
                         src={product.image}
                         alt={product.name}
@@ -147,27 +147,27 @@ export default function CategoryPage() {
                     </div>
 
                     {/* Content */}
-                    <div className="p-6">
-                      <h3 className="font-playfair text-xl font-bold text-nubia-black mb-2">
+                    <div className="p-4 sm:p-6 flex flex-col flex-1">
+                      <h3 className="font-playfair text-lg sm:text-xl font-bold text-nubia-black mb-2">
                         {locale === 'en' && product.name_en ? product.name_en : product.name}
                       </h3>
 
-                      <p className="text-sm text-nubia-black/70 mb-4 line-clamp-2">
+                      <p className="text-xs sm:text-sm text-nubia-black/70 mb-3 sm:mb-4 line-clamp-2 flex-1">
                         {locale === 'en' && product.description_en ? product.description_en : product.description}
                       </p>
 
-                      <div className="flex items-center justify-between mb-4">
-                        <span className="text-2xl font-bold text-nubia-gold">
+                      <div className="flex items-center justify-between mb-3 sm:mb-4">
+                        <span className="text-xl sm:text-2xl font-bold text-nubia-gold">
                           {product.price.toLocaleString('fr-FR')} FCFA
                         </span>
-                        <span className="text-sm text-nubia-white bg-nubia-gold px-3 py-1 rounded-full">
+                        <span className="text-xs sm:text-sm text-nubia-white bg-nubia-gold px-2 sm:px-3 py-1 rounded-full">
                           {'⭐'.repeat(product.rating)}
                         </span>
                       </div>
 
                       <Link 
                         href={`/produit/${product.name.toLowerCase().replace(/\s+/g, '-')}`}
-                        className="block w-full py-3 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white border-2 border-nubia-gold transition-all duration-300 text-center"
+                        className="block w-full py-2 sm:py-3 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white border-2 border-nubia-gold transition-all duration-300 text-center text-sm sm:text-base"
                       >
                         Voir les détails
                       </Link>
