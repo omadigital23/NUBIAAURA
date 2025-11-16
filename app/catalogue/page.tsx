@@ -160,7 +160,7 @@ export default function CataloguePage() {
                 {/* Image */}
                 <div className="relative h-48 sm:h-56 md:h-64 bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300 flex-shrink-0">
                   <Image
-                    src={product.image}
+                    src={product.image_url || product.image || '/placeholder-evening-dress.svg'}
                     alt={product.name}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw"
