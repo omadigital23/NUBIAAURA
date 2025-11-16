@@ -202,8 +202,8 @@ function CatalogueContent() {
       </section>
 
       {/* Products Grid */}
-      <section className="flex-1 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="flex-1 py-8 sm:py-12 lg:py-16">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
           {loading && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {Array.from({ length: 9 }).map((_, i) => (
@@ -218,15 +218,15 @@ function CatalogueContent() {
             <div className="py-16 text-center text-nubia-black">{t('catalog.no_results', 'Aucun produit trouvé')}</div>
           )}
           {!loading && !error && grouped.map(([cat, list]) => (
-            <div key={cat} className="mb-12">
-              <h2 className="font-playfair text-2xl md:text-3xl font-bold text-nubia-black mb-6">
+            <div key={cat} className="mb-8 sm:mb-12">
+              <h2 className="font-playfair text-xl sm:text-2xl md:text-3xl font-bold text-nubia-black mb-4 sm:mb-6">
                 {t(`categories.${cat}`, cat)}
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
                 {list.map((product) => (
                   <div
                     key={product.id}
-                    className="group bg-nubia-white border border-nubia-gold/20 rounded-lg overflow-hidden hover:shadow-2xl hover:border-nubia-gold/60 transition-all duration-300 transform hover:-translate-y-2 flex flex-col min-h-[600px]"
+                    className="group bg-nubia-white border border-nubia-gold/20 rounded-lg overflow-hidden hover:shadow-2xl hover:border-nubia-gold/60 transition-all duration-300 transform hover:-translate-y-2 flex flex-col min-h-[500px] sm:min-h-[550px] md:min-h-[600px] lg:min-h-[650px]"
                   >
                     {/* Image */}
                     {(() => {
@@ -240,44 +240,48 @@ function CatalogueContent() {
                       const imageUrl = firstProductImage || product.image || (product as any).image_url;
                       
                       return imageUrl ? (
-                        <div className="relative w-full h-80 sm:h-96 md:h-[448px] lg:h-[560px] bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                        <div className="relative w-full h-64 sm:h-80 md:h-96 lg:h-[480px] bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5 overflow-hidden flex-shrink-0 flex items-center justify-center">
                           <img
                             src={withImageParams('catalog', imageUrl as string)}
                             alt={(locale === 'fr' ? (product as any).name_fr : (product as any).name_en) || product.name}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
                           />
                         </div>
                       ) : null;
                     })()}
 
                     {/* Content */}
-                    <div className="p-4 flex flex-col flex-1 overflow-hidden">
-                      <h3 className="font-playfair text-lg font-bold text-nubia-black mb-1 line-clamp-1 group-hover:text-nubia-gold transition-colors duration-300">
-                        {(locale === 'fr' ? (product as any).name_fr : (product as any).name_en) || product.name}
-                      </h3>
+                    <div className="p-3 sm:p-4 flex flex-col flex-1 justify-between">
+                      <div>
+                        <h3 className="font-playfair text-base sm:text-lg font-bold text-nubia-black mb-1 line-clamp-2 group-hover:text-nubia-gold transition-colors duration-300">
+                          {(locale === 'fr' ? (product as any).name_fr : (product as any).name_en) || product.name}
+                        </h3>
 
-                      {/* Description */}
-                      <p className="text-xs text-nubia-black/60 mb-2 line-clamp-1 group-hover:text-nubia-black/80 transition-colors duration-300">
-                        {locale === 'fr' 
-                          ? ((product as any).description_fr || (product as any).description || 'Pièce de mode premium')
-                          : ((product as any).description_en || 'Premium fashion piece')}
-                      </p>
-
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-xl font-bold text-nubia-gold group-hover:scale-110 transition-transform duration-300 origin-left">
-                          {Number(product.price).toLocaleString('fr-FR')} {t('common.currency', 'FCFA')}
-                        </span>
-                        <span className="text-xs text-nubia-white bg-nubia-gold px-2 py-0.5 rounded-full group-hover:scale-110 transition-transform duration-300">
-                          {'⭐'.repeat(Math.max(0, Math.min(5, Math.floor(product.rating || 0))))}
-                        </span>
+                        {/* Description */}
+                        <p className="text-xs text-nubia-black/60 mb-2 line-clamp-2 group-hover:text-nubia-black/80 transition-colors duration-300">
+                          {locale === 'fr' 
+                            ? ((product as any).description_fr || (product as any).description || 'Pièce de mode premium')
+                            : ((product as any).description_en || 'Premium fashion piece')}
+                        </p>
                       </div>
 
-                      <Link 
-                        href={`/${locale}/produit/${(product.slug || product.name.toLowerCase().replace(/\s+/g, '-'))}`}
-                        className="block w-full py-2 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white border-2 border-nubia-gold transition-all duration-300 text-center text-sm group-hover:shadow-lg group-hover:scale-105"
-                      >
-                        {t('common.view_details', 'Voir les détails')}
-                      </Link>
+                      <div className="space-y-2 sm:space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-lg sm:text-xl font-bold text-nubia-gold group-hover:scale-110 transition-transform duration-300 origin-left">
+                            {Number(product.price).toLocaleString('fr-FR')} {t('common.currency', 'FCFA')}
+                          </span>
+                          <span className="text-xs text-nubia-white bg-nubia-gold px-2 py-0.5 rounded-full group-hover:scale-110 transition-transform duration-300">
+                            {'⭐'.repeat(Math.max(0, Math.min(5, Math.floor(product.rating || 0))))}
+                          </span>
+                        </div>
+
+                        <Link 
+                          href={`/${locale}/produit/${(product.slug || product.name.toLowerCase().replace(/\s+/g, '-'))}`}
+                          className="block w-full py-2 sm:py-2.5 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white border-2 border-nubia-gold transition-all duration-300 text-center text-xs sm:text-sm group-hover:shadow-lg group-hover:scale-105"
+                        >
+                          {t('common.view_details', 'Voir les détails')}
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 ))}
