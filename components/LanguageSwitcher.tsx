@@ -40,10 +40,10 @@ export default function LanguageSwitcher() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-32 bg-nubia-white border border-nubia-gold/20 rounded-lg shadow-lg z-50">
+        <div className="absolute right-0 mt-2 min-w-max bg-nubia-white border border-nubia-gold/20 rounded-lg shadow-lg z-50">
           <button
             onClick={() => switchLanguage('fr')}
-            className={`w-full text-left px-4 py-2 hover:bg-nubia-gold/10 transition-colors focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-inset ${
+            className={`w-full text-left px-4 py-2 hover:bg-nubia-gold/10 transition-colors focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-inset whitespace-nowrap ${
               currentLocale === 'fr' ? 'bg-nubia-gold/20 text-nubia-gold font-bold' : ''
             }`}
             aria-label="Changer la langue en français"
@@ -53,7 +53,7 @@ export default function LanguageSwitcher() {
           </button>
           <button
             onClick={() => switchLanguage('en')}
-            className={`w-full text-left px-4 py-2 hover:bg-nubia-gold/10 transition-colors focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-inset ${
+            className={`w-full text-left px-4 py-2 hover:bg-nubia-gold/10 transition-colors focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-inset whitespace-nowrap ${
               currentLocale === 'en' ? 'bg-nubia-gold/20 text-nubia-gold font-bold' : ''
             }`}
             aria-label="Change language to English"
