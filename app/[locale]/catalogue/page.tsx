@@ -244,7 +244,7 @@ function CatalogueContent() {
                           <img
                             src={withImageParams('catalog', imageUrl as string)}
                             alt={(locale === 'fr' ? (product as any).name_fr : (product as any).name_en) || product.name}
-                            className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                           />
                         </div>
                       ) : null;
