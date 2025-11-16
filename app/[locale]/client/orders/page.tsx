@@ -16,6 +16,8 @@ interface Order {
   created_at: string;
   shipping_method: string;
   address: any;
+  delivered_at?: string | null;
+  shipped_at?: string | null;
 }
 
 export default function OrdersPage() {
@@ -49,9 +51,13 @@ export default function OrdersPage() {
         headers.Authorization = `Bearer ${token}`;
       }
       
+      console.log('[OrdersPage] Using token from localStorage:', !!token);
       const response = await fetch('/api/orders/list', {
         method: 'GET',
         headers,
+        // ensure cookies are sent and no cached responses are used
+        credentials: 'include',
+        cache: 'no-store',
       });
 
       if (!response.ok) {
@@ -181,6 +187,24 @@ export default function OrdersPage() {
                           day: 'numeric',
                         })}
                       </p>
+                      {order.delivered_at && (
+                        <p className="text-sm text-green-600 font-medium mb-2">
+                          Livrée le {new Date(order.delivered_at).toLocaleDateString('fr-FR', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                          })}
+                        </p>
+                      )}
+                      {!order.delivered_at && order.shipped_at && (
+                        <p className="text-sm text-purple-600 font-medium mb-2">
+                          Expédiée le {new Date(order.shipped_at).toLocaleDateString('fr-FR', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                          })}
+                        </p>
+                      )}
                       <p className="text-sm text-nubia-black/70">
                         Livraison: {order.shipping_method === 'standard' ? 'Standard' : 'Express'}
                       </p>

@@ -210,6 +210,8 @@ export default function AdminOrdersPage() {
     } else {
       console.warn('[Realtime] Supabase environment variables not found, Realtime disabled');
     }
+    // Always return a cleanup function or undefined on all code paths to satisfy TypeScript
+    return () => {};
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale, router]);
 
@@ -302,7 +304,7 @@ export default function AdminOrdersPage() {
       }));
       
       console.log('[loadOrders] Setting orders state, count:', freshOrders.length);
-      const debugOrderInState = freshOrders.find(o => o.id === 'aa86dcc2-f684-4fe6-a205-46a3f21edcaa');
+  const debugOrderInState = freshOrders.find((o: Order) => o.id === 'aa86dcc2-f684-4fe6-a205-46a3f21edcaa');
       if (debugOrderInState) {
         console.log('[loadOrders] DEBUG ORDER in state being set:', {
           id: debugOrderInState.id,
@@ -454,7 +456,7 @@ export default function AdminOrdersPage() {
           }));
           
           console.log('[handleSave] Setting new orders state, count:', freshOrders.length);
-          console.log('[handleSave] Order to update in state:', freshOrders.find(o => o.id === orderId));
+          console.log('[handleSave] Order to update in state:', freshOrders.find((o: Order) => o.id === orderId));
           
           // Update state with fresh normalized data
           setOrders(freshOrders);

@@ -17,6 +17,8 @@ interface Order {
   payment_status: string;
   shipping_method: string;
   created_at: string;
+  delivered_at?: string | null;
+  shipped_at?: string | null;
   order_items?: OrderItem[];
 }
 
@@ -219,12 +221,26 @@ export default function OrdersPage() {
                             day: 'numeric'
                           })}
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Truck size={16} />
-                          {order.shipping_method === 'standard' 
-                            ? t('checkout.shipping.standard', 'Livraison Standard')
-                            : t('checkout.shipping.express', 'Livraison Express')}
-                        </div>
+                        {order.delivered_at && (
+                          <div className="flex items-center gap-1 text-green-600 font-medium">
+                            <Truck size={16} />
+                            {t('orders.delivered_on', 'Livrée le')} {new Date(order.delivered_at).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </div>
+                        )}
+                        {!order.delivered_at && order.shipped_at && (
+                          <div className="flex items-center gap-1 text-purple-600 font-medium">
+                            <Truck size={16} />
+                            {t('orders.shipped_on', 'Expédiée le')} {new Date(order.shipped_at).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </div>
+                        )}
                         <div className="flex items-center gap-1">
                           <CreditCard size={16} />
                           {order.payment_status === 'paid' 

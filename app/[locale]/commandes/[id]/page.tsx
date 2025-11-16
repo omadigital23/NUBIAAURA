@@ -16,6 +16,8 @@ interface Order {
   shipping_address: any;
   shipping_method: string;
   created_at: string;
+  delivered_at?: string | null;
+  shipped_at?: string | null;
   order_items?: OrderItem[];
 }
 
@@ -183,6 +185,24 @@ export default function OrderDetailPage() {
                       ? t('checkout.shipping.standard', 'Livraison Standard')
                       : t('checkout.shipping.express', 'Livraison Express')}
                   </p>
+                  {order.delivered_at && (
+                    <p className="text-sm text-green-600 font-medium mt-1">
+                      {t('orders.delivered_on', 'Livrée le')} {new Date(order.delivered_at).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
+                  )}
+                  {!order.delivered_at && order.shipped_at && (
+                    <p className="text-sm text-purple-600 font-medium mt-1">
+                      {t('orders.shipped_on', 'Expédiée le')} {new Date(order.shipped_at).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
+                  )}
                 </div>
               </div>
 

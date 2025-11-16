@@ -166,16 +166,16 @@ export default function Home() {
         <section className="py-10 md:py-12 lg:py-16 bg-gradient-to-br from-nubia-gold/10 via-nubia-white to-nubia-gold/5 text-nubia-black border-y border-nubia-gold/20" aria-label="Inscription à la newsletter">
           <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="font-playfair text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4">
-              {t('newsletter.title', 'Restez informé')}
+              {t('home.newsletter_title')}
             </h2>
             <p className="text-sm md:text-base text-nubia-black/85 mb-5 md:mb-6">
-              {t('newsletter.subtitle', 'Recevez nos nouveautés et offres exclusives')}
+              {t('home.newsletter_subtitle')}
             </p>
 
             <NewsletterForm />
 
             <p className="text-xs text-nubia-black/75 mt-3 md:mt-4">
-              {t('newsletter.privacy', 'Nous respectons votre vie privée. Désinscription simple à tout moment.')}
+              {t('home.newsletter_privacy')}
             </p>
           </div>
         </section>
