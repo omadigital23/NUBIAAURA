@@ -6,12 +6,6 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { supabase } from '@/lib/supabase';
 import { withImageParams } from '@/lib/image-formats';
 
-type ProductImage = {
-  url: string;
-  alt?: string | null;
-  position?: number | null;
-};
-
 type DBProduct = {
   id: string;
   slug: string;
@@ -23,7 +17,7 @@ type DBProduct = {
   price: number;
   rating: number | null;
   reviews: number | null;
-  product_images?: ProductImage[] | null;
+  product_images?: Array<{ url: string; alt?: string; position?: number }> | null;
 };
 
 export default function FeaturedProducts() {
@@ -37,13 +31,23 @@ export default function FeaturedProducts() {
       setLoading(true);
       const { data, error } = await supabase
         .from('products')
-        .select('id, slug, name, name_fr, name_en, image, image_url, price, rating, reviews, product_images(url, alt, position).order("position", { ascending: true })')
+        .select('id, slug, name, name_fr, name_en, image, image_url, price, rating, reviews, product_images(url, alt, position)')
         .eq('inStock', true)
         .order('rating', { ascending: false, nullsFirst: false })
         .order('reviews', { ascending: false, nullsFirst: false })
         .limit(8);
+      
       if (!isMounted) return;
-      setItems(error ? [] : data || []);
+      
+      // Trier les product_images par position pour chaque produit
+      const sortedData = (data || []).map((product: any) => ({
+        ...product,
+        product_images: product.product_images 
+          ? [...product.product_images].sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0))
+          : []
+      }));
+      
+      setItems(sortedData);
       setLoading(false);
     }
     load();
@@ -80,12 +84,11 @@ export default function FeaturedProducts() {
               const name = locale === 'fr'
                 ? (p.name_fr || p.name || '')
                 : (p.name_en || '');
-              // Priorité 1: Utiliser la première image de product_images
-              const firstProductImage = p.product_images && p.product_images.length > 0 
-                ? p.product_images[0]?.url 
+              // Utiliser product_images[0] (main image avec position 0) comme sur la page de détail
+              const mainImage = p.product_images && p.product_images.length > 0 
+                ? p.product_images.find(img => img.position === 0 || img.position === null || p.product_images!.indexOf(img) === 0)?.url 
                 : null;
-              // Priorité 2: Utiliser product.image ou product.image_url
-              const imageSrc = firstProductImage || p.image || p.image_url || '';
+              const imageSrc = mainImage || p.image_url || p.image || '';
               return (
                 <Link 
                   key={p.id} 

@@ -89,7 +89,7 @@ function CategoryContent() {
       {isInspiration && (
         <section className="bg-nubia-gold/10 border-b-2 border-nubia-gold py-4">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <p className="text-center text-nubia-gold font-semibold">
+            <p className="text-center text-nubia-black font-semibold">
               💡 {t('common.inspiration_note', 'Inspirez-vous de ces modèles pour créer votre propre design unique.')}
             </p>
           </div>

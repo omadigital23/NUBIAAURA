@@ -134,14 +134,13 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
     return t(`colors.${key}`, raw);
   };
 
-  // Build gallery: only product_images sorted by position, filtered to "grande" size
-  // This ensures exactly 3 images (01-main, 02-back, 03-detail)
+  // Build gallery: product_images sorted by position
+  // This ensures correct order (0=main, 1=back, 2=detail) regardless of size folder structure
   const gallery = useMemo(() => {
     const images: string[] = [];
     if (product.product_images && Array.isArray(product.product_images)) {
-      // Filter to only include "grande" size images to avoid duplicates
-      const grandeImages = product.product_images.filter(img => img.url && img.url.includes('/grande/'));
-      const sorted = [...grandeImages].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+      // Sort by position to ensure 0=main, 1=back, 2=detail
+      const sorted = [...product.product_images].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
       sorted.forEach((img) => {
         if (img.url && !images.includes(img.url)) {
           images.push(img.url);
@@ -266,8 +265,8 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
             )}
 
             {/* Main Image */}
-            <div className="flex-1 min-h-96 md:min-h-0">
-              <div className="relative w-full h-96 md:h-full aspect-auto md:aspect-[3/4] bg-nubia-cream/30 rounded-lg overflow-hidden">
+            <div className="min-h-96 md:min-h-0 md:w-80">
+              <div className="relative w-full h-96 md:h-[550px] aspect-auto md:aspect-[2/3] bg-nubia-cream/30 rounded-lg overflow-hidden">
                 {currentImage && (
                   <img
                     src={withImageParams('cover', currentImage)}

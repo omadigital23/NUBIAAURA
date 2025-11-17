@@ -31,6 +31,12 @@ function adjustLocalPathForUsage(usage: ImageUsage, src: string) {
   const hasSizeSegment = /\/(petite|moyenne|grande)\//.test(src);
   if (!hasSizeSegment) return src;
 
+  // Always keep /grande/ if it exists - this is where the main image is
+  // Never downsize from grande to petite/moyenne for landing page
+  if (src.includes('/grande/')) {
+    return src;
+  }
+
   const desired = (() => {
     switch (usage) {
       case 'catalog':
@@ -59,7 +65,7 @@ export function withImageParams(usage: ImageUsage, src: string) {
     src = 'https:' + src;
   }
   
-  const base = process.env.NEXT_PUBLIC_IMAGE_BASE; // e.g. https://<proj>.supabase.co/storage/v1/object/public
+  const base = process.env.NEXT_PUBLIC_IMAGE_BASE || 'https://exjtjbciznzyyqrfctsc.supabase.co/storage/v1/object/public'; 
   const bucket = process.env.NEXT_PUBLIC_IMAGE_BUCKET || 'products';
   
   // Supabase Storage URLs: return as-is (don't add params)
@@ -70,18 +76,16 @@ export function withImageParams(usage: ImageUsage, src: string) {
   // Local public/ images: rewrite size folder according to usage, and optionally prefix with Supabase public URL
   if (!isExternal(src)) {
     let path = adjustLocalPathForUsage(usage, src);
-    if (base) {
-      const cleanedBase = base.replace(/\/$/, '');
-      if (path.startsWith('/images/')) {
-        // Map /images/... to <base>/<bucket>/images/...
-        path = `${cleanedBase}/${bucket}${path}`;
-      } else if (path.startsWith('images/')) {
-        // Map images/... (without leading slash) as well
-        path = `${cleanedBase}/${bucket}/${path}`;
-      } else if (path.startsWith('products/')) {
-        // Map products/... directly to <base>/products/...
-        path = `${cleanedBase}/${path}`;
-      }
+    const cleanedBase = base.replace(/\/$/, '');
+    if (path.startsWith('/images/')) {
+      // Map /images/... to <base>/<bucket>/images/...
+      path = `${cleanedBase}/${bucket}${path}`;
+    } else if (path.startsWith('images/')) {
+      // Map images/... (without leading slash) as well
+      path = `${cleanedBase}/${bucket}/${path}`;
+    } else if (path.startsWith('products/')) {
+      // Map products/... directly to <base>/products/...
+      path = `${cleanedBase}/${path}`;
     }
     return path;
   }
