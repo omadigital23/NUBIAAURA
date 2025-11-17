@@ -38,9 +38,9 @@ export const CustomOrderSchema = z.object({
   name: z.string().min(2, 'Nom requis').max(100),
   email: z.string().email('Email invalide'),
   phone: z.string().min(8, 'Numéro invalide').max(20),
-  type: z.enum(['dress', 'suit', 'shirt', 'pants', 'skirt', 'other']),
-  measurements: z.string().min(5, 'Mesures requises').max(500),
-  preferences: z.string().min(5, 'Préférences requises').max(1000),
+  type: z.enum(['dress', 'suit', 'shirt', 'pants', 'skirt', 'other', 'robe', 'costume', 'chemise', 'pantalon', 'jupe', 'autre']),
+  measurements: z.string().min(1, 'Mesures requises').max(500),
+  preferences: z.string().min(1, 'Préférences requises').max(1000),
   budget: z.number().positive('Budget invalide'),
 });
 

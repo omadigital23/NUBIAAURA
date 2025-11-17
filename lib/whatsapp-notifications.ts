@@ -81,7 +81,11 @@ export async function notifyManagerNewContact(data: {
  */
 export async function notifyManagerNewCustomOrder(data: {
   name: string;
+  email: string;
+  phone: string;
   type: string;
+  measurements: string;
+  preferences: string;
   budget: number;
   reference: string;
 }) {
@@ -92,7 +96,11 @@ export async function notifyManagerNewCustomOrder(data: {
 
   const message = `🎨 *Nouvelle commande sur-mesure*\n\n` +
     `👤 *Client:* ${data.name}\n` +
+    `📧 *Email:* ${data.email}\n` +
+    `📱 *Téléphone:* ${data.phone}\n` +
     `👗 *Type:* ${data.type}\n` +
+    `📏 *Mensurations:* ${data.measurements}\n` +
+    `✨ *Préférences:* ${data.preferences}\n` +
     `💰 *Budget:* ${data.budget.toLocaleString('fr-FR')} FCFA\n` +
     `🔖 *Réf:* ${data.reference}\n\n` +
     `Contactez le client rapidement !`;

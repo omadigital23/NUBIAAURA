@@ -81,7 +81,11 @@ export async function POST(request: NextRequest) {
     try {
       await notifyManagerNewCustomOrder({
         name: validated.name,
+        email: validated.email,
+        phone: validated.phone,
         type: validated.type,
+        measurements: validated.measurements,
+        preferences: validated.preferences,
         budget: validated.budget,
         reference,
       });

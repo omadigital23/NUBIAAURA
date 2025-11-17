@@ -369,18 +369,18 @@ export default function CustomOrderPage() {
                       </label>
                       <select
                         name="type"
-                        value={formData.type}
+                        value={formData.type || ''}
                         onChange={handleChange}
                         required
                         className="w-full px-5 py-3 border-2 border-nubia-gold/30 rounded-xl focus:outline-none focus:border-nubia-gold focus:bg-nubia-gold/5 transition-all duration-200 text-nubia-black"
                       >
                         <option value="">{t('custom.type_placeholder', '— Choose an option —')}</option>
-                        <option value="dress">{t('custom.type_dress', 'Dress')}</option>
-                        <option value="suit">{t('custom.type_suit', 'Suit')}</option>
-                        <option value="shirt">{t('custom.type_shirt', 'Shirt')}</option>
-                        <option value="pants">{t('custom.type_pants', 'Pants')}</option>
-                        <option value="skirt">{t('custom.type_skirt', 'Skirt')}</option>
-                        <option value="other">{t('custom.type_other', 'Other')}</option>
+                        <option value={locale === 'fr' ? 'robe' : 'dress'}>{t('custom.type_dress', 'Dress')}</option>
+                        <option value={locale === 'fr' ? 'costume' : 'suit'}>{t('custom.type_suit', 'Suit')}</option>
+                        <option value={locale === 'fr' ? 'chemise' : 'shirt'}>{t('custom.type_shirt', 'Shirt')}</option>
+                        <option value={locale === 'fr' ? 'pantalon' : 'pants'}>{t('custom.type_pants', 'Pants')}</option>
+                        <option value={locale === 'fr' ? 'jupe' : 'skirt'}>{t('custom.type_skirt', 'Skirt')}</option>
+                        <option value={locale === 'fr' ? 'autre' : 'other'}>{t('custom.type_other', 'Other')}</option>
                       </select>
                     </div>
                   </div>
