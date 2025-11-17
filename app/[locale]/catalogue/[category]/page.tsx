@@ -157,10 +157,13 @@ function CategoryContent() {
                   >
                     {/* Image */}
                     {(() => {
-                      // Priorité 1: Utiliser la première image de product_images
+                      // Priorité 1: Utiliser la première image de product_images (triée par position)
                       const productImages = (product as any).product_images;
-                      const firstProductImage = productImages && productImages.length > 0 
-                        ? productImages[0]?.url 
+                      const sortedImages = productImages && productImages.length > 0
+                        ? [...productImages].sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0))
+                        : [];
+                      const firstProductImage = sortedImages.length > 0 
+                        ? sortedImages[0]?.url 
                         : null;
                       
                       // Priorité 2: Utiliser product.image ou product.image_url
