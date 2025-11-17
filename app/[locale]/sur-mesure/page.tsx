@@ -226,12 +226,12 @@ export default function CustomOrderPage() {
 
             {/* Thumbnail 3 : African Suits */}
             <Link
-              href={`/${locale}/catalogue/super100?inspiration=true`}
+              href={`/${locale}/catalogue/costumes-africains?inspiration=true`}
               className="group relative overflow-hidden rounded-2xl h-64 sm:h-72 md:h-80 cursor-pointer hover:shadow-2xl transition-all duration-300 block border-2 border-nubia-gold/20 hover:border-nubia-gold/60"
             >
               {/* Banner Image - Using Same as Catalog */}
               <img
-                src={getProductImageUrl('images/banners/category/super100.png')}
+                src={getProductImageUrl('images/banners/category/costumes-africains.png')}
                 alt={t('custom.category_suit', 'African Suits')}
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
               />
