@@ -92,12 +92,13 @@ function CatalogueSearchResultsContent() {
                       {/* Image du produit */}
                       <div className="relative w-full h-64 overflow-hidden">
                         {(() => {
-                          // Priorité 1: Utiliser la première image de product_images
+                          // Priorité 1: Trier product_images par position et utiliser la première (position 0 = face)
                           const productImages = (product as any).product_images;
-                          const firstProductImage = productImages && productImages.length > 0 
-                            ? productImages[0]?.url 
-                            : null;
-                          
+                          const sortedProductImages = productImages && Array.isArray(productImages) && productImages.length > 0
+                            ? [...productImages].sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0))
+                            : [];
+                          const firstProductImage = sortedProductImages.length > 0 ? sortedProductImages[0].url : null;
+
                           // Priorité 2: Utiliser product.image ou product.image_url
                           const imageUrl = firstProductImage || product.image || (product as any).image_url;
                           
