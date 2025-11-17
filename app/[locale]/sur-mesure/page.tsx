@@ -10,7 +10,7 @@ import { withImageParams } from '@/lib/image-formats';
 import { getProductImageUrl } from '@/lib/media';
 
 export default function CustomOrderPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
