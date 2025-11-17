@@ -367,5 +367,8 @@
   "orders.view_details": "View Details",
   "orders.back_to_orders": "Back to Orders",
   "orders.loading": "Loading your orders...",
-  "orders.error": "Error loading your orders"
+  "orders.error": "Error loading your orders",
+  "common.inspiration_model": "Inspiration Model",
+  "common.inspiration_banner": "These models will inspire you to create your custom piece.",
+  "common.inspiration_note": "Get inspired by these models to create your unique design."
 }

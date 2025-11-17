@@ -1,11 +1,13 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { withImageParams } from '@/lib/image-formats';
+import { getProductImageUrl } from '@/lib/media';
 
 export default function CustomOrderPage() {
   const { t } = useTranslation();
@@ -158,100 +160,100 @@ export default function CustomOrderPage() {
             </p>
           </div>
 
-          {/* Categories Grid - 3 Thumbnails */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+          {/* Categories Grid - 3 Thumbnails - Same as Catalog */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {/* Thumbnail 1 : Wedding Dresses */}
-            <div className="group cursor-pointer">
-              <div className="relative overflow-hidden rounded-2xl h-64 sm:h-72 md:h-80 bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5 shadow-lg hover:shadow-2xl transition-all duration-300">
-                <img 
-                  src={withImageParams('catalog', 'https://exjtjbciznzyyqrfctsc.supabase.co/storage/v1/object/public/products/images/robes/mariage/longue-rose/grande/1.png')}
-                  alt="Wedding Dresses"
-                  className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-nubia-black/60 via-transparent to-transparent"></div>
-              </div>
+            <Link
+              href={`/${locale}/catalogue/robes-mariage?inspiration=true`}
+              className="group relative overflow-hidden rounded-2xl h-64 sm:h-72 md:h-80 cursor-pointer hover:shadow-2xl transition-all duration-300 block border-2 border-nubia-gold/20 hover:border-nubia-gold/60"
+            >
+              {/* Banner Image - Using Same as Catalog */}
+              <img
+                src={getProductImageUrl('images/banners/category/robes-mariage.png')}
+                alt={t('custom.category_wedding', 'Wedding Dresses')}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              />
               
-              <div className="mt-4">
-                <h3 className="font-playfair text-xl md:text-2xl font-bold text-nubia-black mb-2">
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-nubia-black/80 via-nubia-black/40 to-transparent group-hover:from-nubia-black/90 transition-colors duration-300" />
+              
+              {/* Label */}
+              <div className="absolute inset-0 flex flex-col items-center justify-end pb-6">
+                <h3 className="font-playfair text-2xl md:text-3xl font-bold text-white text-center px-4 mb-3">
                   {t('custom.category_wedding', 'Wedding Dresses')}
                 </h3>
-                <p className="text-sm md:text-base text-nubia-black/70 mb-3">
-                  {t('custom.wedding_desc', 'A unique piece for your special day')}
-                </p>
-                
-                {/* Price Box */}
-                <div className="p-4 bg-nubia-gold/10 border border-nubia-gold/30 rounded-lg">
+                <div className="text-center px-4">
                   <p className="text-nubia-gold font-bold mb-1">
-                    {t('custom.starting_from', 'From')} <span className="text-2xl">100 000</span> FCFA
+                    {t('custom.starting_from', 'From')} <span className="text-xl">100 000</span> FCFA
                   </p>
-                  <p className="text-xs md:text-sm text-nubia-black/70">
+                  <p className="text-xs md:text-sm text-nubia-white/90">
                     {t('custom.wedding_offer', 'Veil offered with every custom order.')}
                   </p>
                 </div>
               </div>
-            </div>
+            </Link>
 
             {/* Thumbnail 2 : Ceremony Dresses */}
-            <div className="group cursor-pointer">
-              <div className="relative overflow-hidden rounded-2xl h-64 sm:h-72 md:h-80 bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5 shadow-lg hover:shadow-2xl transition-all duration-300">
-                <img 
-                  src={withImageParams('catalog', 'https://exjtjbciznzyyqrfctsc.supabase.co/storage/v1/object/public/products/images/robes/ceremonie/courte-bleue/grande/1.png')}
-                  alt="Ceremony Dresses"
-                  className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-nubia-black/60 via-transparent to-transparent"></div>
-              </div>
+            <Link
+              href={`/${locale}/catalogue/robes-ceremonie?inspiration=true`}
+              className="group relative overflow-hidden rounded-2xl h-64 sm:h-72 md:h-80 cursor-pointer hover:shadow-2xl transition-all duration-300 block border-2 border-nubia-gold/20 hover:border-nubia-gold/60"
+            >
+              {/* Banner Image - Using Same as Catalog */}
+              <img
+                src={getProductImageUrl('images/banners/category/robes-ceremonie.png')}
+                alt={t('custom.category_ceremony', 'Ceremony Dresses')}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              />
               
-              <div className="mt-4">
-                <h3 className="font-playfair text-xl md:text-2xl font-bold text-nubia-black mb-2">
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-nubia-black/80 via-nubia-black/40 to-transparent group-hover:from-nubia-black/90 transition-colors duration-300" />
+              
+              {/* Label */}
+              <div className="absolute inset-0 flex flex-col items-center justify-end pb-6">
+                <h3 className="font-playfair text-2xl md:text-3xl font-bold text-white text-center px-4 mb-3">
                   {t('custom.category_ceremony', 'Ceremony Dresses')}
                 </h3>
-                <p className="text-sm md:text-base text-nubia-black/70 mb-3">
-                  {t('custom.ceremony_desc', 'Elegance and refinement for every occasion')}
-                </p>
-                
-                {/* Price Box */}
-                <div className="p-4 bg-nubia-gold/10 border border-nubia-gold/30 rounded-lg">
+                <div className="text-center px-4">
                   <p className="text-nubia-gold font-bold mb-1">
-                    {t('custom.starting_from', 'From')} <span className="text-2xl">20 000</span> FCFA
+                    {t('custom.starting_from', 'From')} <span className="text-xl">20 000</span> FCFA
                   </p>
-                  <p className="text-xs md:text-sm text-nubia-black/70">
+                  <p className="text-xs md:text-sm text-nubia-white/90">
                     {t('custom.ceremony_offer', 'Custom order.')}
                   </p>
                 </div>
               </div>
-            </div>
+            </Link>
 
             {/* Thumbnail 3 : African Suits */}
-            <div className="group cursor-pointer">
-              <div className="relative overflow-hidden rounded-2xl h-64 sm:h-72 md:h-80 bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5 shadow-lg hover:shadow-2xl transition-all duration-300">
-                <img 
-                  src={withImageParams('catalog', 'https://exjtjbciznzyyqrfctsc.supabase.co/storage/v1/object/public/products/images/costumes/super100/classique-noir/grande/1.png')}
-                  alt="African Suits"
-                  className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-nubia-black/60 via-transparent to-transparent"></div>
-              </div>
+            <Link
+              href={`/${locale}/catalogue/super100?inspiration=true`}
+              className="group relative overflow-hidden rounded-2xl h-64 sm:h-72 md:h-80 cursor-pointer hover:shadow-2xl transition-all duration-300 block border-2 border-nubia-gold/20 hover:border-nubia-gold/60"
+            >
+              {/* Banner Image - Using Same as Catalog */}
+              <img
+                src={getProductImageUrl('images/banners/category/super100.png')}
+                alt={t('custom.category_suit', 'African Suits')}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              />
               
-              <div className="mt-4">
-                <h3 className="font-playfair text-xl md:text-2xl font-bold text-nubia-black mb-2">
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-nubia-black/80 via-nubia-black/40 to-transparent group-hover:from-nubia-black/90 transition-colors duration-300" />
+              
+              {/* Label */}
+              <div className="absolute inset-0 flex flex-col items-center justify-end pb-6">
+                <h3 className="font-playfair text-2xl md:text-3xl font-bold text-white text-center px-4 mb-3">
                   {t('custom.category_suit', 'African Suits')}
                 </h3>
-                <p className="text-sm md:text-base text-nubia-black/70 mb-3">
-                  {t('custom.suit_desc', 'Modern traditional style personalized')}
-                </p>
-                
-                {/* Price Box */}
-                <div className="p-4 bg-nubia-gold/10 border border-nubia-gold/30 rounded-lg">
+                <div className="text-center px-4">
                   <p className="text-nubia-gold font-bold mb-1">
-                    {t('custom.starting_from', 'From')} <span className="text-2xl">20 000</span> FCFA
+                    {t('custom.starting_from', 'From')} <span className="text-xl">20 000</span> FCFA
                   </p>
-                  <p className="text-xs md:text-sm text-nubia-black/70">
+                  <p className="text-xs md:text-sm text-nubia-white/90">
                     {t('custom.suit_offer', 'Prices vary based on model chosen.')}
                   </p>
                 </div>
               </div>
-            </div>
+            </Link>
           </div>
         </div>
       </section>

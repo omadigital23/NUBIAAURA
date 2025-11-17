@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -20,8 +20,10 @@ interface Category {
 
 function CategoryContent() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const { t, locale } = useTranslation();
   const categorySlug = params.category as string;
+  const isInspiration = searchParams.get('inspiration') === 'true';
   const [category, setCategory] = useState<Category | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -76,10 +78,23 @@ function CategoryContent() {
           </Link>
           <h1 className="font-playfair text-4xl md:text-5xl font-bold mb-4">{categoryName}</h1>
           <p className="text-lg text-nubia-white/80">
-            {t('catalog.category_description', `Découvrez notre collection de ${categoryName.toLowerCase()}`)}
+            {isInspiration
+              ? t('common.inspiration_banner', 'Ces modèles vous serviront d\'inspiration pour votre création sur mesure.')
+              : t('catalog.category_description', `Découvrez notre collection de ${categoryName.toLowerCase()}`)}
           </p>
         </div>
       </section>
+
+      {/* Inspiration Banner */}
+      {isInspiration && (
+        <section className="bg-nubia-gold/10 border-b-2 border-nubia-gold py-4">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <p className="text-center text-nubia-gold font-semibold">
+              💡 {t('common.inspiration_note', 'Inspirez-vous de ces modèles pour créer votre propre design unique.')}
+            </p>
+          </div>
+        </section>
+      )}
 
       {/* Search Section */}
       <section className="bg-nubia-white border-b border-nubia-gold/20 py-6">
@@ -184,12 +199,18 @@ function CategoryContent() {
                         </span>
                       </div>
 
-                      <Link 
-                        href={`/${locale}/produit/${(product.slug || product.name.toLowerCase().replace(/\s+/g, '-'))}`}
-                        className="block w-full py-2 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white border-2 border-nubia-gold transition-all duration-300 text-center text-sm group-hover:shadow-lg group-hover:scale-105"
-                      >
-                        {t('common.view_details', 'Voir les détails')}
-                      </Link>
+                      {isInspiration ? (
+                        <div className="block w-full py-2 bg-nubia-gold/20 border-2 border-nubia-gold text-nubia-gold font-semibold rounded-lg text-center text-sm">
+                          {t('common.inspiration_model', 'Modèle d\'inspiration')}
+                        </div>
+                      ) : (
+                        <Link 
+                          href={`/${locale}/produit/${(product.slug || product.name.toLowerCase().replace(/\s+/g, '-'))}`}
+                          className="block w-full py-2 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white border-2 border-nubia-gold transition-all duration-300 text-center text-sm group-hover:shadow-lg group-hover:scale-105"
+                        >
+                          {t('common.view_details', 'Voir les détails')}
+                        </Link>
+                      )}
                     </div>
                   </div>
                 ))}
