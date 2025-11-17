@@ -6,7 +6,6 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
-import { withImageParams } from '@/lib/image-formats';
 import { getProductImageUrl } from '@/lib/media';
 
 export default function CustomOrderPage() {

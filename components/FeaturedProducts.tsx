@@ -29,7 +29,7 @@ export default function FeaturedProducts() {
     let isMounted = true;
     async function load() {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('products')
         .select('id, slug, name, name_fr, name_en, image, image_url, price, rating, reviews, product_images(url, alt, position)')
         .eq('inStock', true)
