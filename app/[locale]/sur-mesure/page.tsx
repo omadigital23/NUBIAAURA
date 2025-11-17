@@ -164,9 +164,9 @@ export default function CustomOrderPage() {
             <div className="group cursor-pointer">
               <div className="relative overflow-hidden rounded-2xl h-64 sm:h-72 md:h-80 bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5 shadow-lg hover:shadow-2xl transition-all duration-300">
                 <img 
-                  src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&h=800&fit=crop"
+                  src={withImageParams('catalog', 'https://exjtjbciznzyyqrfctsc.supabase.co/storage/v1/object/public/products/images/robes/mariage/longue-rose/grande/1.png')}
                   alt="Wedding Dresses"
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-nubia-black/60 via-transparent to-transparent"></div>
               </div>
@@ -195,9 +195,9 @@ export default function CustomOrderPage() {
             <div className="group cursor-pointer">
               <div className="relative overflow-hidden rounded-2xl h-64 sm:h-72 md:h-80 bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5 shadow-lg hover:shadow-2xl transition-all duration-300">
                 <img 
-                  src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&h=800&fit=crop"
+                  src={withImageParams('catalog', 'https://exjtjbciznzyyqrfctsc.supabase.co/storage/v1/object/public/products/images/robes/ceremonie/courte-bleue/grande/1.png')}
                   alt="Ceremony Dresses"
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-nubia-black/60 via-transparent to-transparent"></div>
               </div>
@@ -226,9 +226,9 @@ export default function CustomOrderPage() {
             <div className="group cursor-pointer">
               <div className="relative overflow-hidden rounded-2xl h-64 sm:h-72 md:h-80 bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5 shadow-lg hover:shadow-2xl transition-all duration-300">
                 <img 
-                  src="https://images.unsplash.com/photo-1591195853828-11db59a44f6b?w=600&h=800&fit=crop"
+                  src={withImageParams('catalog', 'https://exjtjbciznzyyqrfctsc.supabase.co/storage/v1/object/public/products/images/costumes/super100/classique-noir/grande/1.png')}
                   alt="African Suits"
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-nubia-black/60 via-transparent to-transparent"></div>
               </div>
