@@ -37,7 +37,7 @@ export default function FeaturedProducts() {
       setLoading(true);
       const { data, error } = await supabase
         .from('products')
-        .select('id, slug, name, name_fr, name_en, image, image_url, price, rating, reviews, product_images(url, alt, position)')
+        .select('id, slug, name, name_fr, name_en, image, image_url, price, rating, reviews, product_images(url, alt, position).order("position", { ascending: true })')
         .eq('inStock', true)
         .order('rating', { ascending: false, nullsFirst: false })
         .order('reviews', { ascending: false, nullsFirst: false })

@@ -21,9 +21,9 @@ export function useProductsFromDB(options?: { category?: string; categories?: st
           .from('products')
           .select(`
             id, slug, name, name_fr, name_en, image, image_url, price, rating, reviews, inStock, stock, created_at, description, description_fr, description_en, material, material_fr, material_en, care, care_fr, care_en, sizes, colors, category,
-            product_images(url, alt, position),
+            product_images(url, alt, position).order('position', { ascending: true }),
             product_variants(id, size, color, price, stock, image)
-          `);
+          `, { count: 'exact' });
 
         if (options?.category) {
           query = query.eq('category', options.category);

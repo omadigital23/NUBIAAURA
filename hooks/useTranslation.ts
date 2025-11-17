@@ -19,11 +19,13 @@ import frCheckout from '@/locales/fr/checkout.json';
 import enCheckout from '@/locales/en/checkout.json';
 import frCallback from '@/locales/fr/callback.json';
 import enCallback from '@/locales/en/callback.json';
+import frCustom from '@/locales/fr/custom.json';
+import enCustom from '@/locales/en/custom.json';
 
 const merge = (...objs: Record<string, any>[]) => Object.assign({}, ...objs);
 const translations: Record<Locale, Record<string, any>> = {
-  fr: merge(frCommon as any, frLegal as any, frHome as any, frCatalog as any, frProduct as any, frCheckout as any, frCallback as any),
-  en: merge(enCommon as any, enLegal as any, enHome as any, enCatalog as any, enProduct as any, enCheckout as any, enCallback as any),
+  fr: merge(frCommon as any, frLegal as any, frHome as any, frCatalog as any, frProduct as any, frCheckout as any, frCallback as any, frCustom as any),
+  en: merge(enCommon as any, enLegal as any, enHome as any, enCatalog as any, enProduct as any, enCheckout as any, enCallback as any, enCustom as any),
 };
 
 export function useTranslation() {
