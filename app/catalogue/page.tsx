@@ -160,11 +160,11 @@ export default function CataloguePage() {
                 <div className="relative w-full h-56 sm:h-64 md:h-72 bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5 overflow-hidden flex-shrink-0 group-hover:shadow-inner transition-shadow duration-300">
                   {(() => {
                     const productImages = (product as any).product_images;
-                    const sortedProductImages = productImages && Array.isArray(productImages) && productImages.length > 0
-                      ? [...productImages].sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0))
-                      : [];
-                    const firstProductImage = sortedProductImages.length > 0 ? sortedProductImages[0].url : null;
-                    const imageUrl = firstProductImage || product.image_url || product.image || '/placeholder-evening-dress.svg';
+                    // Utiliser product_images avec position 0 comme sur la landing page
+                    const mainImage = productImages && productImages.length > 0
+                      ? productImages.find((img: any) => img.position === 0 || img.position === null || productImages.indexOf(img) === 0)?.url
+                      : null;
+                    const imageUrl = mainImage || product.image_url || product.image || '/placeholder-evening-dress.svg';
 
                     return (
                       <img
