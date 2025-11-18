@@ -29,7 +29,20 @@ export default function OrdersPage() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await fetch('/api/orders');
+        // Get token from localStorage
+        const token = typeof window !== 'undefined' ? localStorage.getItem('sb-auth-token') : null;
+        
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json',
+        };
+        
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        const response = await fetch('/api/orders', {
+          headers,
+        });
         if (!response.ok) {
           router.push('/auth/login');
           return;

@@ -7,13 +7,62 @@ const supabase = createClient(
 );
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     console.log('[Orders API] Fetching order:', params.id);
     
-    // Get order (sans vérification user pour la page merci)
+    // Get token from cookie or Authorization header
+    let token = request.cookies.get('sb-auth-token')?.value;
+    
+    if (!token) {
+      const authHeader = request.headers.get('authorization');
+      if (authHeader?.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+      }
+    }
+    
+    let userId: string | null = null;
+    
+    if (token) {
+      try {
+        // Create a client with the token to get the authenticated user
+        const userSupabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          {
+            global: {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          }
+        );
+
+        const { data: { user }, error: userError } = await userSupabase.auth.getUser();
+        if (!userError && user) {
+          userId = user.id;
+          console.log('[Orders API] Authenticated user:', userId);
+        } else {
+          console.error('[Orders API] Auth error:', userError);
+        }
+      } catch (e) {
+        console.error('[Orders API] Error getting user:', e);
+      }
+    } else {
+      console.warn('[Orders API] No token found');
+    }
+    
+    // If no userId, return 401
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
+    // Get order and verify it belongs to the user
     const { data: order, error } = await supabase
       .from('orders')
       .select(
@@ -32,9 +81,19 @@ export async function GET(
       `
       )
       .eq('id', params.id)
+      .eq('user_id', userId)
       .single();
 
-    if (error || !order) {
+    if (error) {
+      console.error('[Orders API] Query error:', error);
+      return NextResponse.json(
+        { error: 'Order not found' },
+        { status: 404 }
+      );
+    }
+
+    if (!order) {
+      console.error('[Orders API] Order not found for user:', userId, 'Order ID:', params.id);
       return NextResponse.json(
         { error: 'Order not found' },
         { status: 404 }
@@ -45,7 +104,7 @@ export async function GET(
   } catch (error: any) {
     console.error('Get order error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error.message },
       { status: 500 }
     );
   }

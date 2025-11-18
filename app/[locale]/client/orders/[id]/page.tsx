@@ -5,7 +5,9 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { ArrowLeft, Truck, Package, MapPin, Loader, AlertCircle } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useTranslation } from '@/hooks/useTranslation';
+import { ArrowLeft, Loader, AlertCircle, Truck, Package, MapPin } from 'lucide-react';
 
 interface OrderDetail {
   id: string;
@@ -31,51 +33,63 @@ interface OrderDetail {
 }
 
 export default function OrderDetailPage() {
+  const { user, isAuthenticated, isLoading } = useAuth();
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const router = useRouter();
   const params = useParams();
+  const { t, locale } = useTranslation();
   const orderId = params.id as string;
 
   useEffect(() => {
-    const fetchOrder = async () => {
-      try {
-        // Get token from localStorage
-        const token = typeof window !== 'undefined' ? localStorage.getItem('sb-auth-token') : null;
-        
-        const headers: HeadersInit = {
-          'Content-Type': 'application/json',
-        };
-        
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-        
-        const response = await fetch(`/api/orders/${orderId}`, {
-          headers,
-        });
-        
-        if (!response.ok) {
-          if (response.status === 401) {
-            router.push('/auth/login');
-            return;
-          }
-          throw new Error('Commande non trouvée');
-        }
-        const data = await response.json();
-        setOrder(data.order);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (!isLoading && !isAuthenticated) {
+      router.push(`/${locale}/auth/login?callbackUrl=/${locale}/client/orders/${orderId}`);
+    }
+  }, [isLoading, isAuthenticated, router, locale, orderId]);
 
-    if (orderId) {
+  useEffect(() => {
+    if (isAuthenticated && user && orderId) {
       fetchOrder();
     }
-  }, [orderId, router]);
+  }, [isAuthenticated, user, orderId]);
+
+  const fetchOrder = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('sb-auth-token');
+      const headers: any = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`/api/orders/detail/${orderId}`, {
+        method: 'GET',
+        headers,
+        credentials: 'include',
+        cache: 'no-store',
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          setError('Commande non trouvée');
+        } else {
+          setError('Erreur lors du chargement de la commande');
+        }
+        return;
+      }
+
+      const data = await response.json();
+      setOrder(data.order);
+      setError('');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
@@ -84,6 +98,7 @@ export default function OrderDetailPage() {
       shipped: 'Expédiée',
       delivered: 'Livrée',
       cancelled: 'Annulée',
+      paid: 'Payée',
     };
     return labels[status] || status;
   };
@@ -95,18 +110,19 @@ export default function OrderDetailPage() {
       shipped: 'bg-purple-50 text-purple-700 border-purple-200',
       delivered: 'bg-green-50 text-green-700 border-green-200',
       cancelled: 'bg-red-50 text-red-700 border-red-200',
+      paid: 'bg-green-50 text-green-700 border-green-200',
     };
     return colors[status] || 'bg-gray-50 text-gray-700 border-gray-200';
   };
 
-  if (loading) {
+  if (isLoading || loading) {
     return (
       <div className="min-h-screen bg-nubia-white flex flex-col">
         <Header />
         <section className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <Loader className="animate-spin text-nubia-gold mx-auto mb-4" size={40} />
-            <p className="text-nubia-black/70">Chargement de la commande...</p>
+            <p className="text-nubia-black/70">{t('common.loading', 'Chargement...')}</p>
           </div>
         </section>
         <Footer />
@@ -123,7 +139,7 @@ export default function OrderDetailPage() {
             <AlertCircle className="text-red-600 mx-auto mb-4" size={40} />
             <p className="text-red-700 mb-6">{error || 'Commande non trouvée'}</p>
             <Link
-              href="/client/orders"
+              href={`/${locale}/client/orders`}
               className="inline-block px-6 py-3 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white border-2 border-nubia-gold transition-all"
             >
               Retour aux commandes
@@ -144,7 +160,7 @@ export default function OrderDetailPage() {
           {/* Header */}
           <div className="mb-8">
             <Link
-              href="/client/orders"
+              href={`/${locale}/client/orders`}
               className="inline-flex items-center gap-2 text-nubia-gold hover:underline mb-4"
             >
               <ArrowLeft size={20} />
@@ -266,12 +282,12 @@ export default function OrderDetailPage() {
                 Adresse de livraison
               </h2>
               <div className="space-y-2 text-nubia-black/70">
-                <p>{order.shipping_address.firstName} {order.shipping_address.lastName}</p>
-                <p>{order.shipping_address.address}</p>
+                <p>{order.shipping_address?.firstName} {order.shipping_address?.lastName}</p>
+                <p>{order.shipping_address?.address}</p>
                 <p>
-                  {order.shipping_address.zipCode} {order.shipping_address.city}
+                  {order.shipping_address?.zipCode} {order.shipping_address?.city}
                 </p>
-                <p>{order.shipping_address.country}</p>
+                <p>{order.shipping_address?.country}</p>
               </div>
             </div>
 
@@ -301,19 +317,11 @@ export default function OrderDetailPage() {
           {/* Actions */}
           <div className="flex gap-4">
             <Link
-              href="/client/orders"
+              href={`/${locale}/client/orders`}
               className="flex-1 py-3 border-2 border-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-gold/10 transition-all text-center"
             >
               Retour aux commandes
             </Link>
-            {order.status === 'delivered' && (
-              <Link
-                href={`/client/returns?order_id=${order.id}`}
-                className="flex-1 py-3 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white border-2 border-nubia-gold transition-all text-center"
-              >
-                Demander un retour
-              </Link>
-            )}
           </div>
         </div>
       </section>

@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Récupérer l'utilisateur
-      const { data: { user }, error: userError } = await supabase.auth.getUser(token as string);
+      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
 
       if (userError || !user) {
         return NextResponse.json(

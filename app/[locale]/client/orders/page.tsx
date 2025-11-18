@@ -219,9 +219,12 @@ export default function OrdersPage() {
                     </div>
 
                     {/* Action */}
-                    <button className="px-6 py-2 border-2 border-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-gold/10 transition-colors">
+                    <Link
+                      href={`/${locale}/client/orders/${order.id}`}
+                      className="px-6 py-2 border-2 border-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-gold/10 transition-colors text-center"
+                    >
                       Détails
-                    </button>
+                    </Link>
                   </div>
                 </div>
               ))}
