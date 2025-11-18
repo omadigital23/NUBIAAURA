@@ -33,9 +33,13 @@ export default function UserMenu({ user, onLogout }: UserMenuProps) {
     setIsLoggingOut(true);
     try {
       await onLogout();
+      setIsOpen(false);
+      // Rediriger vers la page d'accueil après déconnexion
+      if (typeof window !== 'undefined') {
+        window.location.href = '/';
+      }
     } finally {
       setIsLoggingOut(false);
-      setIsOpen(false);
     }
   };
 

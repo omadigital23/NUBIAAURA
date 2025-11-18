@@ -6,15 +6,28 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function PUT(request: NextRequest) {
+async function updateProfile(request: NextRequest) {
   try {
     const token = request.cookies.get('sb-auth-token')?.value;
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Create a client with the token to get the user
+    const userSupabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      }
+    );
+
     // Get user from token
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    const { data: { user }, error: userError } = await userSupabase.auth.getUser();
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -22,7 +35,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { name, phone } = body;
 
-    // Update user profile
+    // Update user profile using service role
     const { error } = await supabase
       .from('users')
       .update({
@@ -48,4 +61,12 @@ export async function PUT(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+export async function PUT(request: NextRequest) {
+  return updateProfile(request);
+}
+
+export async function POST(request: NextRequest) {
+  return updateProfile(request);
 }

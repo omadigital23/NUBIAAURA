@@ -74,15 +74,18 @@ export function useAuth(): UseAuthResult {
 
       setUser(null);
       setIsAuthenticated(false);
+      // Ne pas rediriger ici — laisser le composant UserMenu gérer la redirection
+      // après avoir fermé le dropdown
       
-      // Rediriger vers la page d'accueil
-      if (typeof window !== 'undefined') {
-        window.location.href = '/';
-      }
+      // Forcer un refetch pour s'assurer que l'état est à jour
+      await fetchUser();
     } catch (error) {
       console.error('Error logging out:', error);
+      // Même en cas d'erreur, vider l'état local
+      setUser(null);
+      setIsAuthenticated(false);
     }
-  }, []);
+  }, [fetchUser]);
 
   return {
     user,
