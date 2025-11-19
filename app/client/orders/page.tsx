@@ -145,7 +145,7 @@ export default function OrdersPage() {
             <div className="flex-1">
               <input
                 type="text"
-                placeholder="Rechercher par numéro ou montant..."
+                placeholder={t('orders.search_placeholder', 'Rechercher par numéro ou montant...')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"

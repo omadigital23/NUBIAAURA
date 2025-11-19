@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { AlertCircle, Loader, ArrowLeft, CheckCircle, Clock, XCircle, Package } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface Return {
   id: string;
@@ -20,6 +21,7 @@ interface Return {
 
 export default function ReturnDetailsPage() {
   const params = useParams();
+  const { t } = useTranslation();
   const [returnRequest, setReturnRequest] = useState<Return | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -116,7 +118,7 @@ export default function ReturnDetailsPage() {
 
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-          <p className="text-red-700">{error || 'Retour non trouvé'}</p>
+          <p className="text-red-700">{error || t('returns.not_found', 'Retour non trouvé')}</p>
         </div>
       </div>
     );

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslation } from '@/hooks/useTranslation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { User, ShoppingBag, MapPin, LogOut, Settings, ArrowRight, Loader, RotateCcw } from 'lucide-react';
@@ -17,6 +18,7 @@ interface Order {
 }
 
 export default function ClientDashboard() {
+  const { t } = useTranslation();
   const [user, setUser] = useState<any>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -148,7 +150,7 @@ export default function ClientDashboard() {
                 onClick={handleLogout}
                 className="text-sm text-red-600 hover:underline flex items-center gap-1"
               >
-                <LogOut size={14} /> Déconnexion
+                <LogOut size={14} /> {t('nav.logout', 'Déconnexion')}
               </button>
             </div>
           </div>

@@ -179,7 +179,7 @@ export default function ContactPage() {
                     value={formData.phone}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"
-                    placeholder="+221 77 123 45 67"
+                    placeholder={t('contact.phone_placeholder', '+221 77 123 45 67')}
                   />
                 </div>
 

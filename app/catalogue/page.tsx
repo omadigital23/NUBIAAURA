@@ -16,7 +16,7 @@ interface Category {
 }
 
 export default function CataloguePage() {
-  const { locale } = useTranslation();
+  const { locale, t } = useTranslation();
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,8 +69,8 @@ export default function CataloguePage() {
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-nubia-black to-nubia-dark text-nubia-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="font-playfair text-4xl md:text-5xl font-bold mb-4">Notre Catalogue</h1>
-          <p className="text-lg text-nubia-white/80">Découvrez notre collection complète de créations</p>
+          <h1 className="font-playfair text-4xl md:text-5xl font-bold mb-4">{t('catalog.title')}</h1>
+          <p className="text-lg text-nubia-white/80">{t('catalog.subtitle')}</p>
         </div>
       </section>
 
@@ -81,7 +81,7 @@ export default function CataloguePage() {
             <Search className="absolute left-3 top-3 text-nubia-gold" size={20} />
             <input
               type="text"
-              placeholder="Rechercher un produit..."
+              placeholder={t('catalog.search_placeholder', 'Rechercher un produit...')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"
@@ -93,7 +93,7 @@ export default function CataloguePage() {
       {/* Categories Section */}
       <section className="bg-nubia-white border-b border-nubia-gold/20 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="font-playfair text-2xl font-bold text-nubia-black mb-8">Parcourir par catégorie</h2>
+          <h2 className="font-playfair text-2xl font-bold text-nubia-black mb-8">{t('catalog.browse_by_category')}</h2>
           
           {/* Category Cards with Images */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -120,14 +120,14 @@ export default function CataloguePage() {
                 >
                   <img
                     src={imageUrl}
-                    alt={category.name_fr}
+                    alt={locale === 'fr' ? category.name_fr : category.name_en}
                     loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors duration-300 flex items-end">
                     <div className="w-full p-4 bg-gradient-to-t from-black to-transparent">
                       <p className="font-playfair text-lg font-bold text-nubia-white">
-                        {category.name_fr}
+                        {locale === 'fr' ? category.name_fr : category.name_en}
                       </p>
                     </div>
                   </div>
@@ -143,11 +143,11 @@ export default function CataloguePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {loading ? (
             <div className="text-center py-12">
-              <p className="text-nubia-black/70">Chargement des produits...</p>
+              <p className="text-nubia-black/70">{t('catalog.loading')}</p>
             </div>
           ) : filteredProducts.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-nubia-black/70">Aucun produit trouvé</p>
+              <p className="text-nubia-black/70">{t('catalog.no_products')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">

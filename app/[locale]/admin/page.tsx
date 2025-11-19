@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 function useAdminToken() {
   const [token, setToken] = useState("");
@@ -52,14 +53,14 @@ export default function AdminPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="font-playfair text-3xl font-bold text-nubia-black">Admin Dashboard</h1>
-            <p className="text-nubia-black/60 text-sm mt-1">Connecté en tant que: {username}</p>
+            <h1 className="font-playfair text-3xl font-bold text-nubia-black">{t('admin.dashboard_title', 'Admin Dashboard')}</h1>
+            <p className="text-nubia-black/60 text-sm mt-1">{t('admin.logged_as', 'Connecté en tant que:')} {username}</p>
           </div>
           <button
             onClick={logout}
             className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
           >
-            Déconnexion
+            {t('nav.logout', 'Déconnexion')}
           </button>
         </div>
 
@@ -236,6 +237,7 @@ function OrdersPanel({ token }: { token: string }) {
 }
 
 function ProductsPanel({ token }: { token: string }) {
+  const { t } = useTranslation();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -379,14 +381,14 @@ function ProductsPanel({ token }: { token: string }) {
           <div className="p-4 border-b flex flex-col gap-2 bg-nubia-cream/40">
             <div className="font-semibold">Create Product</div>
             <div className="flex flex-wrap gap-2 items-center">
-              <input className="border px-2 py-1 rounded" placeholder="slug" value={newProduct.slug} onChange={(e) => setNewProduct(p => ({ ...p, slug: e.target.value }))} />
-              <input type="number" className="border px-2 py-1 rounded w-28" placeholder="price" value={newProduct.price} onChange={(e) => setNewProduct(p => ({ ...p, price: Number(e.target.value) }))} />
-              <input className="border px-2 py-1 rounded" placeholder="category" value={newProduct.category} onChange={(e) => setNewProduct(p => ({ ...p, category: e.target.value }))} list="categories-list" />
+              <input className="border px-2 py-1 rounded" placeholder={t('admin.form.slug_placeholder', 'slug')} value={newProduct.slug} onChange={(e) => setNewProduct(p => ({ ...p, slug: e.target.value }))} />
+              <input type="number" className="border px-2 py-1 rounded w-28" placeholder={t('admin.form.price_placeholder', 'price')} value={newProduct.price} onChange={(e) => setNewProduct(p => ({ ...p, price: Number(e.target.value) }))} />
+              <input className="border px-2 py-1 rounded" placeholder={t('admin.form.category_placeholder', 'category')} value={newProduct.category} onChange={(e) => setNewProduct(p => ({ ...p, category: e.target.value }))} list="categories-list" />
               <datalist id="categories-list">
                 {categories.map((c) => (<option key={c} value={c} />))}
               </datalist>
-              <input className="border px-2 py-1 rounded" placeholder="name_fr" value={newProduct.name_fr || ''} onChange={(e) => setNewProduct(p => ({ ...p, name_fr: e.target.value }))} />
-              <input className="border px-2 py-1 rounded" placeholder="name_en" value={newProduct.name_en || ''} onChange={(e) => setNewProduct(p => ({ ...p, name_en: e.target.value }))} />
+              <input className="border px-2 py-1 rounded" placeholder={t('admin.form.name_fr_placeholder', 'name_fr')} value={newProduct.name_fr || ''} onChange={(e) => setNewProduct(p => ({ ...p, name_fr: e.target.value }))} />
+              <input className="border px-2 py-1 rounded" placeholder={t('admin.form.name_en_placeholder', 'name_en')} value={newProduct.name_en || ''} onChange={(e) => setNewProduct(p => ({ ...p, name_en: e.target.value }))} />
               <button className="px-3 py-1 border rounded bg-nubia-gold text-nubia-black" onClick={async () => {
                 if (!newProduct.slug || !newProduct.price || !newProduct.category) return;
                 await fetch('/api/admin/products', {
@@ -462,10 +464,10 @@ function ProductsPanel({ token }: { token: string }) {
                     <input className="border px-2 py-1 rounded w-full" defaultValue={p.care_en || ''} onChange={(e) => setEdit(p.id, "care_en", e.target.value)} />
                   </td>
                   <td className="p-3 w-48">
-                    <input className="border px-2 py-1 rounded w-full" placeholder="S,M,L" defaultValue={Array.isArray(p.sizes) ? p.sizes.join(',') : ''} onChange={(e) => setEdit(p.id, "sizes", e.target.value)} />
+                    <input className="border px-2 py-1 rounded w-full" placeholder={t('admin.form.sizes_placeholder', 'S,M,L')} defaultValue={Array.isArray(p.sizes) ? p.sizes.join(',') : ''} onChange={(e) => setEdit(p.id, "sizes", e.target.value)} />
                   </td>
                   <td className="p-3 w-48">
-                    <input className="border px-2 py-1 rounded w-full" placeholder="Noir,Or" defaultValue={Array.isArray(p.colors) ? p.colors.join(',') : ''} onChange={(e) => setEdit(p.id, "colors", e.target.value)} />
+                    <input className="border px-2 py-1 rounded w-full" placeholder={t('admin.form.colors_placeholder', 'Noir,Or')} defaultValue={Array.isArray(p.colors) ? p.colors.join(',') : ''} onChange={(e) => setEdit(p.id, "colors", e.target.value)} />
                   </td>
                   <td className="p-3">
                     <div className="flex items-center gap-2">

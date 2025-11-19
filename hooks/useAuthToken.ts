@@ -10,6 +10,12 @@ export function useAuthToken() {
 
   // Load token from localStorage on mount and listen for changes
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const stored = localStorage.getItem(TOKEN_KEY);
       setToken(stored);

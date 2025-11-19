@@ -41,7 +41,7 @@ interface EditingOrder {
 
 export default function AdminOrdersPage() {
   const router = useRouter();
-  const { locale } = useTranslation();
+  const { locale, t } = useTranslation();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -761,7 +761,7 @@ export default function AdminOrdersPage() {
                                         minute: '2-digit',
                                       }
                                     )
-                                  : 'Non expédiée'}
+                                  : t('admin.orders.not_shipped', 'Non expédiée')}
                               </p>
                             )}
                           </div>
@@ -919,12 +919,12 @@ export default function AdminOrdersPage() {
                                     e.target.value
                                   )
                                 }
-                                placeholder="Ex: TRACK123456"
+                                placeholder={t('admin.tracking_placeholder', 'Ex: TRACK123456')}
                                 className="w-full px-4 py-2 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"
                               />
                             ) : (
                               <p className="text-lg text-nubia-black">
-                                {order.tracking_number || 'Non fourni'}
+                                {order.tracking_number || t('admin.orders.not_provided', 'Non fourni')}
                               </p>
                             )}
                           </div>
@@ -946,7 +946,7 @@ export default function AdminOrdersPage() {
                                 }
                                 className="w-full px-4 py-2 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"
                               >
-                                <option value="">Sélectionner un transporteur</option>
+                                <option value="">{t('orders.select_carrier', 'Sélectionner un transporteur')}</option>
                                 <option value="DHL">DHL</option>
                                 <option value="FedEx">FedEx</option>
                                 <option value="UPS">UPS</option>
@@ -955,7 +955,7 @@ export default function AdminOrdersPage() {
                               </select>
                             ) : (
                               <p className="text-lg text-nubia-black">
-                                {order.carrier || 'Non spécifié'}
+                                {order.carrier || t('admin.orders.not_specified', 'Non spécifié')}
                               </p>
                             )}
                           </div>

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { X, Mail, Lock, User, AlertCircle, Loader } from 'lucide-react';
 import { useAuthToken } from '@/hooks/useAuthToken';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { saveToken } = useAuthToken();
+  const { t } = useTranslation();
 
   const [loginData, setLoginData] = useState({
     email: '',
@@ -189,10 +191,10 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
                 {loading ? (
                   <>
                     <Loader size={20} className="animate-spin" />
-                    Connexion...
+                    {t('auth.logging_in', 'Connexion...')}
                   </>
                 ) : (
-                  'Se connecter'
+                  t('auth.login_button', 'Se connecter')
                 )}
               </button>
 

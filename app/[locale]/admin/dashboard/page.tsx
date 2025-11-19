@@ -42,10 +42,23 @@ export default function AdminDashboardPage() {
 
   const loadStats = async () => {
     try {
-      // Récupérer les statistiques
+      const token = localStorage.getItem('admin_token');
+      if (!token) {
+        throw new Error('No admin token');
+      }
+
+      // Récupérer les statistiques depuis les endpoints admin avec token
       const [ordersRes, productsRes] = await Promise.all([
-        fetch('/api/orders'),
-        fetch('/api/products'),
+        fetch('/api/admin/orders/list', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }),
+        fetch('/api/admin/products', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }),
       ]);
 
       const ordersData = await ordersRes.json();
@@ -59,7 +72,7 @@ export default function AdminDashboardPage() {
       setStats({
         totalOrders: orders.length,
         totalRevenue,
-        totalCustomers: new Set(orders.map((o: any) => o.customer_id)).size,
+        totalCustomers: new Set(orders.map((o: any) => o.user_id)).size,
         totalProducts: products.length,
       });
     } catch (error) {

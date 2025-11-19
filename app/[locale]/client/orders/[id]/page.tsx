@@ -34,12 +34,12 @@ interface OrderDetail {
 
 export default function OrderDetailPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
+  const { t, locale } = useTranslation();
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const router = useRouter();
   const params = useParams();
-  const { t, locale } = useTranslation();
   const orderId = params.id as string;
 
   useEffect(() => {
@@ -137,7 +137,7 @@ export default function OrderDetailPage() {
         <section className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <AlertCircle className="text-red-600 mx-auto mb-4" size={40} />
-            <p className="text-red-700 mb-6">{error || 'Commande non trouvée'}</p>
+            <p className="text-red-700 mb-6">{error || t('orders.not_found', 'Commande non trouvée')}</p>
             <Link
               href={`/${locale}/client/orders`}
               className="inline-block px-6 py-3 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white border-2 border-nubia-gold transition-all"

@@ -1,28 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase';
-
-function verify(req: NextRequest) {
-  const header = req.headers.get('authorization') || '';
-  const expected = process.env.ADMIN_TOKEN || '';
-  if (header.startsWith('Bearer ')) {
-    const token = header.slice(7);
-    if (expected && token === expected) return true;
-  }
-  if (header.startsWith('Basic ')) {
-    const b64 = header.slice(6);
-    try {
-      const decoded = Buffer.from(b64, 'base64').toString('utf8');
-      const [u, p] = decoded.split(':');
-      const adminUser = process.env.ADMIN_USER || 'nubiaaura';
-      const adminPass = process.env.ADMIN_PASS || 'Paty2025!';
-      if (u === adminUser && p === adminPass) return true;
-    } catch {}
-  }
-  return false;
-}
+import { verifyAdminToken } from '@/lib/auth-admin';
 
 export async function GET(req: NextRequest) {
-  if (!verify(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  // Vérifier l'authentification admin
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return NextResponse.json(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
+
+  const token = authHeader.slice(7); // Remove 'Bearer ' prefix
+  
+  // Vérifier le token admin
+  if (!verifyAdminToken(token)) {
+    return NextResponse.json(
+      { error: 'Invalid admin token' },
+      { status: 401 }
+    );
+  }
   const supabase = getSupabaseServerClient();
 
   const { data, error } = await supabase
@@ -38,11 +36,29 @@ export async function GET(req: NextRequest) {
     stock: Array.isArray(p.product_variants) ? p.product_variants.reduce((sum: number, v: any) => sum + (v?.stock || 0), 0) : 0,
   }));
 
-  return NextResponse.json({ products });
+  return NextResponse.json({ data: products });
 }
 
 export async function POST(req: NextRequest) {
-  if (!verify(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  // Vérifier l'authentification admin
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return NextResponse.json(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
+
+  const token = authHeader.slice(7); // Remove 'Bearer ' prefix
+  
+  // Vérifier le token admin
+  if (!verifyAdminToken(token)) {
+    return NextResponse.json(
+      { error: 'Invalid admin token' },
+      { status: 401 }
+    );
+  }
+
   const supabase = getSupabaseServerClient();
   const body = await req.json().catch(() => ({}));
   const action = body.action as string;

@@ -84,7 +84,7 @@ export default function ClientDashboard() {
                 )}
                 <div>
                   <h2 className="font-playfair text-2xl font-bold text-nubia-black">
-                    {user.name || 'Utilisateur'}
+                    {user.name || t('profile.default_name', 'Utilisateur')}
                   </h2>
                   <p className="text-nubia-black/70">{user.email}</p>
                 </div>

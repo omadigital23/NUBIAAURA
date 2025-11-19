@@ -21,11 +21,19 @@ import frCallback from '@/locales/fr/callback.json';
 import enCallback from '@/locales/en/callback.json';
 import frCustom from '@/locales/fr/custom.json';
 import enCustom from '@/locales/en/custom.json';
+import frAuth from '@/locales/fr/auth.json';
+import enAuth from '@/locales/en/auth.json';
+import frAbout from '@/locales/fr/about.json';
+import enAbout from '@/locales/en/about.json';
+import frContact from '@/locales/fr/contact.json';
+import enContact from '@/locales/en/contact.json';
+import frThankYou from '@/locales/fr/thank-you.json';
+import enThankYou from '@/locales/en/thank-you.json';
 
 const merge = (...objs: Record<string, any>[]) => Object.assign({}, ...objs);
 const translations: Record<Locale, Record<string, any>> = {
-  fr: merge(frCommon as any, frLegal as any, frHome as any, frCatalog as any, frProduct as any, frCheckout as any, frCallback as any, frCustom as any),
-  en: merge(enCommon as any, enLegal as any, enHome as any, enCatalog as any, enProduct as any, enCheckout as any, enCallback as any, enCustom as any),
+  fr: merge(frCommon as any, frLegal as any, frHome as any, frCatalog as any, frProduct as any, frCheckout as any, frCallback as any, frCustom as any, frAuth as any, frAbout as any, frContact as any, frThankYou as any),
+  en: merge(enCommon as any, enLegal as any, enHome as any, enCatalog as any, enProduct as any, enCheckout as any, enCallback as any, enCustom as any, enAuth as any, enAbout as any, enContact as any, enThankYou as any),
 };
 
 export function useTranslation() {

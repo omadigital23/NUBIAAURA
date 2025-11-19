@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { useTranslation } from '@/hooks/useTranslation';
 import { User, Mail, Phone, ArrowLeft, Loader, AlertCircle, CheckCircle } from 'lucide-react';
 
 interface UserProfile {
@@ -15,6 +16,7 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
+  const { t } = useTranslation();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -177,7 +179,7 @@ export default function ProfilePage() {
                     value={formData.name}
                     onChange={handleChange}
                     className="w-full pl-12 pr-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20 transition-all"
-                    placeholder="Votre nom complet"
+                    placeholder={t('profile.name_placeholder', 'Votre nom complet')}
                   />
                 </div>
               </div>
@@ -185,7 +187,7 @@ export default function ProfilePage() {
               {/* Phone */}
               <div>
                 <label className="block text-sm font-semibold text-nubia-black mb-2">
-                  Téléphone
+                  {t('contact.phone_label', 'Téléphone')}
                 </label>
                 <div className="relative">
                   <Phone className="absolute left-4 top-3.5 text-nubia-gold/60" size={20} />
@@ -195,7 +197,7 @@ export default function ProfilePage() {
                     value={formData.phone}
                     onChange={handleChange}
                     className="w-full pl-12 pr-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20 transition-all"
-                    placeholder="+221 77 123 45 67"
+                    placeholder={t('contact.phone_placeholder', '+221 77 123 45 67')}
                   />
                 </div>
               </div>
@@ -235,7 +237,7 @@ export default function ProfilePage() {
                 }}
                 className="w-full py-3 px-4 border-2 border-red-600 text-red-600 font-semibold rounded-lg hover:bg-red-50 transition-all"
               >
-                Déconnexion
+                {t('nav.logout', 'Déconnexion')}
               </button>
             </div>
           </div>

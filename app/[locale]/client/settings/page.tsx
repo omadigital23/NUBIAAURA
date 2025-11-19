@@ -120,21 +120,21 @@ export default function SettingsPage() {
 
           {success && (
             <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-green-700 text-sm">Profil mis à jour avec succès!</p>
+              <p className="text-green-700 text-sm">{t('common.profile_updated', 'Profil mis à jour avec succès!')}</p>
             </div>
           )}
 
           {/* Profile Form */}
           <div className="bg-nubia-cream/30 border border-nubia-gold/20 rounded-lg p-8 mb-8">
             <h2 className="font-playfair text-2xl font-bold text-nubia-black mb-6">
-              Informations Personnelles
+              {t('settings.personal_info', 'Informations Personnelles')}
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Name */}
               <div>
                 <label className="block text-sm font-semibold text-nubia-black mb-2">
-                  Nom complet
+                  {t('contact.name_label', 'Nom complet')}
                 </label>
                 <div className="relative">
                   <User className="absolute left-4 top-3.5 text-nubia-gold/60" size={20} />
@@ -144,7 +144,7 @@ export default function SettingsPage() {
                     value={formData.name}
                     onChange={handleChange}
                     className="w-full pl-12 pr-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20 transition-all"
-                    placeholder="Votre nom"
+                    placeholder={t('auth.first_name_placeholder', 'Votre nom')}
                   />
                 </div>
               </div>
@@ -178,10 +178,10 @@ export default function SettingsPage() {
                 {saving ? (
                   <>
                     <Loader size={20} className="animate-spin" />
-                    Enregistrement...
+                    {t('common.saving', 'Enregistrement...')}
                   </>
                 ) : (
-                  'Enregistrer les modifications'
+                  t('common.save_changes', 'Enregistrer les modifications')
                 )}
               </button>
             </form>
@@ -190,7 +190,7 @@ export default function SettingsPage() {
           {/* Security Section */}
           <div className="bg-nubia-cream/30 border border-nubia-gold/20 rounded-lg p-8">
             <h2 className="font-playfair text-2xl font-bold text-nubia-black mb-6">
-              Sécurité
+              {t('settings.security', 'Sécurité')}
             </h2>
 
             <div className="space-y-4">
