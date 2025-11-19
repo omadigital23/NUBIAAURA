@@ -56,7 +56,7 @@ export default function ClientDashboard() {
               {t('nav.account', 'Mon compte')}
             </h1>
             <p className="text-nubia-black/70">
-              Bienvenue, {user.name || user.email}
+              {t('dashboard.welcome', 'Bienvenue,')} {user.name || user.email}
             </p>
           </div>
 
@@ -93,14 +93,14 @@ export default function ClientDashboard() {
 
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="p-4 bg-nubia-white rounded-lg border border-nubia-gold/10">
-                <p className="text-sm text-nubia-black/70 mb-1">Rôle</p>
+                <p className="text-sm text-nubia-black/70 mb-1">{t('dashboard.role_label', 'Rôle')}</p>
                 <p className="font-semibold text-nubia-black capitalize">
                   {user.role === 'customer' ? 'Client' : user.role}
                 </p>
               </div>
               <div className="p-4 bg-nubia-white rounded-lg border border-nubia-gold/10">
-                <p className="text-sm text-nubia-black/70 mb-1">Statut</p>
-                <p className="font-semibold text-green-600">Actif</p>
+                <p className="text-sm text-nubia-black/70 mb-1">{t('dashboard.status_label', 'Statut')}</p>
+                <p className="font-semibold text-green-600">{t('dashboard.status_active', 'Actif')}</p>
               </div>
             </div>
 

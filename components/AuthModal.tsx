@@ -161,7 +161,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
                     onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                     required
                     className="w-full pl-12 pr-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20"
-                    placeholder="votre@email.com"
+                    placeholder={t('auth.email_placeholder', 'votre@email.com')}
                   />
                 </div>
               </div>
@@ -178,7 +178,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
                     onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                     required
                     className="w-full pl-12 pr-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20"
-                    placeholder="••••••••"
+                    placeholder={t('auth.password_placeholder', '••••••••')}
                   />
                 </div>
               </div>
@@ -206,7 +206,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
                 }}
                 className="w-full py-3 border-2 border-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-gold/10 transition-all"
               >
-                Créer un compte
+                {t('auth.signup_register', 'Créer un compte')}
               </button>
             </form>
           ) : (
@@ -214,7 +214,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-nubia-black mb-2">
-                    Prénom
+                    {t('auth.first_name_label', 'Prénom')}
                   </label>
                   <div className="relative">
                     <User className="absolute left-4 top-3.5 text-nubia-gold/60" size={20} />
@@ -224,14 +224,14 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
                       onChange={(e) => setSignupData({ ...signupData, firstName: e.target.value })}
                       required
                       className="w-full pl-12 pr-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20"
-                      placeholder="Prénom"
+                      placeholder={t('auth.first_name_placeholder', 'Prénom')}
                     />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-nubia-black mb-2">
-                    Nom
+                    {t('auth.last_name_label', 'Nom')}
                   </label>
                   <div className="relative">
                     <User className="absolute left-4 top-3.5 text-nubia-gold/60" size={20} />
@@ -241,7 +241,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
                       onChange={(e) => setSignupData({ ...signupData, lastName: e.target.value })}
                       required
                       className="w-full pl-12 pr-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20"
-                      placeholder="Nom"
+                      placeholder={t('auth.last_name_placeholder', 'Nom')}
                     />
                   </div>
                 </div>
@@ -259,7 +259,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
                     onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
                     required
                     className="w-full pl-12 pr-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20"
-                    placeholder="votre@email.com"
+                    placeholder={t('auth.email_placeholder', 'votre@email.com')}
                   />
                 </div>
               </div>
@@ -276,14 +276,14 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
                     onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
                     required
                     className="w-full pl-12 pr-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20"
-                    placeholder="••••••••"
+                    placeholder={t('auth.password_placeholder', '••••••••')}
                   />
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-nubia-black mb-2">
-                  Confirmer mot de passe
+                  {t('auth.confirm_password_label', 'Confirmer mot de passe')}
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-3.5 text-nubia-gold/60" size={20} />
@@ -293,7 +293,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
                     onChange={(e) => setSignupData({ ...signupData, confirmPassword: e.target.value })}
                     required
                     className="w-full pl-12 pr-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20"
-                    placeholder="••••••••"
+                    placeholder={t('auth.password_placeholder', '••••••••')}
                   />
                 </div>
               </div>
@@ -306,10 +306,10 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
                 {loading ? (
                   <>
                     <Loader size={20} className="animate-spin" />
-                    Inscription...
+                    {t('auth.signup_registering', 'Inscription...')}
                   </>
                 ) : (
-                  'Créer mon compte'
+                  t('auth.signup_submit', 'Créer mon compte')
                 )}
               </button>
 
@@ -321,7 +321,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
                 }}
                 className="w-full py-3 border-2 border-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-gold/10 transition-all"
               >
-                J'ai déjà un compte
+                {t('auth.already_have_account', "J'ai déjà un compte")}
               </button>
             </form>
           )}

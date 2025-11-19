@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { AlertCircle, CheckCircle, Loader } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface ReturnItem {
   product_id: string;
@@ -21,6 +22,7 @@ export default function ReturnRequestForm({
   orderItems,
   onSuccess,
 }: ReturnRequestFormProps) {
+  const { t } = useTranslation();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [reason, setReason] = useState('');
   const [comments, setComments] = useState('');
@@ -182,7 +184,7 @@ export default function ReturnRequestForm({
           id="comments"
           value={comments}
           onChange={(e) => setComments(e.target.value)}
-          placeholder="Décrivez les détails du retour..."
+          placeholder={t('returns.describe_details', 'Décrivez les détails du retour...')}
           rows={4}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent"
         />

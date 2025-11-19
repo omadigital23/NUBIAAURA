@@ -120,8 +120,8 @@ export default function ClientDashboard() {
 
             <div className="bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5 border border-nubia-gold/20 rounded-lg p-6">
               <RotateCcw className="text-nubia-gold mb-4" size={32} />
-              <h3 className="font-semibold text-nubia-black mb-2">Retours</h3>
-              <p className="text-sm text-nubia-black/70 mb-4">Gérer vos retours</p>
+              <h3 className="font-semibold text-nubia-black mb-2">{t('dashboard.returns', 'Retours')}</h3>
+              <p className="text-sm text-nubia-black/70 mb-4">{t('dashboard.manage_returns', 'Gérer vos retours')}</p>
               <Link
                 href="/client/returns"
                 className="text-sm text-nubia-gold hover:underline flex items-center gap-1"
@@ -132,8 +132,8 @@ export default function ClientDashboard() {
 
             <div className="bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5 border border-nubia-gold/20 rounded-lg p-6">
               <MapPin className="text-nubia-gold mb-4" size={32} />
-              <h3 className="font-semibold text-nubia-black mb-2">Adresses</h3>
-              <p className="text-sm text-nubia-black/70 mb-4">Gérer vos adresses</p>
+              <h3 className="font-semibold text-nubia-black mb-2">{t('dashboard.addresses', 'Adresses')}</h3>
+              <p className="text-sm text-nubia-black/70 mb-4">{t('dashboard.manage_addresses', 'Gérer vos adresses')}</p>
               <Link
                 href="/client/addresses"
                 className="text-sm text-nubia-gold hover:underline flex items-center gap-1"

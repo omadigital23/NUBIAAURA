@@ -106,7 +106,7 @@ export default function SettingsPage() {
                 {t('nav.settings', 'Paramètres')}
               </h1>
               <p className="text-nubia-black/70">
-                Gérez vos informations personnelles
+                {t('settings.manage_info', 'Gérez vos informations personnelles')}
               </p>
             </div>
           </div>
@@ -165,7 +165,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <p className="text-xs text-nubia-black/50 mt-1">
-                  L'email ne peut pas être modifié
+                  {t('settings.email_cannot_change', "L'email ne peut pas être modifié")}
                 </p>
               </div>
 

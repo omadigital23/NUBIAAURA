@@ -971,14 +971,14 @@ export default function AdminOrdersPage() {
                               className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold"
                             >
                               <Save size={20} />
-                              Enregistrer
+                              {t('admin.save_button', 'Enregistrer')}
                             </button>
                             <button
                               onClick={() => handleCancel(order.id)}
                               className="flex-1 flex items-center justify-center gap-2 bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-colors font-semibold"
                             >
                               <X size={20} />
-                              Annuler
+                              {t('admin.cancel_button', 'Annuler')}
                             </button>
                           </>
                         ) : (
@@ -987,7 +987,7 @@ export default function AdminOrdersPage() {
                             className="flex-1 flex items-center justify-center gap-2 bg-nubia-gold text-nubia-black px-6 py-3 rounded-lg hover:bg-nubia-gold/90 transition-colors font-semibold"
                           >
                             <Edit2 size={20} />
-                            Modifier
+                            {t('admin.edit_button', 'Modifier')}
                           </button>
                         )}
                       </div>
