@@ -4,6 +4,8 @@ import { verifyPaymentByReference, verifyPayment, isPaymentSuccessful } from '@/
 import { Redis } from '@upstash/redis';
 import { checkRateLimit, paymentRatelimit } from '@/lib/rate-limit';
 import { getLocaleFromPath, getTranslations, getTranslationKey } from '@/lib/i18n';
+import { trackPurchase } from '@/lib/analytics-config';
+import * as Sentry from '@sentry/nextjs';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -104,6 +106,35 @@ export async function POST(request: NextRequest) {
         console.error('Finalize reservations error (verify):', e);
       }
 
+      // Track purchase in analytics
+      try {
+        // Fetch order details for accurate tracking
+        const { data: orderData } = await supabase
+          .from('orders')
+          .select('*, order_items(product_id, quantity, price, products(name))')
+          .eq('id', orderId as string)
+          .single();
+
+        if (orderData) {
+          const orderItems = (orderData.order_items || []).map((item: any) => ({
+            id: item.product_id,
+            name: item.products?.name || 'Product',
+            price: item.price,
+            quantity: item.quantity,
+          }));
+
+          trackPurchase({
+            transaction_id: orderId as string,
+            value: orderData.total || 0,
+            tax: 0, // Can be calculated from total if needed
+            shipping: orderData.shipping_cost || 0,
+            items: orderItems,
+          });
+        }
+      } catch (e) {
+        console.error('Analytics tracking error:', e);
+      }
+
       const payload = { success: true, message: 'Paiement vérifié avec succès', paymentStatus: 'completed', orderStatus: 'processing' };
       await redis.set(idemKey, JSON.stringify(payload), { ex: 900 });
       return NextResponse.json(payload, { status: 200 });
@@ -140,9 +171,14 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Payment verification error:', error);
 
+    // Capture error in Sentry
+    Sentry.captureException(error, {
+      tags: { route: 'payments/verify' },
+    });
+
     // Update order with error status
     let bodyAgain: any = {};
-    try { bodyAgain = await request.json(); } catch {}
+    try { bodyAgain = await request.json(); } catch { }
     const orderId = bodyAgain?.orderId || bodyAgain?.tx_ref;
     if (orderId) {
       await supabase

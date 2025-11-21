@@ -6,32 +6,33 @@ import { useTranslation } from "@/hooks/useTranslation";
 function useAdminToken() {
   const [token, setToken] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  
+
   useEffect(() => {
     const t = localStorage.getItem("admin_token") || "";
     setToken(t);
     setIsAuthenticated(!!t);
   }, []);
-  
+
   const save = (t: string) => {
     localStorage.setItem("admin_token", t);
     setToken(t);
     setIsAuthenticated(!!t);
   };
-  
+
   const logout = () => {
     localStorage.removeItem("admin_token");
     localStorage.removeItem("admin_username");
     setToken("");
     setIsAuthenticated(false);
   };
-  
+
   return { token, setToken: save, isAuthenticated, logout };
 }
 
 export default function AdminPage() {
   const [tab, setTab] = useState<"orders" | "products">("orders");
   const { token, isAuthenticated, logout } = useAdminToken();
+  const { t } = useTranslation();
   const username = typeof window !== 'undefined' ? localStorage.getItem("admin_username") : null;
 
   if (!isAuthenticated) {
@@ -64,6 +65,9 @@ export default function AdminPage() {
           </button>
         </div>
 
+        {/* Statistics Cards */}
+        <StatsCards token={token} />
+
         <div className="flex gap-3 mb-6">
           <button
             className={`px-4 py-2 rounded border ${tab === "orders" ? "bg-nubia-gold border-nubia-gold text-nubia-black" : "border-nubia-gold/40"}`}
@@ -85,6 +89,115 @@ export default function AdminPage() {
   );
 }
 
+function StatsCards({ token }: { token: string }) {
+  const [stats, setStats] = useState({ revenue: 0, stockValue: 0, ordersCount: 0, productsCount: 0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        // Load orders for revenue
+        const ordersRes = await fetch("/api/admin/orders", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const ordersData = await ordersRes.json();
+        const orders = ordersData.orders || [];
+
+        // Calculate revenue from paid/delivered orders
+        const revenue = orders
+          .filter((o: any) => o.payment_status === 'paid' || o.status === 'delivered')
+          .reduce((sum: number, o: any) => sum + (o.total || 0), 0);
+
+        // Load products for stock value
+        const productsRes = await fetch("/api/admin/products", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const productsData = await productsRes.json();
+        const products = productsData.products || [];
+
+        // Calculate stock value (price * stock)
+        const stockValue = products.reduce((sum: number, p: any) => {
+          const stock = p.stock || 0;
+          const price = p.price || 0;
+          return sum + (stock * price);
+        }, 0);
+
+        setStats({
+          revenue,
+          stockValue,
+          ordersCount: orders.length,
+          productsCount: products.length,
+        });
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (token) loadStats();
+  }, [token]);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white border border-nubia-gold/20 rounded-lg p-4 animate-pulse">
+          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+          <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      {/* Revenue Card */}
+      <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-4 shadow-sm">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium text-green-800">💰 Chiffre d'Affaires</span>
+        </div>
+        <div className="text-2xl font-bold text-green-900">
+          {stats.revenue.toLocaleString("fr-FR")} <span className="text-lg">FCFA</span>
+        </div>
+        <p className="text-xs text-green-700 mt-1">{stats.ordersCount} commande(s)</p>
+      </div>
+
+      {/* Stock Value Card */}
+      <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4 shadow-sm">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium text-blue-800">📦 Valeur du Stock</span>
+        </div>
+        <div className="text-2xl font-bold text-blue-900">
+          {stats.stockValue.toLocaleString("fr-FR")} <span className="text-lg">FCFA</span>
+        </div>
+        <p className="text-xs text-blue-700 mt-1">{stats.productsCount} produit(s)</p>
+      </div>
+
+      {/* Orders Count Card */}
+      <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-4 shadow-sm">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium text-purple-800">🛍️ Commandes</span>
+        </div>
+        <div className="text-2xl font-bold text-purple-900">
+          {stats.ordersCount}
+        </div>
+        <p className="text-xs text-purple-700 mt-1">Total commandes</p>
+      </div>
+
+      {/* Products Count Card */}
+      <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-4 shadow-sm">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium text-orange-800">👕 Produits</span>
+        </div>
+        <div className="text-2xl font-bold text-orange-900">
+          {stats.productsCount}
+        </div>
+        <p className="text-xs text-orange-700 mt-1">Total produits</p>
+      </div>
+    </div>
+  );
+}
+
 function OrdersPanel({ token }: { token: string }) {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -97,7 +210,7 @@ function OrdersPanel({ token }: { token: string }) {
       // Force no-cache par les headers
       const res = await fetch("/api/admin/orders", {
         method: 'GET',
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache',
@@ -126,20 +239,20 @@ function OrdersPanel({ token }: { token: string }) {
 
   useEffect(() => {
     if (token) load();
-    
+
     // Charger les données chaque 5 secondes pour un refresh automatique
     const interval = setInterval(() => {
       if (token) load();
     }, 5000);
-    
+
     return () => clearInterval(interval);
   }, [token]);
 
   const updateStatus = async (id: string, status: string) => {
     const res = await fetch("/api/admin/orders", {
       method: "POST",
-      headers: { 
-        "Content-Type": "application/json", 
+      headers: {
+        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
         'Cache-Control': 'no-cache, no-store, must-revalidate',
       },
@@ -160,8 +273,8 @@ function OrdersPanel({ token }: { token: string }) {
     }
     const res = await fetch("/api/admin/orders", {
       method: "POST",
-      headers: { 
-        "Content-Type": "application/json", 
+      headers: {
+        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
         'Cache-Control': 'no-cache, no-store, must-revalidate',
       },
@@ -194,7 +307,7 @@ function OrdersPanel({ token }: { token: string }) {
           {loading ? '⏳ Chargement...' : '🔄 Rafraîchir'}
         </button>
       </div>
-      
+
       {loading && <div className="py-10 text-center">⏳ Chargement des commandes...</div>}
       {error && <div className="py-4 bg-red-100 text-red-800 rounded p-3 mb-4">{error}</div>}
       {!loading && orders.length === 0 && !error && <div className="py-10 text-center text-gray-500">Aucune commande disponible</div>}
@@ -217,7 +330,7 @@ function OrdersPanel({ token }: { token: string }) {
                     <td className="p-3 font-medium">{o.order_number || 'N/A'}</td>
                     <td className="p-3"><span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">{o.status || 'unknown'}</span></td>
                     <td className="p-3"><span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">{o.payment_status || 'pending'}</span></td>
-                    <td className="p-3">{o.total ? o.total.toLocaleString("fr-FR") + " €" : 'N/A'}</td>
+                    <td className="p-3">{o.total ? o.total.toLocaleString("fr-FR") + " FCFA" : 'N/A'}</td>
                     <td className="p-3 flex gap-1 flex-wrap">
                       <button className="px-2 py-1 border border-blue-300 bg-blue-50 rounded text-xs hover:bg-blue-100" onClick={() => updateStatus(o.id, "processing")}>Process</button>
                       <button className="px-2 py-1 border border-orange-300 bg-orange-50 rounded text-xs hover:bg-orange-100" onClick={() => updateStatus(o.id, "shipped")}>Ship</button>
@@ -288,7 +401,7 @@ function ProductsPanel({ token }: { token: string }) {
           const cats = await catRes.json();
           if (Array.isArray(cats.categories)) setCategories(cats.categories);
         }
-      } catch {}
+      } catch { }
     } catch (e: any) {
       setError(e.message || "Failed to load");
     } finally {

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { ShoppingBag, ArrowLeft, Filter, Loader } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface Order {
   id: string;
@@ -19,6 +20,7 @@ interface Order {
 type StatusFilter = 'all' | 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
 export default function OrdersPage() {
+  const { t } = useTranslation();
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);

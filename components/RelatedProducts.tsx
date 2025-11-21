@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useTranslation } from '@/hooks/useTranslation';
 import { withImageParams } from '@/lib/image-formats';
+import OptimizedImage from '@/components/OptimizedImage';
 
 type Item = {
   id: string;
@@ -69,7 +70,7 @@ export default function RelatedProducts({ category, excludeId, locale }: { categ
               <Link href={`/${locale}/produit/${p.slug}`} key={p.id} className="group border border-nubia-gold/20 rounded-xl overflow-hidden bg-white hover:shadow-md transition-shadow">
                 <div className="relative w-full h-40 bg-nubia-cream/30 overflow-hidden">
                   {imageSrc && (
-                    <img src={withImageParams('thumbnail', imageSrc)} alt={name} loading="lazy" className="w-full h-full object-cover" />
+                    <OptimizedImage src={withImageParams('thumbnail', imageSrc)} alt={name} fill sizes="(max-width: 768px) 50vw, 25vw" objectFit="cover" />
                   )}
                 </div>
                 <div className="p-3">

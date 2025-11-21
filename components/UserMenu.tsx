@@ -85,9 +85,9 @@ export default function UserMenu({ user, onLogout }: UserMenuProps) {
         </div>
       </button>
 
-      {/* Menu Déroulant */}
+      {/* Menu Déroulant - Optimisé Mobile */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-nubia-black border border-nubia-gold/20 rounded-lg shadow-lg z-50">
+        <div className="fixed sm:absolute left-0 right-0 sm:left-auto sm:right-0 top-16 sm:top-auto sm:mt-2 w-full sm:w-56 bg-nubia-black border-t-2 sm:border border-nubia-gold/20 sm:rounded-lg shadow-2xl z-[9999] max-h-[calc(100vh-4rem)] sm:max-h-none overflow-y-auto">
           {/* En-tête avec infos utilisateur */}
           <div className="px-4 py-3 border-b border-nubia-gold/10">
             <p className="text-sm font-medium text-nubia-gold truncate">
@@ -101,30 +101,30 @@ export default function UserMenu({ user, onLogout }: UserMenuProps) {
             {/* Mon compte */}
             <Link
               href={`/${locale}/client/account`}
-              className="flex items-center space-x-3 px-4 py-2 text-sm text-nubia-gold hover:bg-nubia-gold/10 transition-colors"
+              className="flex items-center space-x-3 px-4 py-3 text-sm text-nubia-gold hover:bg-nubia-gold/10 transition-colors active:bg-nubia-gold/20"
               onClick={() => setIsOpen(false)}
             >
-              <User size={16} />
+              <User size={18} />
               <span>{t('nav.profile', 'Profil')}</span>
             </Link>
 
             {/* Mes commandes */}
             <Link
               href={`/${locale}/client/orders`}
-              className="flex items-center space-x-3 px-4 py-2 text-sm text-nubia-gold hover:bg-nubia-gold/10 transition-colors"
+              className="flex items-center space-x-3 px-4 py-3 text-sm text-nubia-gold hover:bg-nubia-gold/10 transition-colors active:bg-nubia-gold/20"
               onClick={() => setIsOpen(false)}
             >
-              <ShoppingBag size={16} />
+              <ShoppingBag size={18} />
               <span>{t('nav.my_orders', 'Mes commandes')}</span>
             </Link>
 
             {/* Paramètres */}
             <Link
               href={`/${locale}/client/settings`}
-              className="flex items-center space-x-3 px-4 py-2 text-sm text-nubia-gold hover:bg-nubia-gold/10 transition-colors"
+              className="flex items-center space-x-3 px-4 py-3 text-sm text-nubia-gold hover:bg-nubia-gold/10 transition-colors active:bg-nubia-gold/20"
               onClick={() => setIsOpen(false)}
             >
-              <Settings size={16} />
+              <Settings size={18} />
               <span>{t('nav.settings', 'Paramètres')}</span>
             </Link>
 
@@ -135,9 +135,9 @@ export default function UserMenu({ user, onLogout }: UserMenuProps) {
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-nubia-gold hover:bg-nubia-gold/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center space-x-3 px-4 py-3 text-sm text-nubia-gold hover:bg-nubia-gold/10 transition-colors active:bg-nubia-gold/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <LogOut size={16} />
+              <LogOut size={18} />
               <span>
                 {isLoggingOut
                   ? t('common.loading', 'Chargement...')

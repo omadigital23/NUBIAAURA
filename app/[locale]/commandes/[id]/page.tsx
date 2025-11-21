@@ -18,6 +18,9 @@ interface Order {
   created_at: string;
   delivered_at?: string | null;
   shipped_at?: string | null;
+  estimated_delivery_date?: string | null;
+  tracking_number?: string | null;
+  carrier?: string | null;
   order_items?: OrderItem[];
 }
 
@@ -134,7 +137,7 @@ export default function OrderDetailPage() {
   return (
     <div className="min-h-screen bg-nubia-white flex flex-col">
       <Header />
-      
+
       <section className="flex-1 py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
@@ -146,7 +149,7 @@ export default function OrderDetailPage() {
               <ArrowLeft size={20} />
               {t('orders.back_to_list', 'Retour à mes commandes')}
             </button>
-            
+
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
               <h1 className="font-playfair text-3xl font-bold text-nubia-black mb-2 sm:mb-0">
                 {t('orders.detail.title', 'Détails de la commande')} #{order.order_number}
@@ -154,6 +157,64 @@ export default function OrderDetailPage() {
               <span className={`px-4 py-2 rounded-full text-sm font-medium ${getStatusColor(order.status)}`}>
                 {getStatusText(order.status)}
               </span>
+            </div>
+          </div>
+
+          {/* Order Status Stepper */}
+          <div className="bg-white border-2 border-nubia-gold/20 rounded-lg p-6 mb-6 overflow-hidden">
+            <div className="relative">
+              {/* Progress Bar Background */}
+              <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -translate-y-1/2 hidden sm:block" />
+
+              {/* Progress Bar Active */}
+              <div
+                className="absolute top-1/2 left-0 h-1 bg-nubia-gold -translate-y-1/2 transition-all duration-500 hidden sm:block"
+                style={{
+                  width: order.status === 'delivered' ? '100%' :
+                    order.status === 'shipped' ? '75%' :
+                      order.status === 'processing' ? '50%' :
+                        '25%'
+                }}
+              />
+
+              <div className="flex flex-col sm:flex-row justify-between relative z-10 gap-6 sm:gap-0">
+                {['pending', 'processing', 'shipped', 'delivered'].map((step, index) => {
+                  const steps = ['pending', 'processing', 'shipped', 'delivered'];
+                  const currentStepIndex = steps.indexOf(order.status);
+                  const stepIndex = steps.indexOf(step);
+                  const isCompleted = stepIndex <= currentStepIndex;
+                  const isCurrent = stepIndex === currentStepIndex;
+
+                  return (
+                    <div key={step} className="flex items-center sm:flex-col sm:justify-center gap-4 sm:gap-2">
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors ${isCompleted
+                            ? 'bg-nubia-gold border-nubia-gold text-nubia-black'
+                            : 'bg-white border-gray-300 text-gray-300'
+                          }`}
+                      >
+                        {isCompleted ? (
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <span className="text-sm font-bold">{index + 1}</span>
+                        )}
+                      </div>
+                      <div className="flex flex-col sm:items-center">
+                        <span className={`text-sm font-bold ${isCompleted ? 'text-nubia-black' : 'text-gray-400'}`}>
+                          {getStatusText(step)}
+                        </span>
+                        {isCurrent && (
+                          <span className="text-xs text-nubia-gold font-medium animate-pulse">
+                            {t('common.in_progress', 'En cours')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
@@ -176,15 +237,42 @@ export default function OrderDetailPage() {
                 </div>
               </div>
 
+
+
               <div className="flex items-start gap-3">
                 <Truck className="text-nubia-gold mt-1" size={20} />
                 <div>
                   <p className="text-sm text-nubia-black/60">{t('orders.shipping', 'Livraison')}</p>
                   <p className="font-semibold text-nubia-black">
-                    {order.shipping_method === 'standard' 
+                    {order.shipping_method === 'standard'
                       ? t('checkout.shipping.standard', 'Livraison Standard')
                       : t('checkout.shipping.express', 'Livraison Express')}
                   </p>
+
+                  {/* Tracking Info */}
+                  {order.tracking_number && (
+                    <div className="mt-2 p-2 bg-nubia-gold/10 rounded text-sm">
+                      <p className="font-medium text-nubia-black">
+                        {t('orders.tracking', 'Suivi')}: <span className="font-mono">{order.tracking_number}</span>
+                      </p>
+                      {order.carrier && (
+                        <p className="text-nubia-black/70 text-xs">
+                          {t('orders.carrier', 'Transporteur')}: {order.carrier}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {order.estimated_delivery_date && !order.delivered_at && (
+                    <p className="text-sm text-blue-600 font-medium mt-1">
+                      {t('orders.estimated', 'Estimée le')} {new Date(order.estimated_delivery_date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
+                  )}
+
                   {order.delivered_at && (
                     <p className="text-sm text-green-600 font-medium mt-1">
                       {t('orders.delivered_on', 'Livrée le')} {new Date(order.delivered_at).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', {
@@ -211,7 +299,7 @@ export default function OrderDetailPage() {
                 <div>
                   <p className="text-sm text-nubia-black/60">{t('orders.payment', 'Paiement')}</p>
                   <p className="font-semibold text-nubia-black">
-                    {order.payment_status === 'paid' 
+                    {order.payment_status === 'paid'
                       ? t('orders.paid', 'Payée')
                       : t('orders.pending', 'En attente')}
                   </p>
@@ -227,7 +315,7 @@ export default function OrderDetailPage() {
                 <MapPin className="text-nubia-gold" size={20} />
                 {t('orders.shipping_address', 'Adresse de livraison')}
               </h2>
-              
+
               <div className="bg-nubia-gold/5 rounded-lg p-4">
                 <p className="font-semibold text-nubia-black mb-2">
                   {order.shipping_address?.firstName} {order.shipping_address?.lastName}
@@ -249,7 +337,7 @@ export default function OrderDetailPage() {
                 <Package className="text-nubia-gold" size={20} />
                 {t('orders.summary', 'Résumé')}
               </h2>
-              
+
               <div className="space-y-2">
                 <div className="flex justify-between text-nubia-black/70">
                   <span>{order.order_items?.length || 0} articles</span>
@@ -278,7 +366,7 @@ export default function OrderDetailPage() {
             <h2 className="font-playfair text-xl font-bold text-nubia-black mb-6">
               {t('orders.items', 'Articles commandés')}
             </h2>
-            
+
             <div className="space-y-4">
               {order.order_items?.map((item) => (
                 <div key={item.id} className="flex gap-4 p-4 bg-nubia-cream/30 rounded-lg border border-nubia-gold/20">
@@ -332,10 +420,10 @@ export default function OrderDetailPage() {
               {t('orders.print', 'Imprimer la commande')}
             </button>
           </div>
-        </div>
-      </section>
+        </div >
+      </section >
 
       <Footer />
-    </div>
+    </div >
   );
 }

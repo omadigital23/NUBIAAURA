@@ -43,7 +43,7 @@ export default function NewsletterForm() {
 
       setSuccess(true);
       setEmail('');
-      
+
       // Reset success message after 5 seconds
       setTimeout(() => setSuccess(false), 5000);
     } catch (err: any) {
@@ -63,6 +63,8 @@ export default function NewsletterForm() {
         <input
           id="newsletter-email"
           type="email"
+          inputMode="email"
+          autoComplete="email"
           placeholder={t('common.search')}
           value={email}
           onChange={(e) => setEmail(e.target.value)}

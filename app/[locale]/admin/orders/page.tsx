@@ -8,6 +8,17 @@ import Footer from '@/components/Footer';
 import { ArrowLeft, Truck, Package, Eye, Edit2, Save, X } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 
+interface OrderItem {
+  id: string;
+  product_id: string;
+  quantity: number;
+  price: number;
+  products?: {
+    name: string;
+    image_url: string;
+  };
+}
+
 interface Order {
   id: string;
   order_number: string;
@@ -25,6 +36,7 @@ interface Order {
   carrier: string | null;
   created_at: string;
   updated_at: string;
+  order_items?: OrderItem[];
 }
 
 interface EditingOrder {
@@ -49,9 +61,11 @@ export default function AdminOrdersPage() {
   const [editing, setEditing] = useState<EditingOrder>({});
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
   const [forceUpdate, setForceUpdate] = useState(0);
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const subscriptionRef = useRef<any>(null);
   const selectedOrderRef = useRef<string | null>(null);
-  
+
   // Normalize order data to ensure all fields are properly mapped
   // IMPORTANT: Preserve exact values from database, don't convert to null
   const normalizeOrder = (order: any): Order => {
@@ -73,6 +87,7 @@ export default function AdminOrdersPage() {
       carrier: order.carrier !== undefined ? order.carrier : null,
       created_at: order.created_at ?? new Date().toISOString(),
       updated_at: order.updated_at ?? new Date().toISOString(),
+      order_items: order.order_items || [],
     };
   };
 
@@ -99,7 +114,7 @@ export default function AdminOrdersPage() {
       const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
       console.log('[Realtime] Setting up subscription for orders table');
-      
+
       const channel = supabase
         .channel('orders-changes')
         .on(
@@ -113,7 +128,7 @@ export default function AdminOrdersPage() {
             console.log('[Realtime] Order updated:', payload);
             console.log('[Realtime] New delivered_at:', payload.new.delivered_at);
             console.log('[Realtime] Old delivered_at:', payload.old?.delivered_at);
-            
+
             // Update the order in local state
             setOrders((prevOrders) => {
               const orderIndex = prevOrders.findIndex(o => o.id === payload.new.id);
@@ -129,7 +144,7 @@ export default function AdminOrdersPage() {
                 if (index === orderIndex) {
                   // Normalize the payload data and merge with existing order
                   const payloadOrder = normalizeOrder(payload.new);
-                  
+
                   // Create a completely new object with all fields properly mapped
                   const updatedOrder: Order = {
                     ...order, // Keep existing fields
@@ -144,7 +159,7 @@ export default function AdminOrdersPage() {
                     // Ensure updated_at is set
                     updated_at: payloadOrder.updated_at || order.updated_at,
                   };
-                  
+
                   console.log('[Realtime] Order before update:', {
                     id: order.id,
                     delivered_at: order.delivered_at,
@@ -167,18 +182,18 @@ export default function AdminOrdersPage() {
                     shipped_at: updatedOrder.shipped_at,
                     updated_at: updatedOrder.updated_at,
                   });
-                  
+
                   return updatedOrder;
                 }
                 return { ...order }; // Create new object for other orders too
               });
-              
+
               return updatedOrders;
             });
 
             // Force re-render
             setForceUpdate(prev => prev + 1);
-            
+
             // If the updated order is currently selected, keep it selected
             // Use ref to get the current value
             if (selectedOrderRef.current === payload.new.id) {
@@ -211,7 +226,7 @@ export default function AdminOrdersPage() {
       console.warn('[Realtime] Supabase environment variables not found, Realtime disabled');
     }
     // Always return a cleanup function or undefined on all code paths to satisfy TypeScript
-    return () => {};
+    return () => { };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale, router]);
 
@@ -226,7 +241,17 @@ export default function AdminOrdersPage() {
 
       // Force no cache - multiple cache busting techniques
       const cacheBuster = Date.now();
-      const response = await fetch(`/api/admin/orders/list?t=${cacheBuster}&_=${cacheBuster}`, {
+      let url = `/api/admin/orders/list?t=${cacheBuster}&_=${cacheBuster}`;
+
+      if (filterStatus !== 'all') {
+        url += `&status=${filterStatus}`;
+      }
+
+      if (searchQuery) {
+        url += `&q=${encodeURIComponent(searchQuery)}`;
+      }
+
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -246,7 +271,7 @@ export default function AdminOrdersPage() {
         success: data.success,
         ordersCount: data.orders?.length,
       });
-      
+
       // Log specific order to debug
       const debugOrder = data.orders?.find((o: any) => o.id === 'aa86dcc2-f684-4fe6-a205-46a3f21edcaa');
       if (debugOrder) {
@@ -258,7 +283,7 @@ export default function AdminOrdersPage() {
           raw: debugOrder,
         });
       }
-      
+
       // Normalize all orders to ensure proper mapping
       const normalizedOrders = (data.orders || []).map((order: any) => {
         const normalized = normalizeOrder(order);
@@ -273,7 +298,7 @@ export default function AdminOrdersPage() {
         }
         return normalized;
       });
-      
+
       if (normalizedOrders.length > 0) {
         console.log('[loadOrders] First order after normalization:', {
           id: normalizedOrders[0].id,
@@ -282,7 +307,7 @@ export default function AdminOrdersPage() {
           tracking_number: normalizedOrders[0].tracking_number,
         });
       }
-      
+
       // Create completely new array with explicit object creation to force React update
       const freshOrders = normalizedOrders.map((o: Order) => ({
         id: o.id,
@@ -301,10 +326,11 @@ export default function AdminOrdersPage() {
         carrier: o.carrier,
         created_at: o.created_at,
         updated_at: o.updated_at,
+        order_items: o.order_items,
       }));
-      
+
       console.log('[loadOrders] Setting orders state, count:', freshOrders.length);
-  const debugOrderInState = freshOrders.find((o: Order) => o.id === 'aa86dcc2-f684-4fe6-a205-46a3f21edcaa');
+      const debugOrderInState = freshOrders.find((o: Order) => o.id === 'aa86dcc2-f684-4fe6-a205-46a3f21edcaa');
       if (debugOrderInState) {
         console.log('[loadOrders] DEBUG ORDER in state being set:', {
           id: debugOrderInState.id,
@@ -313,7 +339,7 @@ export default function AdminOrdersPage() {
           updated_at: debugOrderInState.updated_at,
         });
       }
-      
+
       // Force state update and re-render
       setOrders(freshOrders);
       setForceUpdate(prev => prev + 1);
@@ -351,11 +377,11 @@ export default function AdminOrdersPage() {
   const handleSave = async (orderId: string) => {
     console.log('[handleSave] START - orderId:', orderId);
     console.log('[handleSave] editing state:', editing);
-    
+
     try {
       const changes = editing[orderId];
       console.log('[handleSave] changes:', changes);
-      
+
       if (!changes || Object.keys(changes).length === 0) {
         console.log('[handleSave] No changes, returning');
         setError(null);
@@ -427,13 +453,13 @@ export default function AdminOrdersPage() {
         if (reloadData.orders) {
           // Normalize all orders to ensure proper mapping
           const normalizedOrders = reloadData.orders.map((o: any) => normalizeOrder(o));
-          
+
           // Find the updated order in the reloaded data to verify
           const updatedOrderInReload = normalizedOrders.find((o: Order) => o.id === orderId);
           console.log('[handleSave] Updated order in reloaded data (normalized):', updatedOrderInReload);
           console.log('[handleSave] delivered_at value:', updatedOrderInReload?.delivered_at);
           console.log('[handleSave] updated_at value:', updatedOrderInReload?.updated_at);
-          
+
           // CRITICAL: Create completely new objects with all properties explicitly set
           // This ensures React detects the change even if values are the same
           const freshOrders = normalizedOrders.map((o: Order) => ({
@@ -453,17 +479,18 @@ export default function AdminOrdersPage() {
             carrier: o.carrier,
             created_at: o.created_at,
             updated_at: o.updated_at,
+            order_items: o.order_items,
           }));
-          
+
           console.log('[handleSave] Setting new orders state, count:', freshOrders.length);
           console.log('[handleSave] Order to update in state:', freshOrders.find((o: Order) => o.id === orderId));
-          
+
           // Update state with fresh normalized data
           setOrders(freshOrders);
-          
+
           // Force multiple re-renders to ensure UI updates
           setForceUpdate(prev => prev + 1);
-          
+
           // Verify the update was successful by checking state after a delay
           setTimeout(() => {
             setOrders((currentOrders) => {
@@ -473,7 +500,7 @@ export default function AdminOrdersPage() {
                 delivered_at: verifyOrder?.delivered_at,
                 updated_at: verifyOrder?.updated_at,
               });
-              
+
               // If the order still has old data, force a complete reload
               if (verifyOrder && updatedOrderInReload) {
                 const stateUpdatedAt = verifyOrder.updated_at;
@@ -483,10 +510,10 @@ export default function AdminOrdersPage() {
                   setTimeout(() => loadOrders(), 100);
                 }
               }
-              
+
               return currentOrders;
             });
-            
+
             setForceUpdate(prev => prev + 1);
             if (wasOpen) {
               setSelectedOrder(null);
@@ -502,7 +529,7 @@ export default function AdminOrdersPage() {
         if (responseData.order) {
           console.log('[handleSave] Fallback: Updating local state with returned order data');
           const normalizedOrder = normalizeOrder(responseData.order);
-          
+
           setOrders((prevOrders) => {
             const updatedOrders = prevOrders.map((order) => {
               if (order.id === orderId) {
@@ -521,10 +548,10 @@ export default function AdminOrdersPage() {
             });
             return updatedOrders;
           });
-          
+
           // Force re-render by updating forceUpdate counter
           setForceUpdate(prev => prev + 1);
-          
+
           if (wasOpen) {
             setTimeout(() => {
               setSelectedOrder(orderId);
@@ -594,6 +621,110 @@ export default function AdminOrdersPage() {
                 Suivi et gestion de la livraison des commandes
               </p>
             </div>
+          </div>
+
+          {/* Filters & Search */}
+          <div className="bg-white p-4 rounded-lg border border-nubia-gold/20 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="flex items-center gap-4 w-full md:w-auto">
+              <div className="relative flex-1 md:w-64">
+                <input
+                  type="text"
+                  placeholder="Rechercher une commande..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && loadOrders()}
+                  className="w-full pl-4 pr-10 py-2 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"
+                />
+                <button
+                  onClick={() => loadOrders()}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-nubia-gold hover:text-nubia-black"
+                >
+                  <Eye size={18} />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
+              {['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((status) => (
+                <button
+                  key={status}
+                  onClick={() => {
+                    setFilterStatus(status);
+                    // Trigger load immediately after state update (need to use effect or pass param)
+                    // For simplicity, we'll let the user click search or we can use an effect, 
+                    // but here we'll just update state and user can refresh or we add an effect on filterStatus
+                  }}
+                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${filterStatus === status
+                    ? 'bg-nubia-gold text-nubia-black'
+                    : 'bg-nubia-gold/5 text-nubia-black/60 hover:bg-nubia-gold/10'
+                    }`}
+                >
+                  {status === 'all' ? 'Toutes' : getStatusLabel(status)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Effect to reload when filter changes */}
+          {/* We can't put useEffect inside return, so we'll add a button or rely on the user to search/refresh. 
+              Better: Add a "Filtrer" button or make the buttons trigger reload. 
+              Let's add a "Rafraîchir" button.
+          */}
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={() => loadOrders()}
+              className="text-sm text-nubia-gold hover:underline flex items-center gap-1"
+            >
+              <Edit2 size={14} /> Appliquer les filtres / Rafraîchir
+            </button>
+          </div>
+
+          {/* Filters & Search */}
+          <div className="bg-white p-4 rounded-lg border border-nubia-gold/20 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="flex items-center gap-4 w-full md:w-auto">
+              <div className="relative flex-1 md:w-64">
+                <input
+                  type="text"
+                  placeholder="Rechercher une commande..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && loadOrders()}
+                  className="w-full pl-4 pr-10 py-2 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"
+                />
+                <button
+                  onClick={() => loadOrders()}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-nubia-gold hover:text-nubia-black"
+                >
+                  <Eye size={18} />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
+              {['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((status) => (
+                <button
+                  key={status}
+                  onClick={() => {
+                    setFilterStatus(status);
+                  }}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${filterStatus === status
+                      ? 'bg-nubia-gold text-nubia-black'
+                      : 'bg-nubia-gold/5 text-nubia-black/60 hover:bg-nubia-gold/10'
+                    }`}
+                >
+                  {status === 'all' ? 'Toutes' : getStatusLabel(status)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={() => loadOrders()}
+              className="text-sm text-nubia-gold hover:underline flex items-center gap-1"
+            >
+              <Edit2 size={14} /> Appliquer les filtres / Rafraîchir
+            </button>
           </div>
 
           {/* Messages */}
@@ -729,15 +860,15 @@ export default function AdminOrdersPage() {
                                 value={
                                   editing[order.id]?.shipped_at
                                     ? new Date(
-                                        editing[order.id].shipped_at!
-                                      )
-                                        .toISOString()
-                                        .slice(0, 16)
+                                      editing[order.id].shipped_at!
+                                    )
+                                      .toISOString()
+                                      .slice(0, 16)
                                     : order.shipped_at
-                                    ? new Date(order.shipped_at)
+                                      ? new Date(order.shipped_at)
                                         .toISOString()
                                         .slice(0, 16)
-                                    : ''
+                                      : ''
                                 }
                                 onChange={(e) =>
                                   handleEdit(
@@ -752,15 +883,15 @@ export default function AdminOrdersPage() {
                               <p className="text-lg text-nubia-black">
                                 {order.shipped_at
                                   ? new Date(order.shipped_at).toLocaleDateString(
-                                      'fr-FR',
-                                      {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                      }
-                                    )
+                                    'fr-FR',
+                                    {
+                                      year: 'numeric',
+                                      month: 'long',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    }
+                                  )
                                   : t('admin.orders.not_shipped', 'Non expédiée')}
                               </p>
                             )}
@@ -777,15 +908,15 @@ export default function AdminOrdersPage() {
                                 value={
                                   editing[order.id]?.estimated_delivery_date
                                     ? new Date(
-                                        editing[order.id].estimated_delivery_date!
-                                      )
-                                        .toISOString()
-                                        .split('T')[0]
+                                      editing[order.id].estimated_delivery_date!
+                                    )
+                                      .toISOString()
+                                      .split('T')[0]
                                     : order.estimated_delivery_date
-                                    ? new Date(order.estimated_delivery_date)
+                                      ? new Date(order.estimated_delivery_date)
                                         .toISOString()
                                         .split('T')[0]
-                                    : ''
+                                      : ''
                                 }
                                 onChange={(e) =>
                                   handleEdit(
@@ -800,12 +931,12 @@ export default function AdminOrdersPage() {
                               <p className="text-lg text-nubia-black">
                                 {order.estimated_delivery_date
                                   ? new Date(
-                                      order.estimated_delivery_date
-                                    ).toLocaleDateString('fr-FR', {
-                                      year: 'numeric',
-                                      month: 'long',
-                                      day: 'numeric',
-                                    })
+                                    order.estimated_delivery_date
+                                  ).toLocaleDateString('fr-FR', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                  })
                                   : 'À calculer'}
                               </p>
                             )}
@@ -822,15 +953,15 @@ export default function AdminOrdersPage() {
                                 value={
                                   editing[order.id]?.delivered_at
                                     ? new Date(
-                                        editing[order.id].delivered_at!
-                                      )
-                                        .toISOString()
-                                        .slice(0, 16)
+                                      editing[order.id].delivered_at!
+                                    )
+                                      .toISOString()
+                                      .slice(0, 16)
                                     : order.delivered_at
-                                    ? new Date(order.delivered_at)
+                                      ? new Date(order.delivered_at)
                                         .toISOString()
                                         .slice(0, 16)
-                                    : ''
+                                      : ''
                                 }
                                 onChange={(e) =>
                                   handleEdit(
@@ -842,7 +973,7 @@ export default function AdminOrdersPage() {
                                 className="w-full px-4 py-2 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"
                               />
                             ) : (
-                              <div 
+                              <div
                                 key={`delivered-at-${order.id}-${order.updated_at}-${forceUpdate}`}
                                 className="text-lg text-nubia-black"
                               >
@@ -853,9 +984,9 @@ export default function AdminOrdersPage() {
                                     console.warn('[Display] Order not found in state:', order.id);
                                     return <span>Non livrée</span>;
                                   }
-                                  
+
                                   const deliveredAtValue = currentOrder.delivered_at;
-                                  
+
                                   // Debug logging for specific order
                                   if (order.id === 'aa86dcc2-f684-4fe6-a205-46a3f21edcaa' || order.id === selectedOrder) {
                                     console.log('[Display] Rendering delivered_at:', {
@@ -867,7 +998,7 @@ export default function AdminOrdersPage() {
                                       forceUpdate: forceUpdate,
                                     });
                                   }
-                                  
+
                                   if (deliveredAtValue) {
                                     try {
                                       const date = new Date(deliveredAtValue);
@@ -882,11 +1013,11 @@ export default function AdminOrdersPage() {
                                         hour: '2-digit',
                                         minute: '2-digit',
                                       });
-                                      
+
                                       if (order.id === 'aa86dcc2-f684-4fe6-a205-46a3f21edcaa' || order.id === selectedOrder) {
                                         console.log('[Display] Formatted date:', formatted, 'from value:', deliveredAtValue);
                                       }
-                                      
+
                                       return <span>{formatted}</span>;
                                     } catch (e) {
                                       console.error('[Display] Date parsing error:', e, deliveredAtValue, 'for order:', order.id);
@@ -959,6 +1090,72 @@ export default function AdminOrdersPage() {
                               </p>
                             )}
                           </div>
+                        </div>
+                      </div>
+
+                      {/* Status Management */}
+                      <div className="bg-nubia-gold/5 p-4 rounded-lg border border-nubia-gold/20 mt-6">
+                        <h3 className="font-semibold text-nubia-black mb-3">Statut de la commande</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {['pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((status) => (
+                            <button
+                              key={status}
+                              onClick={() => {
+                                if (editing[order.id]?.status === status || (!editing[order.id]?.status && order.status === status)) return;
+                                handleEdit(order.id, 'status', status);
+                              }}
+                              className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${(editing[order.id]?.status || order.status) === status
+                                ? getStatusColor(status) + ' ring-2 ring-offset-2 ring-nubia-gold/50'
+                                : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+                                }`}
+                            >
+                              {getStatusLabel(status)}
+                            </button>
+                          ))}
+                        </div>
+                        {editing[order.id]?.status && editing[order.id]?.status !== order.status && (
+                          <div className="mt-3 flex justify-end">
+                            <button
+                              onClick={() => handleSave(order.id)}
+                              className="flex items-center gap-2 px-4 py-2 bg-nubia-gold text-nubia-black rounded-lg hover:bg-nubia-white border-2 border-nubia-gold transition-all text-sm font-bold"
+                            >
+                              <Save size={16} />
+                              Confirmer le changement de statut
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Order Items */}
+                      <div className="border-t border-nubia-gold/20 pt-6 mt-6">
+                        <h3 className="font-semibold text-nubia-black mb-4 flex items-center gap-2">
+                          <Package size={20} className="text-nubia-gold" />
+                          Articles commandés ({order.order_items?.length || 0})
+                        </h3>
+                        <div className="space-y-3">
+                          {order.order_items?.map((item) => (
+                            <div key={item.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                              {item.products?.image_url && (
+                                <div className="w-12 h-12 bg-white rounded border border-gray-200 overflow-hidden flex-shrink-0">
+                                  <img
+                                    src={item.products.image_url}
+                                    alt={item.products.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              )}
+                              <div className="flex-1">
+                                <p className="font-medium text-nubia-black">{item.products?.name || 'Produit inconnu'}</p>
+                                <p className="text-sm text-gray-500">Qté: {item.quantity} × {item.price.toLocaleString('fr-FR')} FCFA</p>
+                              </div>
+                              <p className="font-bold text-nubia-black">
+                                {(item.quantity * item.price).toLocaleString('fr-FR')} FCFA
+                              </p>
+                            </div>
+                          ))}
+                          {(!order.order_items || order.order_items.length === 0) && (
+                            <p className="text-gray-500 italic">Aucun article trouvé pour cette commande.</p>
+                          )}
                         </div>
                       </div>
 

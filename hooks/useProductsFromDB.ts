@@ -6,7 +6,7 @@ import type { Product, ProductFilters } from '@/lib/types';
 
 type SortOption = ProductFilters['sort'];
 
-export function useProductsFromDB(options?: { category?: string; categories?: string[]; search?: string; sort?: SortOption; priceMin?: number; priceMax?: number }) {
+export function useProductsFromDB(options?: { category?: string; categories?: string[]; search?: string; sort?: SortOption; priceMin?: number; priceMax?: number; excludeCategories?: string[] }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +31,11 @@ export function useProductsFromDB(options?: { category?: string; categories?: st
 
         if (options?.categories && options.categories.length > 0) {
           query = query.in('category', options.categories);
+        }
+
+        // Exclure les catégories spécifiées
+        if (options?.excludeCategories && options.excludeCategories.length > 0) {
+          query = query.not('category', 'in', `(${options.excludeCategories.map(c => `"${c}"`).join(',')})`);
         }
 
         if (options?.search && options.search.trim().length > 0) {
@@ -82,7 +87,7 @@ export function useProductsFromDB(options?: { category?: string; categories?: st
     };
 
     fetchProducts();
-  }, [options?.category, JSON.stringify(options?.categories || []), options?.search, options?.sort, options?.priceMin, options?.priceMax]);
+  }, [options?.category, JSON.stringify(options?.categories || []), options?.search, options?.sort, options?.priceMin, options?.priceMax, JSON.stringify(options?.excludeCategories || [])]);
 
   return { products, loading, error };
 }

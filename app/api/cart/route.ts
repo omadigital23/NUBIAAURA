@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import { cartRateLimit, getClientIdentifier, addRateLimitHeaders } from '@/lib/rate-limit-upstash';
+import * as Sentry from '@sentry/nextjs';
 
 const CartItemSchema = z.object({
   id: z.string(),
@@ -18,8 +20,56 @@ const CartSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting check
+    if (cartRateLimit) {
+      const identifier = getClientIdentifier(request);
+      const { success, limit, remaining, reset } = await cartRateLimit.limit(identifier);
+
+      if (!success) {
+        console.warn(`[Cart] Rate limit exceeded for ${identifier}`);
+
+        const response = NextResponse.json(
+          {
+            error: 'Trop de requêtes. Veuillez réessayer dans quelques instants.',
+            retryAfter: Math.ceil((reset - Date.now()) / 1000),
+          },
+          { status: 429 }
+        );
+
+        addRateLimitHeaders(response.headers, { limit, remaining, reset });
+        return response;
+      }
+
+      const response = await handleCartRequest(request);
+      addRateLimitHeaders(response.headers, { limit, remaining, reset });
+      return response;
+    }
+
+    return await handleCartRequest(request);
+  } catch (error: any) {
+    console.error('[Cart] Error:', error);
+    Sentry.captureException(error, {
+      tags: { route: 'cart' },
+    });
+
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Données invalides', details: error.errors },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: 'Erreur lors de la gestion du panier' },
+      { status: 500 }
+    );
+  }
+}
+
+async function handleCartRequest(request: NextRequest) {
+  try {
     const body = await request.json();
-    
+
     const parsed = CartSchema.parse(body);
 
     const supabase = createClient(
@@ -29,7 +79,7 @@ export async function POST(request: NextRequest) {
 
     // ✅ AUTHENTIFICATION OBLIGATOIRE
     let userId: string | null = null;
-    
+
     // Try to get token from Authorization header first, then from cookie
     let token: string | null = null;
     const authHeader = request.headers.get('Authorization');
@@ -39,11 +89,11 @@ export async function POST(request: NextRequest) {
       const cookieToken = request.cookies.get('sb-auth-token');
       token = cookieToken?.value || null;
     }
-    
+
     console.log('[Cart API] Token from Authorization header:', !!authHeader);
     console.log('[Cart API] Token from cookie:', !!request.cookies.get('sb-auth-token'));
     console.log('[Cart API] Final token present:', !!token);
-    
+
     if (!token) {
       return NextResponse.json(
         { error: 'Authentication required', code: 'AUTH_REQUIRED' },
@@ -79,12 +129,12 @@ export async function POST(request: NextRequest) {
       if (!cart) {
         const { data: newCart, error: newCartError } = await supabase
           .from('carts')
-          .insert({ 
+          .insert({
             user_id: userId
           })
           .select('id')
           .single();
-        
+
         if (newCartError) {
           console.error('[Cart API] Create cart error:', newCartError);
           return NextResponse.json({ error: newCartError.message }, { status: 500 });
@@ -150,12 +200,12 @@ export async function POST(request: NextRequest) {
       if (!cart) {
         const { data: newCart, error: newCartError } = await supabase
           .from('carts')
-          .insert({ 
+          .insert({
             user_id: userId
           })
           .select('id')
           .single();
-        
+
         if (newCartError) {
           return NextResponse.json({ error: newCartError.message }, { status: 500 });
         }
@@ -179,7 +229,7 @@ export async function POST(request: NextRequest) {
         // Mettre à jour la quantité
         const { error: updateError } = await supabase
           .from('cart_items')
-          .update({ 
+          .update({
             quantity: existingItem.quantity + parsed.item.quantity,
             updated_at: new Date().toISOString()
           })
@@ -206,19 +256,9 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Décrémenter le stock du produit
-      const quantityToDeduct = existingItem ? parsed.item.quantity : parsed.item.quantity;
-      const { error: stockError } = await supabase
-        .from('products')
-        .update({ 
-          stock: product.stock ? product.stock - quantityToDeduct : 0
-        })
-        .eq('id', parsed.item.id);
-
-      if (stockError) {
-        console.error('[Cart API] Stock update error:', stockError);
-        // Ne pas retourner une erreur, juste logger
-      }
+      // NOTE: Stock is NOT decremented here anymore
+      // Stock reservations are created at checkout time instead
+      // This allows users to abandon carts without losing stock
 
       // Retourner l'item mis à jour
       const transformedItem = {
@@ -244,14 +284,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
       }
 
-      // Récupérer la quantité de l'item avant suppression
-      const { data: cartItem } = await supabase
-        .from('cart_items')
-        .select('quantity')
-        .eq('cart_id', cart.id)
-        .eq('product_id', parsed.item.id)
-        .single();
-
       // Supprimer l'item du panier
       const { error: deleteError } = await supabase
         .from('cart_items')
@@ -263,22 +295,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: deleteError.message }, { status: 500 });
       }
 
-      // Restaurer le stock du produit
-      if (cartItem && cartItem.quantity > 0) {
-        const { data: product } = await supabase
-          .from('products')
-          .select('stock')
-          .eq('id', parsed.item.id)
-          .single();
-
-        if (product) {
-          const newStock = (product.stock || 0) + cartItem.quantity;
-          await supabase
-            .from('products')
-            .update({ stock: newStock })
-            .eq('id', parsed.item.id);
-        }
-      }
+      // NOTE: Stock restoration is NOT needed here
+      // Stock was never decremented from cart, only reserved at checkout
 
       return NextResponse.json({ success: true });
     }
@@ -331,7 +349,7 @@ export async function POST(request: NextRequest) {
         // Mettre à jour la quantité
         const { error: updateError } = await supabase
           .from('cart_items')
-          .update({ 
+          .update({
             quantity: parsed.item.quantity,
             updated_at: new Date().toISOString()
           })
@@ -384,6 +402,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('[Cart API] Error:', error);
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    throw error; // Re-throw to be caught by outer handler
   }
 }

@@ -10,13 +10,14 @@ import { useCartContext } from '@/contexts/CartContext';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/hooks/useAuth';
 import CheckoutDebugPanel from '@/components/CheckoutDebugPanel';
+import { trackBeginCheckout, trackAddShippingInfo, trackAddPaymentInfo } from '@/lib/analytics-config';
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { items: cartItems, clearCart, loading: cartLoading } = useCartContext();
   const { t, locale } = useTranslation();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
-  
+
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +28,7 @@ export default function CheckoutPage() {
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [quoteError, setQuoteError] = useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -64,6 +65,26 @@ export default function CheckoutPage() {
     );
   }, [formData]);
 
+  // Track begin checkout when user reaches checkout page with items
+  useEffect(() => {
+    if (cartItems.length > 0 && !authLoading) {
+      try {
+        const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        trackBeginCheckout({
+          value: subtotal,
+          items: cartItems.map(item => ({
+            id: item.id,
+            name: item.name || '',
+            price: item.price,
+            quantity: item.quantity,
+          })),
+        });
+      } catch (e) {
+        console.error('Analytics tracking error:', e);
+      }
+    }
+  }, []); // Only track once on mount
+
   // Redirect to catalog if cart empty (only after cart finished loading)
   // BUT NOT if we're processing an order (to allow redirect to thank you page)
   useEffect(() => {
@@ -83,12 +104,12 @@ export default function CheckoutPage() {
         console.log('[Checkout] Panier vide, quote reset');
         return;
       }
-      
+
       console.log('[Checkout] Démarrage calcul quote pour', cartItems.length, 'produits');
       console.log('[Checkout] quoteLoading = true (début calcul)');
       setQuoteLoading(true);
       setQuoteError(null);
-      
+
       try {
         const res = await fetch('/api/checkout/quote', {
           method: 'POST',
@@ -99,10 +120,10 @@ export default function CheckoutPage() {
             items: cartItems.map((it) => ({ product_id: it.id, quantity: it.quantity })),
           }),
         });
-        
+
         const data = await res.json();
         console.log('[Checkout] Réponse quote API:', data);
-        
+
         if (!aborted) {
           if (!res.ok || !data?.success) {
             setQuote(null);
@@ -151,7 +172,25 @@ export default function CheckoutPage() {
   };
 
   const handleShippingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setShippingMethod(e.target.value);
+    const newShippingMethod = e.target.value;
+    setShippingMethod(newShippingMethod);
+
+    // Track shipping info selection
+    try {
+      const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      trackAddShippingInfo({
+        value: subtotal,
+        shipping_tier: newShippingMethod,
+        items: cartItems.map(item => ({
+          id: item.id,
+          name: item.name || '',
+          price: item.price,
+          quantity: item.quantity,
+        })),
+      });
+    } catch (e) {
+      console.error('Analytics tracking error:', e);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -177,7 +216,7 @@ export default function CheckoutPage() {
       console.log('[Checkout] handleSubmit called');
       console.log('[Checkout] Selected payment method (from state):', paymentMethod);
       console.log('[Checkout] Step:', step);
-      
+
       // Marquer qu'on traite une commande pour éviter la redirection automatique
       setIsProcessingOrder(true);
 
@@ -221,7 +260,7 @@ export default function CheckoutPage() {
         console.log('[Checkout] COD response status:', response.status);
         const data = await response.json();
         console.log('[Checkout] COD response data:', data);
-      
+
         if (!response.ok || !data?.order?.id) {
           throw new Error(data?.error || t('checkout.errors.cod_failed', 'Erreur lors de la création de la commande (COD)'));
         }
@@ -235,9 +274,9 @@ export default function CheckoutPage() {
           console.error('[Checkout] Error clearing cart:', clearError);
           // Continue anyway - order is already created
         }
-        
+
         console.log('[Checkout] Redirecting to:', `/${locale}/merci?orderId=${data.order.id}`);
-        
+
         // Redirection avec window.location pour éviter les useEffect
         window.location.href = `/${locale}/merci?orderId=${data.order.id}`;
         return;
@@ -341,11 +380,10 @@ export default function CheckoutPage() {
                         }
                         setStep(3);
                       }}
-                      className={`w-full py-3 rounded-lg font-semibold transition-all ${
-                        step === s
+                      className={`w-full py-3 rounded-lg font-semibold transition-all ${step === s
                           ? 'bg-nubia-gold text-nubia-black'
                           : 'bg-nubia-gold/20 text-nubia-black/70'
-                      }`}
+                        }`}
                     >
                       {s === 1 ? t('checkout.steps.address', 'Adresse') : s === 2 ? t('checkout.steps.shipping', 'Livraison') : t('checkout.steps.payment', 'Paiement')}
                     </button>
@@ -466,18 +504,17 @@ export default function CheckoutPage() {
                     <h2 className="font-playfair text-2xl font-bold text-nubia-black mb-6">{t('checkout.shipping.title', 'Méthode de Livraison')}</h2>
 
                     <div className="space-y-4">
-                      <label className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                        shippingMethod === 'standard' 
-                          ? 'border-nubia-gold bg-nubia-gold/10' 
+                      <label className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${shippingMethod === 'standard'
+                          ? 'border-nubia-gold bg-nubia-gold/10'
                           : 'border-nubia-gold/30 hover:bg-nubia-gold/10'
-                      }`}>
-                        <input 
-                          type="radio" 
-                          name="shipping" 
-                          value="standard" 
+                        }`}>
+                        <input
+                          type="radio"
+                          name="shipping"
+                          value="standard"
                           checked={shippingMethod === 'standard'}
                           onChange={handleShippingChange}
-                          className="mr-4" 
+                          className="mr-4"
                         />
                         <div>
                           <p className="font-semibold text-nubia-black">{t('checkout.shipping.standard', 'Livraison Standard')}</p>
@@ -485,18 +522,17 @@ export default function CheckoutPage() {
                         </div>
                       </label>
 
-                      <label className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                        shippingMethod === 'express' 
-                          ? 'border-nubia-gold bg-nubia-gold/10' 
+                      <label className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${shippingMethod === 'express'
+                          ? 'border-nubia-gold bg-nubia-gold/10'
                           : 'border-nubia-gold/30 hover:bg-nubia-gold/10'
-                      }`}>
-                        <input 
-                          type="radio" 
-                          name="shipping" 
-                          value="express" 
+                        }`}>
+                        <input
+                          type="radio"
+                          name="shipping"
+                          value="express"
                           checked={shippingMethod === 'express'}
                           onChange={handleShippingChange}
-                          className="mr-4" 
+                          className="mr-4"
                         />
                         <div>
                           <p className="font-semibold text-nubia-black">{t('checkout.shipping.express', 'Livraison Express')}</p>
@@ -520,9 +556,8 @@ export default function CheckoutPage() {
                     <div className="space-y-4">
                       <label
                         onClick={() => setPaymentMethod('flutterwave')}
-                        className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                        paymentMethod === 'flutterwave' ? 'border-nubia-gold bg-nubia-gold/10' : 'border-nubia-gold/30 hover:bg-nubia-gold/10'
-                      }`}
+                        className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${paymentMethod === 'flutterwave' ? 'border-nubia-gold bg-nubia-gold/10' : 'border-nubia-gold/30 hover:bg-nubia-gold/10'
+                          }`}
                       >
                         <input
                           type="radio"
@@ -533,6 +568,23 @@ export default function CheckoutPage() {
                             console.log('[Checkout] Flutterwave radio clicked, value:', e.target.value);
                             setPaymentMethod('flutterwave');
                             console.log('[Checkout] paymentMethod state updated to: flutterwave');
+
+                            // Track payment info selection
+                            try {
+                              const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                              trackAddPaymentInfo({
+                                value: subtotal,
+                                payment_type: 'flutterwave',
+                                items: cartItems.map(item => ({
+                                  id: item.id,
+                                  name: item.name || '',
+                                  price: item.price,
+                                  quantity: item.quantity,
+                                })),
+                              });
+                            } catch (e) {
+                              console.error('Analytics tracking error:', e);
+                            }
                           }}
                           className="mr-4"
                         />
@@ -544,9 +596,8 @@ export default function CheckoutPage() {
 
                       <label
                         onClick={() => setPaymentMethod('cod')}
-                        className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                        paymentMethod === 'cod' ? 'border-nubia-gold bg-nubia-gold/10' : 'border-nubia-gold/30 hover:bg-nubia-gold/10'
-                      }`}
+                        className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${paymentMethod === 'cod' ? 'border-nubia-gold bg-nubia-gold/10' : 'border-nubia-gold/30 hover:bg-nubia-gold/10'
+                          }`}
                       >
                         <input
                           type="radio"
@@ -557,6 +608,23 @@ export default function CheckoutPage() {
                             console.log('[Checkout] COD radio clicked, value:', e.target.value);
                             setPaymentMethod('cod');
                             console.log('[Checkout] paymentMethod state updated to: cod');
+
+                            // Track payment info selection
+                            try {
+                              const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                              trackAddPaymentInfo({
+                                value: subtotal,
+                                payment_type: 'cod',
+                                items: cartItems.map(item => ({
+                                  id: item.id,
+                                  name: item.name || '',
+                                  price: item.price,
+                                  quantity: item.quantity,
+                                })),
+                              });
+                            } catch (e) {
+                              console.error('Analytics tracking error:', e);
+                            }
                           }}
                           className="mr-4"
                         />

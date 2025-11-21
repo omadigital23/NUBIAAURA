@@ -74,6 +74,21 @@ export async function POST(request: NextRequest) {
 
     if (itemsError) throw itemsError;
 
+    // Créer les réservations de stock pour chaque item
+    const reservations = validated.items.map((item: any) => ({
+      order_id: order.id,
+      product_id: item.product_id,
+      variant_id: item.variant_id || null,
+      qty: item.quantity,
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24h expiration
+    }));
+
+    const { error: reservationError } = await supabase
+      .from('stock_reservations')
+      .insert(reservations);
+
+    if (reservationError) throw reservationError;
+
     return NextResponse.json(
       {
         success: true,

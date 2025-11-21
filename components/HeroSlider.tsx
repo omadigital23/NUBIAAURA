@@ -6,6 +6,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { withImageParams } from '@/lib/image-formats';
+import OptimizedImage from '@/components/OptimizedImage';
 
 type DBProduct = {
   id: string;
@@ -100,25 +101,28 @@ export default function HeroSlider() {
   const currentProduct = items[currentIndex];
   const displayName = currentProduct
     ? (locale === 'fr'
-        ? currentProduct.name_fr || currentProduct.name || currentProduct.name_en || ''
-        : currentProduct.name_en || currentProduct.name || currentProduct.name_fr || '')
+      ? currentProduct.name_fr || currentProduct.name || currentProduct.name_en || ''
+      : currentProduct.name_en || currentProduct.name || currentProduct.name_fr || '')
     : '';
   const imageSrc = currentProduct?.image || currentProduct?.image_url || '';
   const price = currentProduct?.price || 0;
   const rating = currentProduct?.rating ?? 5;
 
-  
+
 
   return (
     <div className="relative h-full min-h-screen bg-gradient-to-br from-nubia-gold/20 to-nubia-gold/5 rounded-2xl overflow-hidden border border-nubia-gold/30 group">
       {/* Main Image */}
       <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
         {imageSrc ? (
-          <img
+          <OptimizedImage
             src={withImageParams('hero', imageSrc)}
             alt={displayName}
-            loading={currentIndex === 0 ? 'eager' : 'lazy'}
-            className="w-full h-full object-cover transition-opacity duration-500"
+            fill
+            sizes="100vw"
+            priority={currentIndex === 0}
+            objectFit="cover"
+            className="transition-opacity duration-500"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-nubia-cream/40" />
@@ -153,7 +157,7 @@ export default function HeroSlider() {
       {/* Previous Button */}
       <button
         onClick={goToPrevious}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-nubia-gold/80 hover:bg-nubia-gold text-nubia-black p-2 rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 transform hover:scale-110"
+        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-nubia-gold/80 hover:bg-nubia-gold text-nubia-black p-2 rounded-full transition-all duration-300 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transform hover:scale-110"
         aria-label={t('common.previous')}
       >
         <ChevronLeft size={24} />
@@ -162,7 +166,7 @@ export default function HeroSlider() {
       {/* Next Button */}
       <button
         onClick={goToNext}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-nubia-gold/80 hover:bg-nubia-gold text-nubia-black p-2 rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 transform hover:scale-110"
+        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-nubia-gold/80 hover:bg-nubia-gold text-nubia-black p-2 rounded-full transition-all duration-300 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transform hover:scale-110"
         aria-label={t('common.next')}
       >
         <ChevronRight size={24} />
@@ -174,11 +178,10 @@ export default function HeroSlider() {
           <button
             key={index}
             onClick={() => goToSlide(index)}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              index === currentIndex
-                ? 'bg-nubia-gold w-8'
-                : 'bg-nubia-white/50 hover:bg-nubia-white/80 w-2'
-            }`}
+            className={`h-2 rounded-full transition-all duration-300 ${index === currentIndex
+              ? 'bg-nubia-gold w-8'
+              : 'bg-nubia-white/50 hover:bg-nubia-white/80 w-2'
+              }`}
             aria-label={`Aller à la diapositive ${index + 1}`}
           />
         ))}

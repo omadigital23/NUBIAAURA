@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { X, Mail, Lock, User, AlertCircle, Loader } from 'lucide-react';
 import { useAuthToken } from '@/hooks/useAuthToken';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -16,7 +17,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { saveToken } = useAuthToken();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
 
   const [loginData, setLoginData] = useState({
     email: '',
@@ -123,8 +124,8 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-nubia-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center sm:p-4">
+      <div className="bg-nubia-white rounded-none sm:rounded-lg max-w-md w-full h-full sm:h-auto sm:max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-nubia-white border-b border-nubia-gold/20 p-6 flex items-center justify-between">
           <h2 className="font-playfair text-2xl font-bold text-nubia-black">
@@ -181,6 +182,17 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
                     placeholder={t('auth.password_placeholder', '••••••••')}
                   />
                 </div>
+              </div>
+
+              {/* Forgot Password Link */}
+              <div className="text-right">
+                <Link
+                  href={`/${locale}/auth/forgot-password`}
+                  onClick={onClose}
+                  className="text-sm text-nubia-gold hover:text-nubia-black transition-colors"
+                >
+                  {t('auth.forgot_password', 'Mot de passe oublié ?')}
+                </Link>
               </div>
 
               <button

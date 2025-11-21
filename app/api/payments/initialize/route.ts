@@ -6,6 +6,7 @@ import { Redis } from '@upstash/redis';
 import { computeQuote, ShippingMethod } from '@/lib/pricing';
 import { getLocaleFromPath, getTranslations, getTranslationKey } from '@/lib/i18n';
 import { paymentRatelimit, checkRateLimit } from '@/lib/rate-limit';
+import * as Sentry from '@sentry/nextjs';
 
 // Validation schema - flexible to accept both checkout form and test data
 const PaymentInitializationSchema = z.object({
@@ -20,7 +21,7 @@ const PaymentInitializationSchema = z.object({
   country: z.string().optional(),
   shippingMethod: z.enum(['standard', 'express']).optional().default('standard'),
   locale: z.enum(['fr', 'en']).optional(),
-  
+
   // From cart/items
   items: z.array(z.object({
     product_id: z.string(),
@@ -28,7 +29,7 @@ const PaymentInitializationSchema = z.object({
     price: z.number().positive('Prix doit être positif'),
     name: z.string().optional(),
   })).optional(),
-  
+
   // Legacy fields for backward compatibility
   orderId: z.string().optional(),
   amount: z.number().optional(),
@@ -41,8 +42,8 @@ const PaymentInitializationSchema = z.object({
 }).refine(
   (data) => {
     // Must have either items or cartItems
-    return (Array.isArray(data.items) && data.items.length > 0) || 
-           (Array.isArray(data.cartItems) && data.cartItems.length > 0);
+    return (Array.isArray(data.items) && data.items.length > 0) ||
+      (Array.isArray(data.cartItems) && data.cartItems.length > 0);
   },
   { message: 'Au moins un article est requis' }
 );
@@ -74,7 +75,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     console.log('[Payment Init] Request body:', JSON.stringify(body, null, 2));
-    
+
     const validatedData = PaymentInitializationSchema.parse(body);
 
     const supabase = createClient(
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
 
     // Use items or cartItems (for backward compatibility)
     const cartItems = Array.isArray(body.items) ? body.items : (Array.isArray(body.cartItems) ? body.cartItems : []);
-    
+
     if (!Array.isArray(cartItems) || cartItems.length === 0) {
       const msg = getTranslationKey(commonNs, 'common.error') || 'Au moins un article est requis';
       return NextResponse.json({ error: msg }, { status: 400 });
@@ -242,11 +243,11 @@ export async function POST(request: NextRequest) {
       customer_name: validatedData.customerName || `${body.firstName || ''} ${body.lastName || ''}`.trim() || 'Client',
       redirect_url: redirectUrl,
     } as any;
-    
+
     console.log('[Payment Init] Payment payload:', JSON.stringify(paymentPayload, null, 2));
     const paymentResponse = await initializePayment(paymentPayload);
     console.log('[Payment Init] Payment response:', JSON.stringify(paymentResponse, null, 2));
-    
+
     const paymentLink = paymentResponse.data?.link;
     if (!paymentLink) {
       const msg = getTranslationKey(commonNs, 'common.error') || 'Payment link missing';
@@ -263,6 +264,16 @@ export async function POST(request: NextRequest) {
     );
   } catch (error: any) {
     console.error('Payment initialization error:', error);
+
+    // Capture error in Sentry
+    Sentry.captureException(error, {
+      tags: { route: 'payments/initialize' },
+      extra: {
+        flutterwaveResponse: error.response?.data,
+        flutterwaveStatus: error.response?.status,
+      },
+    });
+
     // Log detailed error response from Flutterwave if available
     if (error.response?.data) {
       // eslint-disable-next-line no-console

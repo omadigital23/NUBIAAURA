@@ -37,21 +37,20 @@ export default function ProductActions({ productName, productUrl }: { productNam
       <div className="flex flex-wrap gap-4">
         <button
           onClick={handleShare}
-          className="flex items-center space-x-2 px-4 py-2 border border-nubia-gold/30 rounded-lg hover:bg-nubia-gold/10 transition-colors"
+          className="flex items-center space-x-2 px-5 py-3 border border-nubia-gold/30 rounded-lg hover:bg-nubia-gold/10 transition-colors"
         >
-          <Share2 size={18} className="text-nubia-gold" />
+          <Share2 size={20} className="text-nubia-gold" />
           <span className="text-sm text-nubia-black">{t('product.share', 'Partager')}</span>
         </button>
 
         <button
           onClick={() => setIsWishlisted(!isWishlisted)}
-          className={`flex items-center space-x-2 px-4 py-2 border rounded-lg transition-colors ${
-            isWishlisted
+          className={`flex items-center space-x-2 px-5 py-3 border rounded-lg transition-colors ${isWishlisted
               ? 'bg-nubia-gold/10 border-nubia-gold text-nubia-gold'
               : 'border-nubia-gold/30 hover:bg-nubia-gold/10 text-nubia-black'
-          }`}
+            }`}
         >
-          <Heart size={18} fill={isWishlisted ? 'currentColor' : 'none'} />
+          <Heart size={20} fill={isWishlisted ? 'currentColor' : 'none'} />
           <span className="text-sm">
             {isWishlisted
               ? t('product.wishlist_remove', 'Retirer')

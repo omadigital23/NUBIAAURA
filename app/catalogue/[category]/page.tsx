@@ -18,7 +18,7 @@ interface Category {
 
 export default function CategoryPage() {
   const params = useParams();
-  const { locale } = useTranslation();
+  const { locale, t } = useTranslation();
   const categorySlug = params.category as string;
   const [category, setCategory] = useState<Category | null>(null);
   const [products, setProducts] = useState<any[]>([]);

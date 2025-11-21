@@ -18,11 +18,11 @@ export function SearchBar({ initialSearch = '', className = '' }: { initialSearc
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!search.trim()) return;
-    
+
     // Construire l'URL de recherche
     const searchParams = new URLSearchParams();
     searchParams.set('q', search.trim());
-    
+
     // Rediriger vers la page de résultats de recherche
     router.push(`/catalogue/recherche?${searchParams.toString()}`);
   };
@@ -36,7 +36,7 @@ export function SearchBar({ initialSearch = '', className = '' }: { initialSearc
         <input
           type="text"
           placeholder={t('catalog.search_placeholder', 'Rechercher...')}
-          className="w-full pl-10 pr-4 py-2 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"
+          className="w-full pl-10 pr-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"
           disabled
         />
       </div>
@@ -50,11 +50,12 @@ export function SearchBar({ initialSearch = '', className = '' }: { initialSearc
           <Search size={20} />
         </div>
         <input
-          type="text"
+          type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t('catalog.search_placeholder', 'Rechercher...')}
-          className="w-full pl-10 pr-4 py-2 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"
+          className="w-full pl-10 pr-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"
+          autoComplete="off"
         />
       </div>
     </form>

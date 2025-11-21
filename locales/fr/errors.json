@@ -1,0 +1,8 @@
+{
+    "boundary": {
+        "title": "Oups ! Quelque chose s'est mal passé",
+        "message": "Nous sommes désolés, mais une erreur inattendue s'est produite. Notre équipe a été notifiée et travaille pour résoudre le problème.",
+        "reload": "Recharger la page",
+        "home": "Retour à l'accueil"
+    }
+}

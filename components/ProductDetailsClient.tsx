@@ -7,6 +7,8 @@ import { useCartContext } from "@/contexts/CartContext";
 import { useAuth } from "@/hooks/useAuth";
 import AuthModal from "@/components/AuthModal";
 import { withImageParams } from "@/lib/image-formats";
+import { trackProductView, trackAddToCart } from "@/lib/analytics-config";
+import OptimizedImage from "@/components/OptimizedImage";
 
 type ProductImage = {
   url: string;
@@ -67,6 +69,23 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
     setIsMounted(true);
   }, []);
 
+  // Track product view
+  useEffect(() => {
+    if (product) {
+      try {
+        const productName = (locale === "fr" ? product.name_fr : product.name_en) || product.name;
+        trackProductView({
+          id: product.id,
+          name: productName,
+          price: typeof product.price === 'string' ? parseFloat(product.price) : product.price,
+          category: product.slug,
+        });
+      } catch (e) {
+        console.error('Analytics tracking error:', e);
+      }
+    }
+  }, [product, locale]);
+
   if (!product) {
     return (
       <div className="py-20 text-center text-nubia-black">{t("product.not_found", "Produit non trouvé")}</div>
@@ -80,7 +99,7 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
   const description = useMemo(() => {
     const desc_fr = product.description_fr || product.description || '';
     const desc_en = product.description_en || '';
-    
+
     if (locale === "fr") {
       return desc_fr;
     } else {
@@ -115,13 +134,13 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
     if (typeof product.stock === 'number') {
       return product.stock;
     }
-    
+
     // Priorité 2: Calculer depuis les variants
     if (product.product_variants && product.product_variants.length > 0) {
       const totalStock = product.product_variants.reduce((sum, variant) => sum + (variant.stock || 0), 0);
       return totalStock;
     }
-    
+
     // Priorité 3: Fallback sur inStock
     return inStock ? 10 : 0;
   }, [product.stock, product.product_variants, inStock]);
@@ -166,10 +185,10 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
 
     // Vérifier que l'utilisateur peut ajouter (taille, couleur, stock)
     if (!canAdd) return;
-    
+
     // Vérifier le stock disponible
     if (quantity > availableStock) {
-      setAddError(locale === 'fr' 
+      setAddError(locale === 'fr'
         ? `Stock insuffisant. Seulement ${availableStock} articles disponibles.`
         : `Insufficient stock. Only ${availableStock} items available.`
       );
@@ -187,13 +206,26 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
         quantity,
         image: imageSrc,
       });
+
+      // Track add to cart event
+      try {
+        trackAddToCart({
+          id: product.id,
+          name,
+          price,
+          quantity,
+        });
+      } catch (e) {
+        console.error('Analytics tracking error:', e);
+      }
+
       // Show success message
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
       setAddError(null);
     } catch (err) {
       console.error('Error adding to cart:', err);
-      
+
       // Si erreur AUTH_REQUIRED de l'API, afficher le modal
       if (err instanceof Error && err.message.includes('Authentication required')) {
         setShowAuthModal(true);
@@ -221,23 +253,35 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
         <div className="md:col-span-2">
           {/* Mobile thumbnails - Horizontal */}
           {isMounted && gallery.length > 1 && (
-            <div className="flex md:hidden gap-2 mb-4 overflow-x-auto pb-2">
-              {gallery.map((img, idx) => (
-                <button
-                  key={`${img}-${idx}`}
-                  onClick={() => setActiveImageIndex(idx)}
-                  className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${
-                    activeImageIndex === idx ? 'border-nubia-gold' : 'border-nubia-gold/30'
-                  }`}
-                >
-                  <img
-                    src={withImageParams('thumbnail', img)}
-                    alt={`${name} - ${idx + 1}`}
-                    loading="lazy"
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-              ))}
+            <div className="relative md:hidden mb-4">
+              <div
+                className="flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
+                <style jsx>{`
+                  div::-webkit-scrollbar {
+                    display: none;
+                  }
+                `}</style>
+                {gallery.map((img, idx) => (
+                  <button
+                    key={`${img}-${idx}`}
+                    onClick={() => setActiveImageIndex(idx)}
+                    className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 snap-start ${activeImageIndex === idx ? 'border-nubia-gold' : 'border-nubia-gold/30'
+                      }`}
+                  >
+                    <OptimizedImage
+                      src={withImageParams('thumbnail', img)}
+                      alt={`${name} - ${idx + 1}`}
+                      fill
+                      sizes="64px"
+                      objectFit="cover"
+                    />
+                  </button>
+                ))}
+              </div>
+              {/* Scroll Indicator Fade */}
+              <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none" />
             </div>
           )}
 
@@ -249,15 +293,15 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
                   <button
                     key={`${img}-${idx}`}
                     onClick={() => setActiveImageIndex(idx)}
-                    className={`relative w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${
-                      activeImageIndex === idx ? 'border-nubia-gold' : 'border-nubia-gold/30'
-                    }`}
+                    className={`relative w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${activeImageIndex === idx ? 'border-nubia-gold' : 'border-nubia-gold/30'
+                      }`}
                   >
-                    <img
+                    <OptimizedImage
                       src={withImageParams('thumbnail', img)}
                       alt={`${name} - ${idx + 1}`}
-                      loading="lazy"
-                      className="w-full h-full object-cover"
+                      fill
+                      sizes="(max-width: 768px) 64px, 80px"
+                      objectFit="cover"
                     />
                   </button>
                 ))}
@@ -265,14 +309,16 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
             )}
 
             {/* Main Image */}
-            <div className="min-h-96 md:min-h-0 md:w-80">
-              <div className="relative w-full h-96 md:h-[550px] aspect-auto md:aspect-[2/3] bg-nubia-cream/30 rounded-lg overflow-hidden">
+            <div className="w-full md:w-80">
+              <div className="relative w-full aspect-[4/5] md:h-[550px] md:aspect-[2/3] bg-nubia-cream/30 rounded-lg overflow-hidden">
                 {currentImage && (
-                  <img
+                  <OptimizedImage
                     src={withImageParams('cover', currentImage)}
                     alt={name}
-                    loading="eager"
-                    className="w-full h-full object-cover"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 320px"
+                    priority
+                    objectFit="cover"
                   />
                 )}
               </div>
@@ -296,21 +342,20 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
           <div className="mb-6">
             {availableStock > 0 ? (
               <div className="flex items-center gap-2">
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                  availableStock <= 3 
-                    ? 'bg-red-100 text-red-800' 
-                    : availableStock <= 10 
-                    ? 'bg-yellow-100 text-yellow-800' 
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${availableStock <= 3
+                  ? 'bg-red-100 text-red-800'
+                  : availableStock <= 10
+                    ? 'bg-yellow-100 text-yellow-800'
                     : 'bg-green-100 text-green-800'
-                }`}>
+                  }`}>
                   {availableStock <= 3 && '⚠️ '}
-                  {locale === 'fr' 
+                  {locale === 'fr'
                     ? `${availableStock} ${availableStock === 1 ? 'article restant' : 'articles restants'}`
                     : `${availableStock} ${availableStock === 1 ? 'item left' : 'items left'}`
                   }
                 </span>
                 {availableStock <= 3 && (
-                  <span className="text-xs text-red-600 font-medium">
+                  <span className="text-sm text-red-600 font-medium">
                     {locale === 'fr' ? 'Dépêchez-vous!' : 'Hurry up!'}
                   </span>
                 )}
@@ -353,9 +398,8 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
                 {sizes.map((s) => (
                   <button
                     key={s}
-                    className={`px-3 py-2 border rounded-lg ${
-                      selectedSize === s ? "border-nubia-gold bg-nubia-gold/10" : "border-nubia-gold/30"
-                    }`}
+                    className={`px-3 py-2 border rounded-lg ${selectedSize === s ? "border-nubia-gold bg-nubia-gold/10" : "border-nubia-gold/30"
+                      }`}
                     onClick={() => setSelectedSize(s)}
                   >
                     {s}
@@ -372,9 +416,8 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
                 {colors.map((c) => (
                   <button
                     key={c}
-                    className={`px-3 py-2 border rounded-lg ${
-                      selectedColor === c ? "border-nubia-gold bg-nubia-gold/10" : "border-nubia-gold/30"
-                    }`}
+                    className={`px-3 py-2 border rounded-lg ${selectedColor === c ? "border-nubia-gold bg-nubia-gold/10" : "border-nubia-gold/30"
+                      }`}
                     onClick={() => setSelectedColor(c)}
                   >
                     {colorLabel(c)}
@@ -389,7 +432,7 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
             <div className="mb-2 text-sm text-nubia-black/70">
               {t("common.quantity", "Quantité")}
               {availableStock > 0 && (
-                <span className="ml-2 text-xs text-nubia-black/50">
+                <span className="ml-2 text-sm text-nubia-black/50">
                   ({locale === 'fr' ? 'Max' : 'Max'}: {availableStock})
                 </span>
               )}

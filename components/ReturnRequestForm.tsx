@@ -159,7 +159,7 @@ export default function ReturnRequestForm({
           id="reason"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent"
         >
           <option value="">Sélectionnez une raison</option>
           <option value="Produit défectueux">Produit défectueux</option>
@@ -186,7 +186,7 @@ export default function ReturnRequestForm({
           onChange={(e) => setComments(e.target.value)}
           placeholder={t('returns.describe_details', 'Décrivez les détails du retour...')}
           rows={4}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent"
         />
       </div>
 

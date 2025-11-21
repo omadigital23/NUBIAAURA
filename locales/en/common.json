@@ -429,5 +429,11 @@
   "dashboard.returns": "Returns",
   "dashboard.manage_returns": "Manage your returns",
   "dashboard.addresses": "Addresses",
-  "dashboard.manage_addresses": "Manage your addresses"
+  "dashboard.manage_addresses": "Manage your addresses",
+  "admin.stock_management": "Stock Management",
+  "admin.stocks": "Stocks",
+  "admin.reservations": "Reservations",
+  "admin.no_products": "No products",
+  "admin.no_reservations": "No reservations",
+  "common.refresh": "Refresh"
 }
