@@ -6,15 +6,15 @@ import { getSupabaseServerClient } from '@/lib/supabase';
  * GET /api/admin/orders/validate?id=ORDER_ID&action=confirm|cancel
  */
 export async function GET(request: NextRequest) {
-    try {
-        const searchParams = request.nextUrl.searchParams;
-        const orderId = searchParams.get('id');
-        const action = searchParams.get('action');
+  try {
+    const searchParams = request.nextUrl.searchParams;
+    const orderId = searchParams.get('id');
+    const action = searchParams.get('action');
 
-        // Validation des paramètres
-        if (!orderId || !action) {
-            return new NextResponse(
-                `<!DOCTYPE html>
+    // Validation des paramètres
+    if (!orderId || !action) {
+      return new NextResponse(
+        `<!DOCTYPE html>
         <html>
           <head>
             <meta charset="utf-8">
@@ -36,13 +36,13 @@ export async function GET(request: NextRequest) {
             </div>
           </body>
         </html>`,
-                { status: 400, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-            );
-        }
+        { status: 400, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+      );
+    }
 
-        if (action !== 'confirm' && action !== 'cancel') {
-            return new NextResponse(
-                `<!DOCTYPE html>
+    if (action !== 'confirm' && action !== 'cancel') {
+      return new NextResponse(
+        `<!DOCTYPE html>
         <html>
           <head>
             <meta charset="utf-8">
@@ -64,22 +64,22 @@ export async function GET(request: NextRequest) {
             </div>
           </body>
         </html>`,
-                { status: 400, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-            );
-        }
+        { status: 400, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+      );
+    }
 
-        const supabase = getSupabaseServerClient();
+    const supabase = getSupabaseServerClient();
 
-        // Récupérer la commande
-        const { data: order, error: fetchError } = await supabase
-            .from('orders')
-            .select('id, order_number, status, total')
-            .eq('id', orderId)
-            .single();
+    // Récupérer la commande par order_number (ORD-xxx)
+    const { data: order, error: fetchError } = await supabase
+      .from('orders')
+      .select('id, order_number, status, total')
+      .eq('order_number', orderId)
+      .single();
 
-        if (fetchError || !order) {
-            return new NextResponse(
-                `<!DOCTYPE html>
+    if (fetchError || !order) {
+      return new NextResponse(
+        `<!DOCTYPE html>
         <html>
           <head>
             <meta charset="utf-8">
@@ -101,24 +101,24 @@ export async function GET(request: NextRequest) {
             </div>
           </body>
         </html>`,
-                { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-            );
-        }
+        { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+      );
+    }
 
-        // Mettre à jour le statut
-        const newStatus = action === 'confirm' ? 'confirmed' : 'cancelled';
-        const { error: updateError } = await supabase
-            .from('orders')
-            .update({
-                status: newStatus,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', orderId);
+    // Mettre à jour le statut (utiliser l'id de la commande trouvée)
+    const newStatus = action === 'confirm' ? 'confirmed' : 'cancelled';
+    const { error: updateError } = await supabase
+      .from('orders')
+      .update({
+        status: newStatus,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', order.id);
 
-        if (updateError) {
-            console.error('Error updating order:', updateError);
-            return new NextResponse(
-                `<!DOCTYPE html>
+    if (updateError) {
+      console.error('Error updating order:', updateError);
+      return new NextResponse(
+        `<!DOCTYPE html>
         <html>
           <head>
             <meta charset="utf-8">
@@ -140,17 +140,17 @@ export async function GET(request: NextRequest) {
             </div>
           </body>
         </html>`,
-                { status: 500, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-            );
-        }
+        { status: 500, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+      );
+    }
 
-        // Page de succès
-        const actionText = action === 'confirm' ? 'validée' : 'annulée';
-        const emoji = action === 'confirm' ? '✅' : '❌';
-        const color = action === 'confirm' ? '#27ae60' : '#e74c3c';
+    // Page de succès
+    const actionText = action === 'confirm' ? 'validée' : 'annulée';
+    const emoji = action === 'confirm' ? '✅' : '❌';
+    const color = action === 'confirm' ? '#27ae60' : '#e74c3c';
 
-        return new NextResponse(
-            `<!DOCTYPE html>
+    return new NextResponse(
+      `<!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8">
@@ -224,8 +224,8 @@ export async function GET(request: NextRequest) {
             </div>
             <p style="color: #7f8c8d; margin-top: 20px;">
               ${action === 'confirm'
-                ? 'La commande a été confirmée. Vous pouvez maintenant la préparer.'
-                : 'La commande a été annulée. Le client sera notifié.'}
+        ? 'La commande a été confirmée. Vous pouvez maintenant la préparer.'
+        : 'La commande a été annulée. Le client sera notifié.'}
             </p>
             <a href="${process.env.NEXT_PUBLIC_SITE_URL}/admin" class="btn">
               Voir toutes les commandes
@@ -233,13 +233,13 @@ export async function GET(request: NextRequest) {
           </div>
         </body>
       </html>`,
-            { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-        );
+      { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+    );
 
-    } catch (error) {
-        console.error('Error in order validation:', error);
-        return new NextResponse(
-            `<!DOCTYPE html>
+  } catch (error) {
+    console.error('Error in order validation:', error);
+    return new NextResponse(
+      `<!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8">
@@ -261,7 +261,7 @@ export async function GET(request: NextRequest) {
           </div>
         </body>
       </html>`,
-            { status: 500, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-        );
-    }
+      { status: 500, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+    );
+  }
 }
