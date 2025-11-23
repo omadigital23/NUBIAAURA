@@ -222,6 +222,9 @@ export async function POST(request: NextRequest) {
         customerName: `${parsed.data.firstName} ${parsed.data.lastName}`,
         customerEmail: parsed.data.email,
         customerPhone: parsed.data.phone,
+        subtotal: quote.subtotal,
+        shipping: quote.shipping,
+        tax: quote.tax,
         total: quote.total,
         itemCount: normalized.length,
         items: normalized.map(item => {
@@ -234,6 +237,8 @@ export async function POST(request: NextRequest) {
         }),
         address: parsed.data.address,
         city: parsed.data.city,
+        zipCode: parsed.data.zipCode,
+        country: parsed.data.country,
         paymentMethod: 'cod'
       });
       console.log('[COD API] Notification WhatsApp envoyée avec succès!');

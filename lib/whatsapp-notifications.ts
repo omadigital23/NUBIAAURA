@@ -141,11 +141,16 @@ export async function notifyManagerNewOrder(data: {
   customerName: string;
   customerEmail?: string;
   customerPhone?: string;
+  subtotal?: number;
+  shipping?: number;
+  tax?: number;
   total: number;
   itemCount: number;
   items?: Array<{ name: string; quantity: number; price: number }>;
   address?: string;
   city?: string;
+  zipCode?: string;
+  country?: string;
   paymentMethod?: string;
 }) {
   if (!MANAGER_WHATSAPP) {
@@ -156,51 +161,68 @@ export async function notifyManagerNewOrder(data: {
   // Créer les liens de validation/annulation
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.nubiaaura.com';
 
-  // Message optimisé avec informations essentielles
-  let message = `🛍️ *NOUVELLE COMMANDE*\n\n`;
-  message += `📋 *N°:* ${data.orderId}\n`;
+  // Message avec format exact demandé
+  let message = `🎉 *NOUVELLE COMMANDE NUBIA AURA*\n\n`;
+  message += `📋 *Commande:* ${data.orderId}\n`;
   message += `👤 *Client:* ${data.customerName}\n`;
 
   if (data.customerEmail) {
-    message += `📧 ${data.customerEmail}\n`;
+    message += `📧 *Email:* ${data.customerEmail}\n`;
   }
   if (data.customerPhone) {
-    message += `📱 ${data.customerPhone}\n`;
+    message += `📱 *Téléphone:* ${data.customerPhone}\n`;
   }
 
-  message += `\n🛍️ *ARTICLES:* ${data.itemCount}\n`;
+  message += `\n🛍️ *ARTICLES:*\n`;
 
-  // Ajouter les articles (max 3 pour éviter message trop long)
+  // Ajouter tous les articles
   if (data.items && data.items.length > 0) {
-    const itemsToShow = data.items.slice(0, 3);
-    itemsToShow.forEach((item, index) => {
+    data.items.forEach((item, index) => {
       message += `${index + 1}. ${item.name}\n`;
-      message += `   ${item.quantity} × ${item.price.toLocaleString('fr-FR')} FCFA\n`;
+      message += `   Qté: ${item.quantity} × ${item.price.toLocaleString('fr-FR')} FCFA\n`;
     });
-    if (data.items.length > 3) {
-      message += `... +${data.items.length - 3} autre(s)\n`;
-    }
   }
 
-  message += `\n💰 *TOTAL: ${data.total.toLocaleString('fr-FR')} FCFA*\n`;
+  message += `\n💰 *MONTANTS:*\n`;
+  if (data.subtotal !== undefined) {
+    message += `Sous-total: ${data.subtotal.toLocaleString('fr-FR')} FCFA\n`;
+  }
+  if (data.shipping !== undefined) {
+    message += `Livraison: ${data.shipping.toLocaleString('fr-FR')} FCFA\n`;
+  }
+  if (data.tax !== undefined) {
+    message += `Taxes: ${data.tax.toLocaleString('fr-FR')} FCFA\n`;
+  }
+  message += `*TOTAL: ${data.total.toLocaleString('fr-FR')} FCFA*\n`;
 
-  // Adresse (format court)
-  if (data.address && data.city) {
-    message += `\n📍 ${data.city}\n`;
+  // Adresse complète
+  if (data.address || data.city) {
+    message += `\n📍 *ADRESSE DE LIVRAISON:*\n`;
+    if (data.address) {
+      message += `${data.address}\n`;
+    }
+    if (data.zipCode && data.city) {
+      message += `${data.zipCode} ${data.city}\n`;
+    } else if (data.city) {
+      message += `${data.city}\n`;
+    }
+    if (data.country) {
+      message += `${data.country}\n`;
+    }
   }
 
   // Méthode de paiement
   if (data.paymentMethod) {
     const paymentLabel = data.paymentMethod === 'cod' ? 'Paiement à la livraison' : 'Paiement en ligne';
-    message += `💳 ${paymentLabel}\n`;
+    message += `\n💳 *Paiement:* ${paymentLabel}\n`;
   }
 
   // Liens de validation
-  message += `\n*⚡ ACTIONS RAPIDES:*\n`;
-  message += `✅ ${baseUrl}/api/admin/orders/validate?id=${data.orderId}&action=confirm\n`;
-  message += `❌ ${baseUrl}/api/admin/orders/validate?id=${data.orderId}&action=cancel`;
+  message += `\n*⚡ ACTIONS:*\n`;
+  message += `✅ Valider: ${baseUrl}/api/admin/orders/validate?id=${data.orderId}&action=confirm\n`;
+  message += `❌ Annuler: ${baseUrl}/api/admin/orders/validate?id=${data.orderId}&action=cancel`;
 
-  console.log('[WhatsApp] Sending detailed notification with validation links');
+  console.log('[WhatsApp] Sending complete order notification');
   console.log('[WhatsApp] Message length:', message.length);
 
   return sendWhatsAppNotification({
