@@ -3,6 +3,8 @@
  * Gratuit et simple à configurer
  */
 
+import { generateValidationToken, storeValidationToken } from './order-validation-tokens';
+
 const CALLMEBOT_API_KEY = process.env.CALLMEBOT_API_KEY;
 const MANAGER_WHATSAPP = process.env.MANAGER_WHATSAPP;
 
@@ -217,12 +219,17 @@ export async function notifyManagerNewOrder(data: {
     message += `\n💳 *Paiement:* ${paymentLabel}\n`;
   }
 
-  // Liens de validation
-  message += `\n*⚡ ACTIONS:*\n`;
-  message += `✅ Valider: ${baseUrl}/api/admin/orders/validate?id=${data.orderId}&action=confirm\n`;
-  message += `❌ Annuler: ${baseUrl}/api/admin/orders/validate?id=${data.orderId}&action=cancel`;
+  // Générer et stocker le token de validation sécurisé
+  const token = generateValidationToken(data.orderId);
+  await storeValidationToken(data.orderId, token);
+  console.log(`[WhatsApp] Generated validation token for order ${data.orderId}`);
 
-  console.log('[WhatsApp] Sending complete order notification');
+  // Liens de validation avec token sécurisé
+  message += `\n*⚡ ACTIONS:*\n`;
+  message += `✅ Valider: ${baseUrl}/api/admin/orders/validate?id=${data.orderId}&token=${token}&action=confirm\n`;
+  message += `❌ Annuler: ${baseUrl}/api/admin/orders/validate?id=${data.orderId}&token=${token}&action=cancel`;
+
+  console.log('[WhatsApp] Sending complete order notification with secure validation links');
   console.log('[WhatsApp] Message length:', message.length);
 
   return sendWhatsAppNotification({
