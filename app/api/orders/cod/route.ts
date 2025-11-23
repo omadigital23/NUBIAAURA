@@ -144,6 +144,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Calculer delivery_duration_days (1-3 jours aléatoire)
+    const deliveryDurationDays = Math.floor(Math.random() * 3) + 1;
+    const estimatedDeliveryDate = new Date();
+    estimatedDeliveryDate.setDate(estimatedDeliveryDate.getDate() + deliveryDurationDays);
+
     const { data: order, error: orderErr } = await supabase
       .from('orders')
       .insert({
@@ -163,6 +168,8 @@ export async function POST(request: NextRequest) {
         shipping_method: parsed.data.shippingMethod,
         status: 'pending',
         payment_status: 'pending',
+        delivery_duration_days: deliveryDurationDays,
+        estimated_delivery_date: estimatedDeliveryDate.toISOString(),
       })
       .select('*')
       .single();

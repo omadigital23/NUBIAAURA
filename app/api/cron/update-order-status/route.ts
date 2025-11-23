@@ -76,6 +76,27 @@ export async function POST(request: NextRequest) {
           } else {
             console.log(`[OrderStatusCron] ✅ Order ${order.order_number} marked as shipped`);
 
+            // Créer entrée dans shipments
+            try {
+              const carriers = ['DHL', 'FedEx', 'UPS', 'Senegal Post', 'Local'];
+              const randomCarrier = carriers[Math.floor(Math.random() * carriers.length)];
+              const trackingNumber = `TRK-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`;
+
+              await supabase
+                .from('shipments')
+                .insert({
+                  order_id: order.id,
+                  tracking_number: trackingNumber,
+                  carrier: randomCarrier,
+                  shipped_at: shippedAt.toISOString(),
+                  estimated_delivery_at: estimatedDeliveryDate.toISOString(),
+                  status: 'in_transit',
+                });
+              console.log(`[OrderStatusCron] ✅ Shipment created for ${order.order_number} with carrier ${randomCarrier}`);
+            } catch (shipmentErr: any) {
+              console.warn(`[OrderStatusCron] Warning: Failed to create shipment for ${order.order_number}:`, shipmentErr?.message);
+            }
+
             // Ajouter dans delivery_tracking
             try {
               await supabase

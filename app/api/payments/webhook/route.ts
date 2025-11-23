@@ -62,6 +62,11 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true, message: 'Duplicate ignored' }, { status: 200 });
       }
 
+      // Calculer delivery_duration_days (1-3 jours aléatoire) et estimated_delivery_date
+      const deliveryDurationDays = Math.floor(Math.random() * 3) + 1;
+      const estimatedDeliveryDate = new Date();
+      estimatedDeliveryDate.setDate(estimatedDeliveryDate.getDate() + deliveryDurationDays);
+
       // Update order
       const { error, data: orderData } = await supabase
         .from('orders')
@@ -69,6 +74,8 @@ export async function POST(request: NextRequest) {
           payment_status: 'completed',
           status: 'processing',
           updated_at: new Date().toISOString(),
+          delivery_duration_days: deliveryDurationDays,
+          estimated_delivery_date: estimatedDeliveryDate.toISOString(),
         })
         .eq('id', paymentData.tx_ref)
         .select()

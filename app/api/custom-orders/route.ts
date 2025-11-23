@@ -26,6 +26,11 @@ export async function POST(request: NextRequest) {
       userId = user?.id;
     }
 
+    // Calculer delivery_duration_days (10-20 jours aléatoire) et estimated_delivery_date
+    const deliveryDurationDays = Math.floor(Math.random() * 11) + 10; // 10-20 jours
+    const estimatedDeliveryDate = new Date();
+    estimatedDeliveryDate.setDate(estimatedDeliveryDate.getDate() + deliveryDurationDays);
+
     // Save to database
     const { data: customOrder, error } = await supabase
       .from('custom_orders')
@@ -39,6 +44,8 @@ export async function POST(request: NextRequest) {
         preferences: validated.preferences,
         budget: validated.budget,
         status: 'pending',
+        delivery_duration_days: deliveryDurationDays,
+        estimated_delivery_date: estimatedDeliveryDate.toISOString(),
       })
       .select()
       .single();
