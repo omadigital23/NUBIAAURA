@@ -44,6 +44,7 @@ export function useCart(): UseCartResult {
         const data = await response.json();
         if (mounted && data.items) {
           setItems(data.items);
+          console.log('[useCart] Cart loaded successfully:', data.items.length, 'items');
         }
       } catch (err) {
         console.error('[useCart] Error loading cart:', err);
@@ -55,7 +56,25 @@ export function useCart(): UseCartResult {
     if (token) {
       loadCartFromDB();
     }
-    return () => { mounted = false; };
+    
+    // Listen for token changes (e.g., after login)
+    const handleTokenChange = (e: CustomEvent) => {
+      console.log('[useCart] Token changed event received:', e.detail ? 'token present' : 'token cleared');
+      if (e.detail && mounted) {
+        // Token was set, reload cart
+        loadCartFromDB();
+      } else if (!e.detail && mounted) {
+        // Token was cleared, clear cart
+        setItems([]);
+      }
+    };
+
+    window.addEventListener('token-changed', handleTokenChange as EventListener);
+    
+    return () => { 
+      mounted = false;
+      window.removeEventListener('token-changed', handleTokenChange as EventListener);
+    };
   }, [token, getAuthHeaders]);
 
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
