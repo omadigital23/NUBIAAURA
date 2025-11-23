@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { verifyValidationToken, invalidateValidationToken } from '@/lib/order-validation-tokens';
 
+// Initialize Supabase with service role key (same pattern as delivery route)
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 /**
  * API route pour valider ou annuler une commande depuis WhatsApp
  * GET /api/admin/orders/validate?id=ORDER_ID&token=TOKEN&action=confirm|cancel
@@ -102,12 +108,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Utiliser le service role client pour avoir les permissions complètes
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-
+    console.log('[Validation] Fetching order:', orderId);
     // Récupérer la commande par order_number (ORD-xxx)
     const { data: order, error: fetchError } = await supabase
       .from('orders')
