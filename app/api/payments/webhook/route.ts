@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
         // Send WhatsApp alert to manager with validation links (CallMeBot)
         try {
           await notifyManagerNewOrder({
-            orderId: orderData.id,
+            orderId: orderData.order_number,
             customerName: orderData.customer_name,
             customerEmail: orderData.email,
             customerPhone: orderData.phone,
