@@ -44,7 +44,7 @@ function CategoryContent() {
   }, [categorySlug]);
 
   // Charger les produits de la catégorie
-  const { products, loading, error } = useProductsFromDB({ 
+  const { products, loading, error } = useProductsFromDB({
     categories: [categorySlug],
     search: searchTerm || undefined
   });
@@ -58,7 +58,7 @@ function CategoryContent() {
     return name.toLowerCase().includes(searchLower) || description.toLowerCase().includes(searchLower);
   });
 
-  const categoryName = category 
+  const categoryName = category
     ? (locale === 'en' ? category.name_en : category.name_fr)
     : t(`categories.${categorySlug}`, categorySlug);
 
@@ -69,7 +69,7 @@ function CategoryContent() {
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-nubia-black to-nubia-dark text-nubia-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Link 
+          <Link
             href={`/${locale}/catalogue`}
             className="inline-flex items-center gap-2 text-nubia-white/80 hover:text-nubia-white mb-4 transition-colors"
           >
@@ -123,7 +123,7 @@ function CategoryContent() {
           ) : error ? (
             <div className="text-center py-12">
               <p className="text-red-600 mb-4">{error}</p>
-              <Link 
+              <Link
                 href={`/${locale}/catalogue`}
                 className="text-nubia-gold hover:underline"
               >
@@ -133,11 +133,11 @@ function CategoryContent() {
           ) : filteredProducts.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-nubia-black/70 mb-4">
-                {searchTerm 
+                {searchTerm
                   ? t('catalog.no_search_results', 'Aucun produit trouvé pour votre recherche')
                   : t('catalog.no_category_products', 'Aucun produit trouvé dans cette catégorie')}
               </p>
-              <Link 
+              <Link
                 href={`/${locale}/catalogue`}
                 className="text-nubia-gold hover:underline"
               >
@@ -166,7 +166,7 @@ function CategoryContent() {
 
                       // Priorité 2: Utiliser product.image ou product.image_url
                       const imageUrl = firstProductImage || product.image || (product as any).image_url;
-                      
+
                       return imageUrl ? (
                         <div className="relative w-full h-64 sm:h-80 md:h-96 lg:h-[420px] bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5 overflow-hidden flex-shrink-0">
                           <img
@@ -186,16 +186,18 @@ function CategoryContent() {
 
                       {/* Description */}
                       <p className="text-xs text-nubia-black/60 mb-2 line-clamp-1 group-hover:text-nubia-black/80 transition-colors duration-300">
-                        {locale === 'fr' 
+                        {locale === 'fr'
                           ? ((product as any).description_fr || (product as any).description || 'Pièce de mode premium')
                           : ((product as any).description_en || 'Premium fashion piece')}
                       </p>
 
                       <div className="flex items-center justify-between mb-3">
-                        <span className="text-xl font-bold text-nubia-gold group-hover:scale-110 transition-transform duration-300 origin-left">
-                          {Number(product.price).toLocaleString('fr-FR')} {t('common.currency', 'FCFA')}
-                        </span>
-                        <span className="text-xs text-nubia-white bg-nubia-gold px-2 py-0.5 rounded-full group-hover:scale-110 transition-transform duration-300">
+                        {!isInspiration && (
+                          <span className="text-xl font-bold text-nubia-gold group-hover:scale-110 transition-transform duration-300 origin-left">
+                            {Number(product.price).toLocaleString('fr-FR')} {t('common.currency', 'FCFA')}
+                          </span>
+                        )}
+                        <span className={`text-xs text-nubia-white bg-nubia-gold px-2 py-0.5 rounded-full group-hover:scale-110 transition-transform duration-300 ${isInspiration ? 'ml-auto' : ''}`}>
                           {'⭐'.repeat(Math.max(0, Math.min(5, Math.floor(product.rating || 0))))}
                         </span>
                       </div>
@@ -205,7 +207,7 @@ function CategoryContent() {
                           {t('common.inspiration_model', 'Modèle d\'inspiration')}
                         </div>
                       ) : (
-                        <Link 
+                        <Link
                           href={`/${locale}/produit/${(product.slug || product.name.toLowerCase().replace(/\s+/g, '-'))}`}
                           className="block w-full py-2 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white border-2 border-nubia-gold transition-all duration-300 text-center text-sm group-hover:shadow-lg group-hover:scale-105"
                         >
