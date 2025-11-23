@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 import { sendWhatsAppMessage } from '@/lib/whatsapp';
+import { notifyManagerNewOrder } from '@/lib/whatsapp-notifications';
 import { sendOrderConfirmationEmail, notifyManagerEmail } from '@/lib/sendgrid';
 import { Redis } from '@upstash/redis';
 import { getTranslations, getTranslationKey } from '@/lib/i18n';
@@ -123,16 +124,15 @@ export async function POST(request: NextRequest) {
           console.error('Email notification failed:', error.message);
         }
 
-        // Send WhatsApp alert to manager (CallMeBot)
+        // Send WhatsApp alert to manager with validation links (CallMeBot)
         try {
-          const managerMessage = `Nouvelle commande reçue! 🎉\n\nCommande: ${orderData.id}\nClient: ${orderData.customer_name}\nMontant: ${orderData.total.toLocaleString('fr-FR')} FCFA\nAdresse: ${orderData.address}, ${orderData.city}`;
-          const managerPhone = process.env.MANAGER_WHATSAPP;
-          if (!managerPhone) {
-            console.error('MANAGER_WHATSAPP is not configured');
-          } else {
-            await sendWhatsAppMessage(managerPhone, managerMessage);
-            console.log(JSON.stringify({ notification: 'whatsapp_manager_alert', orderId: orderData.id }));
-          }
+          await notifyManagerNewOrder({
+            orderId: orderData.id,
+            customerName: orderData.customer_name,
+            total: orderData.total,
+            itemCount: orderData.items?.length || 0
+          });
+          console.log(JSON.stringify({ notification: 'whatsapp_manager_alert_with_links', orderId: orderData.id }));
         } catch (error: any) {
           console.error('Manager WhatsApp notification failed:', error.message);
         }

@@ -5,7 +5,7 @@ import { Redis } from '@upstash/redis';
 import { computeQuote, ShippingMethod } from '@/lib/pricing';
 import { checkRateLimit, formRatelimit } from '@/lib/rate-limit';
 import { getLocaleFromPath, getTranslations, getTranslationKey } from '@/lib/i18n';
-import { sendOrderToWhatsApp } from '@/lib/whatsapp';
+import { notifyManagerNewOrder } from '@/lib/whatsapp-notifications';
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     console.log('[COD API] Request body:', JSON.stringify(body, null, 2));
-    
+
     const parsed = BodySchema.safeParse(body);
     if (!parsed.success) {
       const msg = getTranslationKey(commonNs, 'checkout.errors.missing_fields') || getTranslationKey(commonNs, 'common.error') || 'Invalid request';
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
     // Redis pour idempotence (optionnel en dev)
     const isDev = process.env.NODE_ENV === 'development';
     const hasRedis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN;
-    
+
     const idemKey = request.headers.get('idempotency-key') || request.headers.get('Idempotency-Key') || null;
     if (idemKey && !isDev && hasRedis) {
       try {
@@ -214,35 +214,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Envoyer les détails de la commande sur WhatsApp (non bloquant)
+    // Envoyer notification WhatsApp au manager avec liens de validation (non bloquant)
     try {
-      console.log('[COD API] Envoi des détails sur WhatsApp...');
-      await sendOrderToWhatsApp({
-        orderNumber: order.order_number,
+      console.log('[COD API] Envoi notification WhatsApp avec liens de validation...');
+      await notifyManagerNewOrder({
+        orderId: order.order_number,
         customerName: `${parsed.data.firstName} ${parsed.data.lastName}`,
-        customerEmail: parsed.data.email,
-        customerPhone: parsed.data.phone,
-        items: normalized.map(item => {
-          const product = products?.find(p => p.id === item.product_id);
-          return {
-            name: product?.name || 'Produit',
-            quantity: item.quantity,
-            price: item.price
-          };
-        }),
-        subtotal: quote.subtotal,
-        shipping: quote.shipping,
-        tax: quote.tax,
         total: quote.total,
-        shippingAddress: {
-          address: parsed.data.address,
-          city: parsed.data.city,
-          zipCode: parsed.data.zipCode,
-          country: parsed.data.country
-        },
-        paymentMethod: 'cod'
+        itemCount: normalized.length
       });
-      console.log('[COD API] Message WhatsApp envoyé!');
+      console.log('[COD API] Notification WhatsApp envoyée avec succès!');
     } catch (whatsappError) {
       console.error('[COD API] Erreur WhatsApp (non bloquant):', whatsappError);
       // Ne pas bloquer la commande si WhatsApp échoue
