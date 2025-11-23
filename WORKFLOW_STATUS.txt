@@ -1,0 +1,142 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                    WORKFLOW IMPLEMENTATION STATUS                               ║
+║                          23 novembre 2025                                       ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+🔹 PRÊT-À-PORTER (ORDERS) - Cycle court (3 jours max)
+════════════════════════════════════════════════════════════════════════════════
+
+Phase 1: CRÉATION DE COMMANDE
+  ✅ Insertion dans table orders
+  ✅ Calcul automatique du total
+  ✅ Génération order_number (ORD-xxx)
+  ⚠️  delivery_duration_days = 3 (par défaut, pas calculé)
+  ⚠️  estimated_delivery_date = NULL (pas calculée)
+
+Phase 2: NOTIFICATION WHATSAPP
+  ✅ Message formaté avec détails complets
+  ✅ Lien de validation généré
+  ✅ Token sécurisé (SHA256)
+  ✅ Envoi via CallMeBot
+
+Phase 3: VALIDATION (Manager)
+  ✅ Endpoint: /api/admin/orders/validate
+  ✅ Vérification token
+  ✅ Mise à jour status: pending → processing/cancelled
+  ✅ Page de succès affichée
+  ❌ Pas d'enregistrement dans delivery_tracking
+  ❌ Pas de notification client
+
+Phase 4: AUTOMATISATION DES DÉLAIS
+  ❌ J+1 → shipped (NON IMPLÉMENTÉ)
+  ❌ J+3 → delivered (NON IMPLÉMENTÉ)
+  ⚠️  Mise à jour MANUELLE uniquement via admin dashboard
+
+RÉSULTAT: 60% implémenté (manque automatisation)
+
+
+🔹 SUR MESURE (CUSTOM_ORDERS) - Cycle long (10-20 jours)
+════════════════════════════════════════════════════════════════════════════════
+
+Phase 1: CRÉATION DE COMMANDE
+  ✅ Insertion dans table custom_orders
+  ✅ Génération reference (UUID substring)
+  ❌ MANQUENT: delivery_duration_days (10-20)
+  ❌ MANQUENT: estimated_delivery_date
+  ❌ MANQUENT: shipped_at, delivered_at
+  ❌ MANQUENT: tracking_number, carrier
+
+Phase 2: NOTIFICATION WHATSAPP
+  ✅ Message formaté avec détails
+  ❌ PAS DE LIEN DE VALIDATION
+  ❌ PAS DE TOKEN SÉCURISÉ
+
+Phase 3: VALIDATION (Manager)
+  ❌ Aucun endpoint de validation
+  ❌ Aucun lien cliquable
+  ❌ Validation manuelle uniquement (si existe)
+
+Phase 4: AUTOMATISATION DES DÉLAIS
+  ❌ J+10 → notification "finition" (NON IMPLÉMENTÉ)
+  ❌ J+20 → delivered (NON IMPLÉMENTÉ)
+
+RÉSULTAT: 30% implémenté (manque validation + automatisation)
+
+
+════════════════════════════════════════════════════════════════════════════════
+PROBLÈMES CRITIQUES À RÉSOUDRE
+════════════════════════════════════════════════════════════════════════════════
+
+🔴 CRITIQUE #1: Automatisation QStash manquante
+   Impact: Les commandes restent "pending" indéfiniment
+   Fichier: /app/api/cron/update-order-status/route.ts (À CRÉER)
+   Tâches: J+1 shipped, J+3 delivered, J+10 notification, J+20 delivered
+
+🔴 CRITIQUE #2: Custom orders manquent colonnes livraison
+   Impact: Impossible de tracker les custom orders
+   Migration: ALTER TABLE custom_orders ADD COLUMN...
+   Colonnes: delivery_duration_days, estimated_delivery_date, shipped_at, 
+             delivered_at, tracking_number, carrier, finalization_notified_at
+
+🟠 MAJEUR #3: Custom orders pas de validation
+   Impact: Manager ne peut pas valider via lien WhatsApp
+   Fichier: /app/api/admin/custom-orders/validate/route.ts (À CRÉER)
+   Besoin: Token sécurisé + endpoint validation
+
+🟡 MINEUR #4: Pas d'enregistrement tracking après validation
+   Impact: Historique incomplet
+   Fichier: /api/admin/orders/validate/route.ts (À MODIFIER)
+   Action: INSERT INTO delivery_tracking après validation
+
+
+════════════════════════════════════════════════════════════════════════════════
+FICHIERS IMPLIQUÉS
+════════════════════════════════════════════════════════════════════════════════
+
+✅ EXISTANTS (Fonctionnels)
+  • /lib/whatsapp-notifications.ts - Génération messages
+  • /app/api/orders/cod/route.ts - Création COD
+  • /app/api/payments/webhook/route.ts - Création paiement en ligne
+  • /app/api/admin/orders/validate/route.ts - Validation prêt-à-porter
+  • /lib/order-validation-tokens.ts - Token sécurisé
+  • /migrations/add_delivery_tracking.sql - Table delivery_tracking
+
+❌ MANQUANTS (À CRÉER)
+  • /app/api/cron/update-order-status/route.ts - Automatisation QStash
+  • /app/api/admin/custom-orders/validate/route.ts - Validation sur mesure
+  • /migrations/add_custom_orders_delivery.sql - Colonnes custom_orders
+
+⚠️  À MODIFIER
+  • /app/api/admin/orders/validate/route.ts - Ajouter delivery_tracking
+  • /app/api/custom-orders/route.ts - Ajouter lien validation
+
+
+════════════════════════════════════════════════════════════════════════════════
+STATISTIQUES
+════════════════════════════════════════════════════════════════════════════════
+
+Prêt-à-porter:  ████████░░ 60% (4/7 phases)
+Sur mesure:     ███░░░░░░░ 30% (2/7 phases)
+Global:         █████░░░░░ 45% (6/14 phases)
+
+Fonctionnalités implémentées: 6/14
+Fonctionnalités manquantes:   8/14
+
+
+════════════════════════════════════════════════════════════════════════════════
+PROCHAINES ÉTAPES
+════════════════════════════════════════════════════════════════════════════════
+
+1. ⏳ Créer migration pour ajouter colonnes à custom_orders
+2. ⏳ Créer endpoint validation pour custom_orders
+3. ⏳ Implémenter QStash pour automatisation J+1, J+3
+4. ⏳ Implémenter QStash pour automatisation J+10, J+20
+5. ⏳ Ajouter enregistrement delivery_tracking après validation
+6. ⏳ Ajouter notification client après validation
+
+Estimé: 4-6 heures de développement
+
+
+════════════════════════════════════════════════════════════════════════════════
+DERNIÈRE MISE À JOUR: 23 novembre 2025 - 10:00 UTC+01:00
+════════════════════════════════════════════════════════════════════════════════

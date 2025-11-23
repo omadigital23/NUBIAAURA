@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { verifyValidationToken, invalidateValidationToken } from '@/lib/order-validation-tokens';
 
-// Initialize Supabase with service role key (same pattern as delivery route)
+// Initialize Supabase with service role key
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -13,18 +13,18 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 /**
- * API route pour valider ou annuler une commande depuis WhatsApp
- * GET /api/admin/orders/validate?id=ORDER_ID&token=TOKEN&action=confirm|cancel
+ * API route pour valider ou annuler une commande sur mesure depuis WhatsApp
+ * GET /api/admin/custom-orders/validate?id=CUSTOM_ORDER_ID&token=TOKEN&action=confirm|cancel
  */
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const orderId = searchParams.get('id');
+    const customOrderId = searchParams.get('id');
     const token = searchParams.get('token');
     const action = searchParams.get('action');
 
     // Validation des paramètres
-    if (!orderId || !token || !action) {
+    if (!customOrderId || !token || !action) {
       return new NextResponse(
         `<!DOCTYPE html>
         <html>
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Vérifier le token de sécurité
-    const isValidToken = await verifyValidationToken(orderId, token);
+    const isValidToken = await verifyValidationToken(customOrderId, token);
     if (!isValidToken) {
       return new NextResponse(
         `<!DOCTYPE html>
@@ -112,15 +112,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log('[Validation] Fetching order:', orderId);
-    // Récupérer la commande par order_number (ORD-xxx)
-    const { data: order, error: fetchError } = await supabase
-      .from('orders')
-      .select('id, order_number, status, total')
-      .eq('order_number', orderId)
+    console.log('[CustomOrderValidation] Fetching custom order:', customOrderId);
+    // Récupérer la commande sur mesure
+    const { data: customOrder, error: fetchError } = await supabase
+      .from('custom_orders')
+      .select('id, name, email, budget, status')
+      .eq('id', customOrderId)
       .single();
 
-    if (fetchError || !order) {
+    if (fetchError || !customOrder) {
       return new NextResponse(
         `<!DOCTYPE html>
         <html>
@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
             <div class="container">
               <div class="error">❌</div>
               <h1>Commande introuvable</h1>
-              <p>La commande ${orderId} n'existe pas.</p>
+              <p>La commande ${customOrderId} n'existe pas.</p>
             </div>
           </body>
         </html>`,
@@ -148,18 +148,28 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Mettre à jour le statut (utiliser l'id de la commande trouvée)
-    const newStatus = action === 'confirm' ? 'confirmed' : 'cancelled';
+    // Mettre à jour le statut
+    const newStatus = action === 'confirm' ? 'processing' : 'cancelled';
+    const updateData: any = {
+      status: newStatus,
+      updated_at: new Date().toISOString(),
+    };
+
+    // Si confirmation, calculer estimated_delivery_date
+    if (action === 'confirm') {
+      const deliveryDate = new Date();
+      deliveryDate.setDate(deliveryDate.getDate() + 15); // 15 jours par défaut
+      updateData.estimated_delivery_date = deliveryDate.toISOString();
+      updateData.delivery_duration_days = 15;
+    }
+
     const { error: updateError } = await supabase
-      .from('orders')
-      .update({
-        status: newStatus,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', order.id);
+      .from('custom_orders')
+      .update(updateData)
+      .eq('id', customOrderId);
 
     if (updateError) {
-      console.error('Error updating order:', updateError);
+      console.error('Error updating custom order:', updateError);
       return new NextResponse(
         `<!DOCTYPE html>
         <html>
@@ -192,21 +202,20 @@ export async function GET(request: NextRequest) {
       await supabase
         .from('delivery_tracking')
         .insert({
-          order_id: order.id,
+          order_id: customOrderId,
           status: newStatus,
-          notes: `Commande ${action === 'confirm' ? 'validée' : 'annulée'} via lien WhatsApp`,
+          notes: `Custom order ${action === 'confirm' ? 'approved' : 'cancelled'} via WhatsApp validation`,
         });
-      console.log(`[Validation] Tracking history added for order ${orderId}`);
     } catch (trackingErr: any) {
-      console.warn(`[Validation] Warning: Failed to add tracking history:`, trackingErr?.message);
+      console.warn('[CustomOrderValidation] Warning: Tracking history error:', trackingErr?.message);
     }
 
-    // Invalider le token après utilisation réussie (usage unique)
-    await invalidateValidationToken(orderId);
-    console.log(`[Validation] Token invalidated for order ${orderId}`);
+    // Invalider le token après utilisation réussie
+    await invalidateValidationToken(customOrderId);
+    console.log(`[CustomOrderValidation] Token invalidated for custom order ${customOrderId}`);
 
     // Page de succès
-    const actionText = action === 'confirm' ? 'validée' : 'annulée';
+    const actionText = action === 'confirm' ? 'approuvée' : 'annulée';
     const emoji = action === 'confirm' ? '✅' : '❌';
     const color = action === 'confirm' ? '#27ae60' : '#e74c3c';
 
@@ -277,15 +286,15 @@ export async function GET(request: NextRequest) {
         <body>
           <div class="container">
             <div class="success">${emoji}</div>
-            <h1>Commande ${actionText} !</h1>
+            <h1>Commande sur mesure ${actionText} !</h1>
             <div class="order-info">
-              <p><strong>N° de commande:</strong> ${order.order_number}</p>
-              <p><strong>Montant:</strong> ${order.total.toLocaleString('fr-FR')} FCFA</p>
+              <p><strong>Client:</strong> ${customOrder.name}</p>
+              <p><strong>Budget:</strong> ${customOrder.budget.toLocaleString('fr-FR')} FCFA</p>
               <p><strong>Nouveau statut:</strong> ${newStatus}</p>
             </div>
             <p style="color: #7f8c8d; margin-top: 20px;">
               ${action === 'confirm'
-        ? 'La commande a été confirmée. Vous pouvez maintenant la préparer.'
+        ? 'La commande a été approuvée. Vous pouvez maintenant commencer la fabrication.'
         : 'La commande a été annulée. Le client sera notifié.'}
             </p>
             <a href="${process.env.NEXT_PUBLIC_SITE_URL}/admin" class="btn">
@@ -298,7 +307,7 @@ export async function GET(request: NextRequest) {
     );
 
   } catch (error) {
-    console.error('Error in order validation:', error);
+    console.error('Error in custom order validation:', error);
     return new NextResponse(
       `<!DOCTYPE html>
       <html>

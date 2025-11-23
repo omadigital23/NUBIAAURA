@@ -4,6 +4,7 @@ import { CustomOrderSchema } from '@/lib/validation';
 import { sendEmail } from '@/lib/sendgrid';
 import { getCustomOrderConfirmationEmail, getCustomOrderManagerNotification } from '@/lib/email-templates';
 import { notifyManagerNewCustomOrder } from '@/lib/whatsapp-notifications';
+import { generateValidationToken, storeValidationToken } from '@/lib/order-validation-tokens';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -45,6 +46,11 @@ export async function POST(request: NextRequest) {
     if (error) throw error;
 
     const reference = customOrder.id.substring(0, 8).toUpperCase();
+
+    // Générer et stocker le token de validation sécurisé
+    const validationToken = generateValidationToken(customOrder.id);
+    await storeValidationToken(customOrder.id, validationToken);
+    console.log(`[CustomOrder] Generated validation token for custom order ${customOrder.id}`);
 
     // Envoyer email de confirmation au client
     try {
@@ -88,6 +94,8 @@ export async function POST(request: NextRequest) {
         preferences: validated.preferences,
         budget: validated.budget,
         reference,
+        customOrderId: customOrder.id,
+        validationToken: validationToken,
       });
     } catch (whatsappError) {
       console.error('Erreur notification WhatsApp:', whatsappError);

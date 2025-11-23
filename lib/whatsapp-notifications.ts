@@ -90,13 +90,17 @@ export async function notifyManagerNewCustomOrder(data: {
   preferences: string;
   budget: number;
   reference: string;
+  customOrderId?: string;
+  validationToken?: string;
 }) {
   if (!MANAGER_WHATSAPP) {
     console.warn('⚠️ Manager WhatsApp not configured');
     return false;
   }
 
-  const message = `🎨 *Nouvelle commande sur-mesure*\n\n` +
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.nubiaaura.com';
+
+  let message = `🎨 *Nouvelle commande sur-mesure*\n\n` +
     `👤 *Client:* ${data.name}\n` +
     `📧 *Email:* ${data.email}\n` +
     `📱 *Téléphone:* ${data.phone}\n` +
@@ -104,8 +108,16 @@ export async function notifyManagerNewCustomOrder(data: {
     `📏 *Mensurations:* ${data.measurements}\n` +
     `✨ *Préférences:* ${data.preferences}\n` +
     `💰 *Budget:* ${data.budget.toLocaleString('fr-FR')} FCFA\n` +
-    `🔖 *Réf:* ${data.reference}\n\n` +
-    `Contactez le client rapidement !`;
+    `🔖 *Réf:* ${data.reference}\n\n`;
+
+  // Ajouter les liens de validation si disponibles
+  if (data.customOrderId && data.validationToken) {
+    message += `*⚡ ACTIONS:*\n`;
+    message += `✅ Approuver: ${baseUrl}/api/admin/custom-orders/validate?id=${data.customOrderId}&token=${data.validationToken}&action=confirm\n`;
+    message += `❌ Annuler: ${baseUrl}/api/admin/custom-orders/validate?id=${data.customOrderId}&token=${data.validationToken}&action=cancel`;
+  } else {
+    message += `Contactez le client rapidement !`;
+  }
 
   return sendWhatsAppNotification({
     phone: MANAGER_WHATSAPP,
