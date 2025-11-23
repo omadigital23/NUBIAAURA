@@ -21,6 +21,7 @@ export async function createOrder(
   checkoutData: CheckoutData
 ): Promise<CreateOrderResult> {
   const supabase = getSupabaseServerClient();
+  let order: any = null; // Declare outside try-catch for access in finally
 
   try {
     // Calculer le total
@@ -30,7 +31,7 @@ export async function createOrder(
     );
 
     // Transaction atomique
-    const { data: order, error: orderError } = await supabase
+    const { data: orderData, error: orderError } = await supabase
       .from('orders')
       .insert({
         user_id: userId,
@@ -45,9 +46,11 @@ export async function createOrder(
       .select()
       .single();
 
-    if (orderError || !order) {
+    if (orderError || !orderData) {
       throw new Error(orderError?.message || 'Failed to create order');
     }
+
+    order = orderData; // Assign to outer variable
 
     // Créer les articles de commande
     const orderItems = checkoutData.items.map((item) => ({
@@ -144,6 +147,32 @@ export async function createOrder(
   } catch (error) {
     console.error('Order creation failed:', error);
     throw error;
+  } finally {
+    // Send notification asynchronously (don't block order creation)
+    // This runs after the order is created successfully
+    if (order?.id) {
+      // Import dynamically to avoid circular dependencies
+      import('@/lib/services/order-notifications').then(async ({ sendNewOrderNotification, formatCustomerName, extractCustomerContact }) => {
+        try {
+          const customerName = formatCustomerName(checkoutData.address);
+          const { email, phone } = extractCustomerContact(checkoutData.address);
+
+          await sendNewOrderNotification({
+            orderId: order.id,
+            orderNumber: order.order_number,
+            customerName,
+            customerEmail: email,
+            customerPhone: phone,
+            total: order.total,
+            itemCount: checkoutData.items.length,
+            shippingMethod: checkoutData.shippingMethod,
+          });
+        } catch (notifError) {
+          // Log but don't throw - notification failure shouldn't affect order
+          console.error('Failed to send order notification:', notifError);
+        }
+      });
+    }
   }
 }
 
@@ -155,6 +184,7 @@ export async function createCODOrder(
   codData: CODOrder
 ): Promise<CreateOrderResult> {
   const supabase = getSupabaseServerClient();
+  let order: any = null; // Declare outside try-catch for access in finally
 
   try {
     // Calculer le total
@@ -164,7 +194,7 @@ export async function createCODOrder(
     );
 
     // Créer la commande
-    const { data: order, error: orderError } = await supabase
+    const { data: orderData, error: orderError } = await supabase
       .from('orders')
       .insert({
         user_id: userId,
@@ -188,9 +218,11 @@ export async function createCODOrder(
       .select()
       .single();
 
-    if (orderError || !order) {
+    if (orderError || !orderData) {
       throw new Error(orderError?.message || 'Failed to create order');
     }
+
+    order = orderData; // Assign to outer variable
 
     // Créer les articles de commande
     const orderItems = codData.items.map((item) => ({
@@ -256,6 +288,26 @@ export async function createCODOrder(
   } catch (error) {
     console.error('COD order creation failed:', error);
     throw error;
+  } finally {
+    // Send notification asynchronously for COD orders
+    if (order?.id) {
+      import('@/lib/services/order-notifications').then(async ({ sendNewOrderNotification }) => {
+        try {
+          await sendNewOrderNotification({
+            orderId: order.id,
+            orderNumber: order.order_number,
+            customerName: `${codData.firstName} ${codData.lastName}`,
+            customerEmail: codData.email,
+            customerPhone: codData.phone,
+            total: order.total,
+            itemCount: codData.items.length,
+            shippingMethod: codData.shippingMethod,
+          });
+        } catch (notifError) {
+          console.error('Failed to send COD order notification:', notifError);
+        }
+      });
+    }
   }
 }
 

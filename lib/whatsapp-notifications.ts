@@ -147,12 +147,21 @@ export async function notifyManagerNewOrder(data: {
     return false;
   }
 
+  // Créer les liens de validation/annulation (format court)
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.nubiaaura.com';
+
   const message = `🛍️ *Nouvelle commande*\n\n` +
     `🔖 *N°:* ${data.orderId}\n` +
     `👤 *Client:* ${data.customerName}\n` +
     `📦 *Articles:* ${data.itemCount}\n` +
     `💰 *Total:* ${data.total.toLocaleString('fr-FR')} FCFA\n\n` +
+    `*Actions:*\n` +
+    `Valider: ${baseUrl}/api/admin/orders/validate?id=${data.orderId}&action=confirm\n` +
+    `Annuler: ${baseUrl}/api/admin/orders/validate?id=${data.orderId}&action=cancel\n\n` +
     `Préparez la commande rapidement !`;
+
+  console.log('[WhatsApp] Sending notification with validation links');
+  console.log('[WhatsApp] Message length:', message.length);
 
   return sendWhatsAppNotification({
     phone: MANAGER_WHATSAPP,
