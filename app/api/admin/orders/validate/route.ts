@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseServerClient } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 /**
  * API route pour valider ou annuler une commande depuis WhatsApp
@@ -68,7 +68,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const supabase = getSupabaseServerClient();
+    // Utiliser le service role client pour avoir les permissions complètes
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
 
     // Récupérer la commande par order_number (ORD-xxx)
     const { data: order, error: fetchError } = await supabase
