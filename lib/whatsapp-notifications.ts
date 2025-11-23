@@ -134,33 +134,73 @@ export async function notifyManagerNewNewsletter(data: {
 }
 
 /**
- * Notifier le manager d'une nouvelle commande
+ * Notifier le manager d'une nouvelle commande avec détails complets
  */
 export async function notifyManagerNewOrder(data: {
   orderId: string;
   customerName: string;
+  customerEmail?: string;
+  customerPhone?: string;
   total: number;
   itemCount: number;
+  items?: Array<{ name: string; quantity: number; price: number }>;
+  address?: string;
+  city?: string;
+  paymentMethod?: string;
 }) {
   if (!MANAGER_WHATSAPP) {
     console.warn('⚠️ Manager WhatsApp not configured');
     return false;
   }
 
-  // Créer les liens de validation/annulation (format court)
+  // Créer les liens de validation/annulation
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.nubiaaura.com';
 
-  const message = `🛍️ *Nouvelle commande*\n\n` +
-    `🔖 *N°:* ${data.orderId}\n` +
-    `👤 *Client:* ${data.customerName}\n` +
-    `📦 *Articles:* ${data.itemCount}\n` +
-    `💰 *Total:* ${data.total.toLocaleString('fr-FR')} FCFA\n\n` +
-    `*Actions:*\n` +
-    `Valider: ${baseUrl}/api/admin/orders/validate?id=${data.orderId}&action=confirm\n` +
-    `Annuler: ${baseUrl}/api/admin/orders/validate?id=${data.orderId}&action=cancel\n\n` +
-    `Préparez la commande rapidement !`;
+  // Message optimisé avec informations essentielles
+  let message = `🛍️ *NOUVELLE COMMANDE*\n\n`;
+  message += `📋 *N°:* ${data.orderId}\n`;
+  message += `👤 *Client:* ${data.customerName}\n`;
 
-  console.log('[WhatsApp] Sending notification with validation links');
+  if (data.customerEmail) {
+    message += `📧 ${data.customerEmail}\n`;
+  }
+  if (data.customerPhone) {
+    message += `📱 ${data.customerPhone}\n`;
+  }
+
+  message += `\n🛍️ *ARTICLES:* ${data.itemCount}\n`;
+
+  // Ajouter les articles (max 3 pour éviter message trop long)
+  if (data.items && data.items.length > 0) {
+    const itemsToShow = data.items.slice(0, 3);
+    itemsToShow.forEach((item, index) => {
+      message += `${index + 1}. ${item.name}\n`;
+      message += `   ${item.quantity} × ${item.price.toLocaleString('fr-FR')} FCFA\n`;
+    });
+    if (data.items.length > 3) {
+      message += `... +${data.items.length - 3} autre(s)\n`;
+    }
+  }
+
+  message += `\n💰 *TOTAL: ${data.total.toLocaleString('fr-FR')} FCFA*\n`;
+
+  // Adresse (format court)
+  if (data.address && data.city) {
+    message += `\n📍 ${data.city}\n`;
+  }
+
+  // Méthode de paiement
+  if (data.paymentMethod) {
+    const paymentLabel = data.paymentMethod === 'cod' ? 'Paiement à la livraison' : 'Paiement en ligne';
+    message += `💳 ${paymentLabel}\n`;
+  }
+
+  // Liens de validation
+  message += `\n*⚡ ACTIONS RAPIDES:*\n`;
+  message += `✅ ${baseUrl}/api/admin/orders/validate?id=${data.orderId}&action=confirm\n`;
+  message += `❌ ${baseUrl}/api/admin/orders/validate?id=${data.orderId}&action=cancel`;
+
+  console.log('[WhatsApp] Sending detailed notification with validation links');
   console.log('[WhatsApp] Message length:', message.length);
 
   return sendWhatsAppNotification({

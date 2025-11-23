@@ -216,12 +216,25 @@ export async function POST(request: NextRequest) {
 
     // Envoyer notification WhatsApp au manager avec liens de validation (non bloquant)
     try {
-      console.log('[COD API] Envoi notification WhatsApp avec liens de validation...');
+      console.log('[COD API] Envoi notification WhatsApp avec détails complets...');
       await notifyManagerNewOrder({
         orderId: order.order_number,
         customerName: `${parsed.data.firstName} ${parsed.data.lastName}`,
+        customerEmail: parsed.data.email,
+        customerPhone: parsed.data.phone,
         total: quote.total,
-        itemCount: normalized.length
+        itemCount: normalized.length,
+        items: normalized.map(item => {
+          const product = products?.find(p => p.id === item.product_id);
+          return {
+            name: product?.name || 'Produit',
+            quantity: item.quantity,
+            price: item.price
+          };
+        }),
+        address: parsed.data.address,
+        city: parsed.data.city,
+        paymentMethod: 'cod'
       });
       console.log('[COD API] Notification WhatsApp envoyée avec succès!');
     } catch (whatsappError) {

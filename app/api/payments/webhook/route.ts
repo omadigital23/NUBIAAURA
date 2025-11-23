@@ -129,10 +129,16 @@ export async function POST(request: NextRequest) {
           await notifyManagerNewOrder({
             orderId: orderData.id,
             customerName: orderData.customer_name,
+            customerEmail: orderData.email,
+            customerPhone: orderData.phone,
             total: orderData.total,
-            itemCount: orderData.items?.length || 0
+            itemCount: orderData.items?.length || 0,
+            items: orderData.items || [],
+            address: orderData.address,
+            city: orderData.city,
+            paymentMethod: 'online'
           });
-          console.log(JSON.stringify({ notification: 'whatsapp_manager_alert_with_links', orderId: orderData.id }));
+          console.log(JSON.stringify({ notification: 'whatsapp_manager_alert_with_details', orderId: orderData.id }));
         } catch (error: any) {
           console.error('Manager WhatsApp notification failed:', error.message);
         }
