@@ -8,6 +8,10 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Force dynamic rendering (required for searchParams)
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 /**
  * API route pour valider ou annuler une commande depuis WhatsApp
  * GET /api/admin/orders/validate?id=ORDER_ID&token=TOKEN&action=confirm|cancel
