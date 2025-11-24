@@ -46,7 +46,7 @@ export default function CheckoutPage() {
       setFormData((prev) => ({
         ...prev,
         email: user.email || prev.email,
-        firstName: (user as any).first_name || prev.firstName,
+        firstName: (user as any).first_name || (user as any).name || prev.firstName,
         lastName: (user as any).last_name || prev.lastName,
         phone: (user as any).phone || prev.phone,
       }));

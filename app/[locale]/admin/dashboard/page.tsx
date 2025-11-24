@@ -12,6 +12,20 @@ interface DashboardStats {
   totalRevenue: number;
   totalCustomers: number;
   totalProducts: number;
+  totalStock?: number;
+  stockValue?: number;
+  outOfStock?: number;
+  lowStock?: number;
+  ordersByStatus?: {
+    pending: number;
+    processing: number;
+    shipped: number;
+    delivered: number;
+    cancelled: number;
+  };
+  conversionRate?: number;
+  averageOrderValue?: number;
+  activeCustomers?: number;
 }
 
 export default function AdminDashboardPage() {
@@ -47,33 +61,33 @@ export default function AdminDashboardPage() {
         throw new Error('No admin token');
       }
 
-      // Récupérer les statistiques depuis les endpoints admin avec token
-      const [ordersRes, productsRes] = await Promise.all([
-        fetch('/api/admin/orders/list', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }),
-        fetch('/api/admin/products', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }),
-      ]);
+      // Récupérer les statistiques avancées depuis la nouvelle API
+      const statsRes = await fetch('/api/admin/stats', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      const ordersData = await ordersRes.json();
-      const productsData = await productsRes.json();
+      if (!statsRes.ok) {
+        throw new Error('Failed to load stats');
+      }
 
-      const orders = ordersData.data || [];
-      const products = productsData.data || [];
-
-      const totalRevenue = orders.reduce((sum: number, order: any) => sum + (order.total || 0), 0);
+      const statsData = await statsRes.json();
+      const advancedStats = statsData.stats;
 
       setStats({
-        totalOrders: orders.length,
-        totalRevenue,
-        totalCustomers: new Set(orders.map((o: any) => o.user_id)).size,
-        totalProducts: products.length,
+        totalOrders: advancedStats.orders.total,
+        totalRevenue: advancedStats.revenue.total,
+        totalCustomers: advancedStats.customers.total,
+        totalProducts: advancedStats.products.total,
+        totalStock: advancedStats.stock.total,
+        stockValue: advancedStats.stock.value,
+        outOfStock: advancedStats.stock.outOfStock,
+        lowStock: advancedStats.stock.lowStock,
+        ordersByStatus: advancedStats.orders.byStatus,
+        conversionRate: advancedStats.customers.conversionRate,
+        averageOrderValue: advancedStats.revenue.averageOrderValue,
+        activeCustomers: advancedStats.customers.active,
       });
     } catch (error) {
       console.error('Erreur lors du chargement des statistiques:', error);
@@ -122,7 +136,77 @@ export default function AdminDashboardPage() {
     {
       icon: BarChart3,
       label: t('admin.total_revenue'),
-      value: `${stats.totalRevenue.toLocaleString('fr-FR')} FCFA`,
+      value: `${(stats.totalRevenue || 0).toLocaleString('fr-FR')} FCFA`,
+      color: 'bg-orange-50',
+      iconColor: 'text-orange-600',
+    },
+    {
+      icon: Boxes,
+      label: t('admin.total_stock'),
+      value: stats.totalStock || 0,
+      color: 'bg-indigo-50',
+      iconColor: 'text-indigo-600',
+    },
+    {
+      icon: BarChart3,
+      label: t('admin.stock_value'),
+      value: `${((stats.stockValue || 0) / 1000).toFixed(0)}k FCFA`,
+      color: 'bg-cyan-50',
+      iconColor: 'text-cyan-600',
+    },
+    {
+      icon: ShoppingCart,
+      label: t('admin.orders_pending'),
+      value: stats.ordersByStatus?.pending || 0,
+      color: 'bg-yellow-50',
+      iconColor: 'text-yellow-600',
+    },
+    {
+      icon: ShoppingCart,
+      label: t('admin.orders_shipped'),
+      value: stats.ordersByStatus?.shipped || 0,
+      color: 'bg-blue-50',
+      iconColor: 'text-blue-600',
+    },
+    {
+      icon: ShoppingCart,
+      label: t('admin.orders_delivered'),
+      value: stats.ordersByStatus?.delivered || 0,
+      color: 'bg-green-50',
+      iconColor: 'text-green-600',
+    },
+    {
+      icon: Users,
+      label: t('admin.conversion_rate'),
+      value: `${(stats.conversionRate || 0).toFixed(1)}%`,
+      color: 'bg-pink-50',
+      iconColor: 'text-pink-600',
+    },
+    {
+      icon: BarChart3,
+      label: t('admin.average_order_value'),
+      value: `${(stats.averageOrderValue || 0).toLocaleString('fr-FR')} FCFA`,
+      color: 'bg-rose-50',
+      iconColor: 'text-rose-600',
+    },
+    {
+      icon: Users,
+      label: t('admin.active_customers'),
+      value: stats.activeCustomers || 0,
+      color: 'bg-teal-50',
+      iconColor: 'text-teal-600',
+    },
+    {
+      icon: Package,
+      label: t('admin.out_of_stock'),
+      value: stats.outOfStock || 0,
+      color: 'bg-red-50',
+      iconColor: 'text-red-600',
+    },
+    {
+      icon: Package,
+      label: t('admin.low_stock'),
+      value: stats.lowStock || 0,
       color: 'bg-orange-50',
       iconColor: 'text-orange-600',
     },
@@ -160,7 +244,7 @@ export default function AdminDashboardPage() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
                 {statCards.map((card, index) => {
                   const Icon = card.icon;
                   return (

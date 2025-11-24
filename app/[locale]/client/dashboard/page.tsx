@@ -6,19 +6,62 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
-import { User, ShoppingBag, LogOut, AlertCircle } from 'lucide-react';
+import { User, ShoppingBag, LogOut, AlertCircle, MapPin, TrendingUp, Package } from 'lucide-react';
+
+interface UserStats {
+  totalSpent: number;
+  totalOrders: number;
+  totalAddresses: number;
+  activeOrders: number;
+  lastOrder?: {
+    id: string;
+    total: number;
+    status: string;
+    created_at: string;
+  };
+}
 
 export default function ClientDashboard() {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const router = useRouter();
   const { t, locale } = useTranslation();
   const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<UserStats>({
+    totalSpent: 0,
+    totalOrders: 0,
+    totalAddresses: 0,
+    activeOrders: 0,
+  });
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push(`/${locale}/auth/login?callbackUrl=/${locale}/client/dashboard`);
     }
   }, [isLoading, isAuthenticated, router, locale]);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      fetchStats();
+    }
+  }, [isAuthenticated, user]);
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch('/api/users/stats', {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to load stats');
+      }
+
+      const data = await response.json();
+      setStats(data.stats);
+    } catch (err: any) {
+      console.error('Error loading stats:', err);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -113,6 +156,61 @@ export default function ClientDashboard() {
             </button>
           </div>
 
+          {/* Statistics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            {/* Total Spent */}
+            <div className="bg-nubia-cream/30 border border-nubia-gold/20 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-nubia-black">
+                  {t('dashboard.total_spent')}
+                </h3>
+                <TrendingUp size={24} className="text-nubia-gold" />
+              </div>
+              <p className="text-3xl font-bold text-nubia-black">
+                {(stats.totalSpent || 0).toLocaleString('fr-FR')} FCFA
+              </p>
+            </div>
+
+            {/* Total Orders */}
+            <div className="bg-nubia-cream/30 border border-nubia-gold/20 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-nubia-black">
+                  {t('dashboard.total_orders')}
+                </h3>
+                <ShoppingBag size={24} className="text-nubia-gold" />
+              </div>
+              <p className="text-3xl font-bold text-nubia-black">
+                {stats.totalOrders}
+              </p>
+            </div>
+
+            {/* Active Orders */}
+            <div className="bg-nubia-cream/30 border border-nubia-gold/20 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-nubia-black">
+                  {t('dashboard.active_orders')}
+                </h3>
+                <Package size={24} className="text-nubia-gold" />
+              </div>
+              <p className="text-3xl font-bold text-nubia-black">
+                {stats.activeOrders}
+              </p>
+            </div>
+
+            {/* Saved Addresses */}
+            <div className="bg-nubia-cream/30 border border-nubia-gold/20 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-nubia-black">
+                  {t('dashboard.saved_addresses')}
+                </h3>
+                <MapPin size={24} className="text-nubia-gold" />
+              </div>
+              <p className="text-3xl font-bold text-nubia-black">
+                {stats.totalAddresses}
+              </p>
+            </div>
+          </div>
+
           {/* Quick Links */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* My Orders */}
@@ -125,11 +223,11 @@ export default function ClientDashboard() {
                   <ShoppingBag className="text-nubia-gold" size={24} />
                 </div>
                 <h3 className="font-playfair text-xl font-bold text-nubia-black">
-                  {t('nav.my_orders', 'Mes commandes')}
+                  {t('nav.my_orders')}
                 </h3>
               </div>
               <p className="text-nubia-black/70 text-sm">
-                Consultez l'historique de vos commandes et suivez vos achats
+                {t('dashboard.view_all_orders')}
               </p>
             </a>
 
@@ -143,11 +241,11 @@ export default function ClientDashboard() {
                   <User className="text-nubia-gold" size={24} />
                 </div>
                 <h3 className="font-playfair text-xl font-bold text-nubia-black">
-                  {t('nav.settings', 'Paramètres')}
+                  {t('nav.settings')}
                 </h3>
               </div>
               <p className="text-nubia-black/70 text-sm">
-                Gérez vos informations personnelles et vos préférences
+                {t('settings.manage_info')}
               </p>
             </a>
           </div>
