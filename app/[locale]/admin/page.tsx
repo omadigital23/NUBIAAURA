@@ -39,10 +39,10 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen bg-nubia-white flex items-center justify-center">
         <div className="text-center">
-          <h1 className="font-playfair text-3xl font-bold text-nubia-black mb-4">Accès Refusé</h1>
-          <p className="text-nubia-black/60 mb-6">Veuillez vous connecter via la page de login</p>
+          <h1 className="font-playfair text-3xl font-bold text-nubia-black mb-4">{t('admin.access_denied', 'Accès Refusé')}</h1>
+          <p className="text-nubia-black/60 mb-6">{t('admin.please_login', 'Veuillez vous connecter via la page de login')}</p>
           <a href="/admin/login" className="bg-nubia-gold text-nubia-black px-6 py-2 rounded-lg hover:bg-nubia-gold/90">
-            Aller à la connexion
+            {t('admin.go_to_login', 'Aller à la connexion')}
           </a>
         </div>
       </div>
@@ -54,14 +54,14 @@ export default function AdminPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="font-playfair text-3xl font-bold text-nubia-black">{t('admin.dashboard_title', 'Admin Dashboard')}</h1>
+            <h1 className="font-playfair text-3xl font-bold text-nubia-black">{t('admin.dashboard_title', 'Tableau de Bord Admin')}</h1>
             <p className="text-nubia-black/60 text-sm mt-1">{t('admin.logged_as', 'Connecté en tant que:')} {username}</p>
           </div>
           <button
             onClick={logout}
             className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
           >
-            {t('nav.logout', 'Déconnexion')}
+            {t('admin.logout', 'Déconnexion')}
           </button>
         </div>
 
@@ -73,13 +73,13 @@ export default function AdminPage() {
             className={`px-4 py-2 rounded border ${tab === "orders" ? "bg-nubia-gold border-nubia-gold text-nubia-black" : "border-nubia-gold/40"}`}
             onClick={() => setTab("orders")}
           >
-            Orders
+            {t('admin.tab_orders', 'Commandes')}
           </button>
           <button
             className={`px-4 py-2 rounded border ${tab === "products" ? "bg-nubia-gold border-nubia-gold text-nubia-black" : "border-nubia-gold/40"}`}
             onClick={() => setTab("products")}
           >
-            Products
+            {t('admin.tab_products', 'Produits')}
           </button>
         </div>
 
@@ -92,6 +92,7 @@ export default function AdminPage() {
 function StatsCards({ token }: { token: string }) {
   const [stats, setStats] = useState({ revenue: 0, stockValue: 0, ordersCount: 0, productsCount: 0 });
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const loadStats = async () => {
@@ -154,51 +155,52 @@ function StatsCards({ token }: { token: string }) {
       {/* Revenue Card */}
       <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-4 shadow-sm">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-green-800">💰 Chiffre d'Affaires</span>
+          <span className="text-sm font-medium text-green-800">💰 {t('admin.stats.revenue', 'Chiffre d\'Affaires')}</span>
         </div>
         <div className="text-2xl font-bold text-green-900">
           {stats.revenue.toLocaleString("fr-FR")} <span className="text-lg">FCFA</span>
         </div>
-        <p className="text-xs text-green-700 mt-1">{stats.ordersCount} commande(s)</p>
+        <p className="text-xs text-green-700 mt-1">{stats.ordersCount} {t('admin.stats.total_orders', 'commande(s)')}</p>
       </div>
 
       {/* Stock Value Card */}
       <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4 shadow-sm">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-blue-800">📦 Valeur du Stock</span>
+          <span className="text-sm font-medium text-blue-800">📦 {t('admin.stats.stock_value', 'Valeur du Stock')}</span>
         </div>
         <div className="text-2xl font-bold text-blue-900">
           {stats.stockValue.toLocaleString("fr-FR")} <span className="text-lg">FCFA</span>
         </div>
-        <p className="text-xs text-blue-700 mt-1">{stats.productsCount} produit(s)</p>
+        <p className="text-xs text-blue-700 mt-1">{stats.productsCount} {t('admin.stats.total_products', 'produit(s)')}</p>
       </div>
 
       {/* Orders Count Card */}
       <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-4 shadow-sm">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-purple-800">🛍️ Commandes</span>
+          <span className="text-sm font-medium text-purple-800">🛍️ {t('admin.stats.orders', 'Commandes')}</span>
         </div>
         <div className="text-2xl font-bold text-purple-900">
           {stats.ordersCount}
         </div>
-        <p className="text-xs text-purple-700 mt-1">Total commandes</p>
+        <p className="text-xs text-purple-700 mt-1">{t('admin.stats.total_orders', 'Total commandes')}</p>
       </div>
 
       {/* Products Count Card */}
       <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-4 shadow-sm">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-orange-800">👕 Produits</span>
+          <span className="text-sm font-medium text-orange-800">👕 {t('admin.stats.products', 'Produits')}</span>
         </div>
         <div className="text-2xl font-bold text-orange-900">
           {stats.productsCount}
         </div>
-        <p className="text-xs text-orange-700 mt-1">Total produits</p>
+        <p className="text-xs text-orange-700 mt-1">{t('admin.stats.total_products', 'Total produits')}</p>
       </div>
     </div>
   );
 }
 
 function OrdersPanel({ token }: { token: string }) {
+  const { t } = useTranslation();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -225,13 +227,13 @@ function OrdersPanel({ token }: { token: string }) {
       console.log('Orders loaded:', data);
       setOrders(data.orders || []);
       if (!data.orders || data.orders.length === 0) {
-        setError('Aucune commande trouvée');
+        setError(t('admin.orders.no_orders', 'Aucune commande trouvée'));
       } else {
         setError(null); // Effacer l'erreur si les données sont là
       }
     } catch (e: any) {
       console.error('Error loading orders:', e);
-      setError(e.message || "Erreur lors du chargement des commandes");
+      setError(e.message || t('admin.orders.error_loading', 'Erreur lors du chargement des commandes'));
     } finally {
       setLoading(false);
     }
@@ -239,13 +241,6 @@ function OrdersPanel({ token }: { token: string }) {
 
   useEffect(() => {
     if (token) load();
-
-    // Charger les données chaque 5 secondes pour un refresh automatique
-    const interval = setInterval(() => {
-      if (token) load();
-    }, 5000);
-
-    return () => clearInterval(interval);
   }, [token]);
 
   const updateStatus = async (id: string, status: string) => {
@@ -268,7 +263,7 @@ function OrdersPanel({ token }: { token: string }) {
   };
 
   const deleteOrder = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette commande ?')) {
+    if (!confirm(t('admin.orders.confirm_delete', 'Êtes-vous sûr de vouloir supprimer cette commande ?'))) {
       return;
     }
     const res = await fetch("/api/admin/orders", {
@@ -295,33 +290,33 @@ function OrdersPanel({ token }: { token: string }) {
       <div className="mb-4 flex justify-between items-center">
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-600">
-            {loading ? '⏳ Chargement...' : `Total: ${orders.length} commande(s)`}
+            {loading ? `⏳ ${t('admin.orders.loading', 'Chargement...')}` : `${t('admin.orders.total', 'Total:')} ${orders.length} ${t('admin.stats.total_orders', 'commande(s)')}`}
           </span>
         </div>
         <button
           onClick={() => load()}
           disabled={loading}
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
-          title="Rafraîchir les données"
+          title={t('admin.orders.refresh_data', 'Rafraîchir les données')}
         >
-          {loading ? '⏳ Chargement...' : '🔄 Rafraîchir'}
+          {loading ? `⏳ ${t('admin.orders.loading', 'Chargement...')}` : `🔄 ${t('admin.orders.refresh', 'Rafraîchir')}`}
         </button>
       </div>
 
-      {loading && <div className="py-10 text-center">⏳ Chargement des commandes...</div>}
+      {loading && <div className="py-10 text-center">⏳ {t('admin.orders.loading_orders', 'Chargement des commandes...')}</div>}
       {error && <div className="py-4 bg-red-100 text-red-800 rounded p-3 mb-4">{error}</div>}
-      {!loading && orders.length === 0 && !error && <div className="py-10 text-center text-gray-500">Aucune commande disponible</div>}
+      {!loading && orders.length === 0 && !error && <div className="py-10 text-center text-gray-500">{t('admin.orders.no_orders_available', 'Aucune commande disponible')}</div>}
       {!loading && orders.length > 0 && (
         <div>
           <div className="overflow-x-auto border rounded">
             <table className="min-w-full text-sm">
               <thead className="bg-nubia-cream">
                 <tr>
-                  <th className="text-left p-3">Order #</th>
-                  <th className="text-left p-3">Status</th>
-                  <th className="text-left p-3">Payment</th>
-                  <th className="text-left p-3">Total</th>
-                  <th className="text-left p-3">Actions</th>
+                  <th className="text-left p-3">{t('admin.orders.table.order_number', 'Commande #')}</th>
+                  <th className="text-left p-3">{t('admin.orders.table.status', 'Statut')}</th>
+                  <th className="text-left p-3">{t('admin.orders.table.payment', 'Paiement')}</th>
+                  <th className="text-left p-3">{t('admin.orders.table.total', 'Total')}</th>
+                  <th className="text-left p-3">{t('admin.orders.table.actions', 'Actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -332,11 +327,11 @@ function OrdersPanel({ token }: { token: string }) {
                     <td className="p-3"><span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">{o.payment_status || 'pending'}</span></td>
                     <td className="p-3">{o.total ? o.total.toLocaleString("fr-FR") + " FCFA" : 'N/A'}</td>
                     <td className="p-3 flex gap-1 flex-wrap">
-                      <button className="px-2 py-1 border border-blue-300 bg-blue-50 rounded text-xs hover:bg-blue-100" onClick={() => updateStatus(o.id, "processing")}>Process</button>
-                      <button className="px-2 py-1 border border-orange-300 bg-orange-50 rounded text-xs hover:bg-orange-100" onClick={() => updateStatus(o.id, "shipped")}>Ship</button>
-                      <button className="px-2 py-1 border border-green-300 bg-green-50 rounded text-xs hover:bg-green-100" onClick={() => updateStatus(o.id, "delivered")}>Complete</button>
-                      <button className="px-2 py-1 border border-red-300 bg-red-50 text-red-700 rounded text-xs hover:bg-red-100" onClick={() => updateStatus(o.id, "cancelled")}>Cancel</button>
-                      <button className="px-2 py-1 border border-red-500 bg-red-100 text-red-700 rounded text-xs hover:bg-red-200" onClick={() => deleteOrder(o.id)}>Delete</button>
+                      <button className="px-2 py-1 border border-blue-300 bg-blue-50 rounded text-xs hover:bg-blue-100" onClick={() => updateStatus(o.id, "processing")}>{t('admin.orders.action.process', 'Traiter')}</button>
+                      <button className="px-2 py-1 border border-orange-300 bg-orange-50 rounded text-xs hover:bg-orange-100" onClick={() => updateStatus(o.id, "shipped")}>{t('admin.orders.action.ship', 'Expédier')}</button>
+                      <button className="px-2 py-1 border border-green-300 bg-green-50 rounded text-xs hover:bg-green-100" onClick={() => updateStatus(o.id, "delivered")}>{t('admin.orders.action.complete', 'Terminer')}</button>
+                      <button className="px-2 py-1 border border-red-300 bg-red-50 text-red-700 rounded text-xs hover:bg-red-100" onClick={() => updateStatus(o.id, "cancelled")}>{t('admin.orders.action.cancel', 'Annuler')}</button>
+                      <button className="px-2 py-1 border border-red-500 bg-red-100 text-red-700 rounded text-xs hover:bg-red-200" onClick={() => deleteOrder(o.id)}>{t('admin.orders.action.delete', 'Supprimer')}</button>
                     </td>
                   </tr>
                 ))}
@@ -487,21 +482,21 @@ function ProductsPanel({ token }: { token: string }) {
 
   return (
     <div>
-      {loading && <div className="py-10">Loading...</div>}
+      {loading && <div className="py-10">{t('admin.products.loading', 'Chargement...')}</div>}
       {error && <div className="py-4 text-red-600">{error}</div>}
       {!loading && (
         <div className="overflow-x-auto border rounded">
           <div className="p-4 border-b flex flex-col gap-2 bg-nubia-cream/40">
-            <div className="font-semibold">Create Product</div>
+            <div className="font-semibold">{t('admin.products.create_title', 'Créer un Produit')}</div>
             <div className="flex flex-wrap gap-2 items-center">
-              <input className="border px-2 py-1 rounded" placeholder={t('admin.form.slug_placeholder', 'slug')} value={newProduct.slug} onChange={(e) => setNewProduct(p => ({ ...p, slug: e.target.value }))} />
-              <input type="number" className="border px-2 py-1 rounded w-28" placeholder={t('admin.form.price_placeholder', 'price')} value={newProduct.price} onChange={(e) => setNewProduct(p => ({ ...p, price: Number(e.target.value) }))} />
-              <input className="border px-2 py-1 rounded" placeholder={t('admin.form.category_placeholder', 'category')} value={newProduct.category} onChange={(e) => setNewProduct(p => ({ ...p, category: e.target.value }))} list="categories-list" />
+              <input className="border px-2 py-1 rounded" placeholder={t('admin.products.form.slug', 'slug')} value={newProduct.slug} onChange={(e) => setNewProduct(p => ({ ...p, slug: e.target.value }))} />
+              <input type="number" className="border px-2 py-1 rounded w-28" placeholder={t('admin.products.form.price', 'prix')} value={newProduct.price} onChange={(e) => setNewProduct(p => ({ ...p, price: Number(e.target.value) }))} />
+              <input className="border px-2 py-1 rounded" placeholder={t('admin.products.form.category', 'catégorie')} value={newProduct.category} onChange={(e) => setNewProduct(p => ({ ...p, category: e.target.value }))} list="categories-list" />
               <datalist id="categories-list">
                 {categories.map((c) => (<option key={c} value={c} />))}
               </datalist>
-              <input className="border px-2 py-1 rounded" placeholder={t('admin.form.name_fr_placeholder', 'name_fr')} value={newProduct.name_fr || ''} onChange={(e) => setNewProduct(p => ({ ...p, name_fr: e.target.value }))} />
-              <input className="border px-2 py-1 rounded" placeholder={t('admin.form.name_en_placeholder', 'name_en')} value={newProduct.name_en || ''} onChange={(e) => setNewProduct(p => ({ ...p, name_en: e.target.value }))} />
+              <input className="border px-2 py-1 rounded" placeholder={t('admin.products.form.name_fr', 'nom_fr')} value={newProduct.name_fr || ''} onChange={(e) => setNewProduct(p => ({ ...p, name_fr: e.target.value }))} />
+              <input className="border px-2 py-1 rounded" placeholder={t('admin.products.form.name_en', 'nom_en')} value={newProduct.name_en || ''} onChange={(e) => setNewProduct(p => ({ ...p, name_en: e.target.value }))} />
               <button className="px-3 py-1 border rounded bg-nubia-gold text-nubia-black" onClick={async () => {
                 if (!newProduct.slug || !newProduct.price || !newProduct.category) return;
                 await fetch('/api/admin/products', {
@@ -511,30 +506,30 @@ function ProductsPanel({ token }: { token: string }) {
                 });
                 setNewProduct({ slug: '', price: 0, category: '' });
                 load();
-              }}>Create</button>
+              }}>{t('admin.products.create_button', 'Créer')}</button>
             </div>
           </div>
           <table className="min-w-full text-sm">
             <thead className="bg-nubia-cream">
               <tr>
-                <th className="text-left p-3">Name FR</th>
-                <th className="text-left p-3">Name EN</th>
-                <th className="text-left p-3">Slug</th>
-                <th className="text-left p-3">Category</th>
-                <th className="text-left p-3">Price</th>
-                <th className="text-left p-3">Original</th>
-                <th className="text-left p-3">Stock</th>
-                <th className="text-left p-3">InStock</th>
-                <th className="text-left p-3">Desc FR</th>
-                <th className="text-left p-3">Desc EN</th>
-                <th className="text-left p-3">Material FR</th>
-                <th className="text-left p-3">Material EN</th>
-                <th className="text-left p-3">Care FR</th>
-                <th className="text-left p-3">Care EN</th>
-                <th className="text-left p-3">Sizes</th>
-                <th className="text-left p-3">Colors</th>
-                <th className="text-left p-3">Images</th>
-                <th className="text-left p-3">Actions</th>
+                <th className="text-left p-3">{t('admin.products.table.name_fr', 'Nom FR')}</th>
+                <th className="text-left p-3">{t('admin.products.table.name_en', 'Nom EN')}</th>
+                <th className="text-left p-3">{t('admin.products.table.slug', 'Slug')}</th>
+                <th className="text-left p-3">{t('admin.products.table.category', 'Catégorie')}</th>
+                <th className="text-left p-3">{t('admin.products.table.price', 'Prix')}</th>
+                <th className="text-left p-3">{t('admin.products.table.original', 'Original')}</th>
+                <th className="text-left p-3">{t('admin.products.table.stock', 'Stock')}</th>
+                <th className="text-left p-3">{t('admin.products.table.in_stock', 'En Stock')}</th>
+                <th className="text-left p-3">{t('admin.products.table.desc_fr', 'Desc FR')}</th>
+                <th className="text-left p-3">{t('admin.products.table.desc_en', 'Desc EN')}</th>
+                <th className="text-left p-3">{t('admin.products.table.material_fr', 'Matière FR')}</th>
+                <th className="text-left p-3">{t('admin.products.table.material_en', 'Matière EN')}</th>
+                <th className="text-left p-3">{t('admin.products.table.care_fr', 'Entretien FR')}</th>
+                <th className="text-left p-3">{t('admin.products.table.care_en', 'Entretien EN')}</th>
+                <th className="text-left p-3">{t('admin.products.table.sizes', 'Tailles')}</th>
+                <th className="text-left p-3">{t('admin.products.table.colors', 'Couleurs')}</th>
+                <th className="text-left p-3">{t('admin.products.table.images', 'Images')}</th>
+                <th className="text-left p-3">{t('admin.products.table.actions', 'Actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -577,19 +572,19 @@ function ProductsPanel({ token }: { token: string }) {
                     <input className="border px-2 py-1 rounded w-full" defaultValue={p.care_en || ''} onChange={(e) => setEdit(p.id, "care_en", e.target.value)} />
                   </td>
                   <td className="p-3 w-48">
-                    <input className="border px-2 py-1 rounded w-full" placeholder={t('admin.form.sizes_placeholder', 'S,M,L')} defaultValue={Array.isArray(p.sizes) ? p.sizes.join(',') : ''} onChange={(e) => setEdit(p.id, "sizes", e.target.value)} />
+                    <input className="border px-2 py-1 rounded w-full" placeholder={t('admin.products.form.sizes', 'S,M,L')} defaultValue={Array.isArray(p.sizes) ? p.sizes.join(',') : ''} onChange={(e) => setEdit(p.id, "sizes", e.target.value)} />
                   </td>
                   <td className="p-3 w-48">
-                    <input className="border px-2 py-1 rounded w-full" placeholder={t('admin.form.colors_placeholder', 'Noir,Or')} defaultValue={Array.isArray(p.colors) ? p.colors.join(',') : ''} onChange={(e) => setEdit(p.id, "colors", e.target.value)} />
+                    <input className="border px-2 py-1 rounded w-full" placeholder={t('admin.products.form.colors', 'Noir,Or')} defaultValue={Array.isArray(p.colors) ? p.colors.join(',') : ''} onChange={(e) => setEdit(p.id, "colors", e.target.value)} />
                   </td>
                   <td className="p-3">
                     <div className="flex items-center gap-2">
                       <label className="text-xs">
-                        Cover
+                        {t('admin.products.upload.cover', 'Couverture')}
                         <input type="file" accept="image/*" className="block text-xs" onChange={(e) => e.target.files && onUpload(p, e.target.files[0], "cover")} />
                       </label>
                       <label className="text-xs">
-                        Gallery
+                        {t('admin.products.upload.gallery', 'Galerie')}
                         <input type="file" accept="image/*" multiple className="block text-xs" onChange={async (e) => {
                           if (!e.target.files) return;
                           for (const f of Array.from(e.target.files)) await onUpload(p, f, "gallery");
@@ -599,7 +594,7 @@ function ProductsPanel({ token }: { token: string }) {
                   </td>
                   <td className="p-3">
                     <div className="flex gap-2">
-                      <button className="px-3 py-1 border rounded" onClick={() => save(p)}>Save</button>
+                      <button className="px-3 py-1 border rounded" onClick={() => save(p)}>{t('admin.products.save', 'Enregistrer')}</button>
                       <button className="px-3 py-1 border rounded text-red-600" onClick={async () => {
                         await fetch('/api/admin/products', {
                           method: 'POST',
@@ -607,7 +602,7 @@ function ProductsPanel({ token }: { token: string }) {
                           body: JSON.stringify({ action: 'delete', id: p.id }),
                         });
                         load();
-                      }}>Delete</button>
+                      }}>{t('admin.products.delete', 'Supprimer')}</button>
                     </div>
                   </td>
                 </tr>
