@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
     // Récupérer la commande par order_number (ORD-xxx)
     const { data: order, error: fetchError } = await supabase
       .from('orders')
-      .select('id, order_number, status, total')
+      .select('id, order_number, status, total, delivery_duration_days, shipping_address')
       .eq('order_number', orderId)
       .single();
 
@@ -148,14 +148,30 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Mettre à jour le statut (utiliser l'id de la commande trouvée)
+    // Préparer les données de mise à jour
     const newStatus = action === 'confirm' ? 'processing' : 'cancelled';
+    const updateData: any = {
+      status: newStatus,
+      updated_at: new Date().toISOString()
+    };
+
+    // Si confirmation, calculer la date de livraison estimée
+    // Le compte à rebours commence MAINTENANT (à la validation)
+    if (action === 'confirm') {
+      const deliveryDurationDays = order.delivery_duration_days || 3;
+      const estimatedDeliveryDate = new Date();
+      estimatedDeliveryDate.setDate(estimatedDeliveryDate.getDate() + deliveryDurationDays);
+
+      updateData.estimated_delivery_date = estimatedDeliveryDate.toISOString();
+
+      console.log(`[Validation] Delivery countdown started: ${deliveryDurationDays} days from now`);
+      console.log(`[Validation] Estimated delivery: ${estimatedDeliveryDate.toISOString()}`);
+    }
+
+    // Mettre à jour le statut (utiliser l'id de la commande trouvée)
     const { error: updateError } = await supabase
       .from('orders')
-      .update({
-        status: newStatus,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', order.id);
 
     if (updateError) {

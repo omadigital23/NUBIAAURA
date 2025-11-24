@@ -6,6 +6,7 @@ import { computeQuote, ShippingMethod } from '@/lib/pricing';
 import { checkRateLimit, formRatelimit } from '@/lib/rate-limit';
 import { getLocaleFromPath, getTranslations, getTranslationKey } from '@/lib/i18n';
 import { notifyManagerNewOrder } from '@/lib/whatsapp-notifications';
+import { calculateDeliveryDuration } from '@/lib/delivery-calculator';
 
 export async function POST(request: NextRequest) {
   try {
@@ -144,10 +145,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Calculer delivery_duration_days (1-3 jours aléatoire)
-    const deliveryDurationDays = Math.floor(Math.random() * 3) + 1;
-    const estimatedDeliveryDate = new Date();
-    estimatedDeliveryDate.setDate(estimatedDeliveryDate.getDate() + deliveryDurationDays);
+    // Calculer delivery_duration_days basé sur le pays
+    // Sénégal: 1-3 jours, International: 3-7 jours
+    // NOTE: estimated_delivery_date sera calculé lors de la VALIDATION (clic sur "Valider")
+    // Le compte à rebours ne commence PAS à la création de la commande
+    const deliveryDurationDays = calculateDeliveryDuration(parsed.data.country, false);
 
     const { data: order, error: orderErr } = await supabase
       .from('orders')
@@ -169,7 +171,7 @@ export async function POST(request: NextRequest) {
         status: 'pending',
         payment_status: 'pending',
         delivery_duration_days: deliveryDurationDays,
-        estimated_delivery_date: estimatedDeliveryDate.toISOString(),
+        // estimated_delivery_date sera calculé à la validation
       })
       .select('*')
       .single();

@@ -5,6 +5,7 @@ import { sendEmail } from '@/lib/sendgrid';
 import { getCustomOrderConfirmationEmail, getCustomOrderManagerNotification } from '@/lib/email-templates';
 import { notifyManagerNewCustomOrder } from '@/lib/whatsapp-notifications';
 import { generateValidationToken, storeValidationToken } from '@/lib/order-validation-tokens';
+import { calculateDeliveryDuration } from '@/lib/delivery-calculator';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,8 +27,10 @@ export async function POST(request: NextRequest) {
       userId = user?.id;
     }
 
-    // Calculer delivery_duration_days (10-20 jours aléatoire) et estimated_delivery_date
-    const deliveryDurationDays = Math.floor(Math.random() * 11) + 10; // 10-20 jours
+    // Calculer delivery_duration_days basé sur le pays (commandes sur-mesure: 10-20 jours)
+    // Le pays peut être fourni dans validated.country ou par défaut 'Senegal'
+    const country = (validated as any).country || 'Senegal';
+    const deliveryDurationDays = calculateDeliveryDuration(country, true); // true = custom order
     const estimatedDeliveryDate = new Date();
     estimatedDeliveryDate.setDate(estimatedDeliveryDate.getDate() + deliveryDurationDays);
 
@@ -44,6 +47,7 @@ export async function POST(request: NextRequest) {
         preferences: validated.preferences,
         budget: validated.budget,
         status: 'pending',
+        country: country, // Stocker le pays pour les calculs de retour
         delivery_duration_days: deliveryDurationDays,
         estimated_delivery_date: estimatedDeliveryDate.toISOString(),
       })
