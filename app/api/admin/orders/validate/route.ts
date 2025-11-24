@@ -149,7 +149,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Mettre à jour le statut (utiliser l'id de la commande trouvée)
-    const newStatus = action === 'confirm' ? 'confirmed' : 'cancelled';
+    const newStatus = action === 'confirm' ? 'processing' : 'cancelled';
     const { error: updateError } = await supabase
       .from('orders')
       .update({
