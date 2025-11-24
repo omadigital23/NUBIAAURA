@@ -316,6 +316,9 @@ function OrdersPanel({ token }: { token: string }) {
                   <th className="text-left p-3">{t('admin.orders.table.status', 'Statut')}</th>
                   <th className="text-left p-3">{t('admin.orders.table.payment', 'Paiement')}</th>
                   <th className="text-left p-3">{t('admin.orders.table.total', 'Total')}</th>
+                  <th className="text-left p-3">Délai</th>
+                  <th className="text-left p-3">Livraison est.</th>
+                  <th className="text-left p-3">Retour jusqu'au</th>
                   <th className="text-left p-3">{t('admin.orders.table.actions', 'Actions')}</th>
                 </tr>
               </thead>
@@ -326,6 +329,39 @@ function OrdersPanel({ token }: { token: string }) {
                     <td className="p-3"><span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">{o.status || 'unknown'}</span></td>
                     <td className="p-3"><span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">{o.payment_status || 'pending'}</span></td>
                     <td className="p-3">{o.total ? o.total.toLocaleString("fr-FR") + " FCFA" : 'N/A'}</td>
+                    <td className="p-3">
+                      {o.delivery_duration_days ? (
+                        <span className="text-xs bg-gray-100 px-2 py-1 rounded">{o.delivery_duration_days}j</span>
+                      ) : '-'}
+                    </td>
+                    <td className="p-3">
+                      {o.estimated_delivery_date ? (
+                        <span className="text-xs">
+                          {new Date(o.estimated_delivery_date).toLocaleDateString('fr-FR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          })}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">-</span>
+                      )}
+                    </td>
+                    <td className="p-3">
+                      {o.return_deadline ? (
+                        <span className={`text-xs ${new Date(o.return_deadline) > new Date()
+                            ? 'text-green-700'
+                            : 'text-red-700'
+                          }`}>
+                          {new Date(o.return_deadline).toLocaleDateString('fr-FR', {
+                            day: '2-digit',
+                            month: '2-digit'
+                          })}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">-</span>
+                      )}
+                    </td>
                     <td className="p-3 flex gap-1 flex-wrap">
                       <button className="px-2 py-1 border border-blue-300 bg-blue-50 rounded text-xs hover:bg-blue-100" onClick={() => updateStatus(o.id, "processing")}>{t('admin.orders.action.process', 'Traiter')}</button>
                       <button className="px-2 py-1 border border-orange-300 bg-orange-50 rounded text-xs hover:bg-orange-100" onClick={() => updateStatus(o.id, "shipped")}>{t('admin.orders.action.ship', 'Expédier')}</button>

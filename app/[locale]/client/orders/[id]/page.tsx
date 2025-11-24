@@ -16,7 +16,10 @@ interface OrderDetail {
   status: string;
   payment_status: string;
   shipping_method: string;
-  estimated_delivery: string;
+  delivery_duration_days: number;
+  estimated_delivery_date: string | null;
+  return_deadline: string | null;
+  delivered_at: string | null;
   tracking_number: string;
   created_at: string;
   shipping_address: any;
@@ -207,31 +210,48 @@ export default function OrderDetailPage() {
                 </div>
               )}
               {order.status === 'processing' && (
-                <div className="flex gap-4">
-                  <Package className="text-blue-600 flex-shrink-0" size={24} />
-                  <div>
-                    <p className="font-semibold text-nubia-black">En traitement</p>
-                    <p className="text-sm text-nubia-black/70">
-                      Votre commande est en cours de préparation
-                    </p>
+                <>
+                  <div className="flex gap-4">
+                    <Package className="text-blue-600 flex-shrink-0" size={24} />
+                    <div className="flex-1">
+                      <p className="font-semibold text-nubia-black">En traitement</p>
+                      <p className="text-sm text-nubia-black/70">
+                        Votre commande est en cours de préparation
+                      </p>
+                    </div>
                   </div>
-                </div>
+                  {order.estimated_delivery_date && (
+                    <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <p className="text-sm font-semibold text-blue-900">
+                        📦 Livraison estimée dans {order.delivery_duration_days} jour{order.delivery_duration_days > 1 ? 's' : ''}
+                      </p>
+                      <p className="text-sm text-blue-700 mt-1">
+                        Date prévue : {new Date(order.estimated_delivery_date).toLocaleDateString('fr-FR', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
               {['shipped', 'delivered'].includes(order.status) && (
                 <>
                   <div className="flex gap-4">
                     <Truck className="text-purple-600 flex-shrink-0" size={24} />
-                    <div>
+                    <div className="flex-1">
                       <p className="font-semibold text-nubia-black">Expédiée</p>
                       {order.tracking_number && (
                         <p className="text-sm text-nubia-black/70">
                           Numéro de suivi: {order.tracking_number}
                         </p>
                       )}
-                      {order.estimated_delivery && (
+                      {order.estimated_delivery_date && (
                         <p className="text-sm text-nubia-black/70">
                           Livraison estimée:{' '}
-                          {new Date(order.estimated_delivery).toLocaleDateString('fr-FR')}
+                          {new Date(order.estimated_delivery_date).toLocaleDateString('fr-FR')}
                         </p>
                       )}
                     </div>
@@ -239,15 +259,50 @@ export default function OrderDetailPage() {
                 </>
               )}
               {order.status === 'delivered' && (
-                <div className="flex gap-4">
-                  <Package className="text-green-600 flex-shrink-0" size={24} />
-                  <div>
-                    <p className="font-semibold text-nubia-black">Livrée</p>
-                    <p className="text-sm text-nubia-black/70">
-                      Votre commande a été livrée avec succès
-                    </p>
+                <>
+                  <div className="flex gap-4">
+                    <Package className="text-green-600 flex-shrink-0" size={24} />
+                    <div className="flex-1">
+                      <p className="font-semibold text-nubia-black">Livrée</p>
+                      <p className="text-sm text-nubia-black/70">
+                        Votre commande a été livrée avec succès
+                      </p>
+                    </div>
                   </div>
-                </div>
+                  {order.return_deadline && (
+                    <div className={`mt-4 p-4 rounded-lg border ${new Date(order.return_deadline) > new Date()
+                        ? 'bg-green-50 border-green-200'
+                        : 'bg-red-50 border-red-200'
+                      }`}>
+                      <p className={`text-sm font-semibold ${new Date(order.return_deadline) > new Date()
+                          ? 'text-green-900'
+                          : 'text-red-900'
+                        }`}>
+                        🔄 Retour possible jusqu'au
+                      </p>
+                      <p className={`text-sm mt-1 ${new Date(order.return_deadline) > new Date()
+                          ? 'text-green-700'
+                          : 'text-red-700'
+                        }`}>
+                        {new Date(order.return_deadline).toLocaleDateString('fr-FR', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                      {new Date(order.return_deadline) > new Date() ? (
+                        <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
+                          ✅ Vous pouvez encore demander un retour
+                        </p>
+                      ) : (
+                        <p className="text-xs text-red-600 mt-2 flex items-center gap-1">
+                          ❌ Délai de retour expiré
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
