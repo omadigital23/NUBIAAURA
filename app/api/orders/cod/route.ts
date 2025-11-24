@@ -191,16 +191,21 @@ export async function POST(request: NextRequest) {
       throw itemsErr;
     }
 
-    // Create reservations for COD pending order
+    // Create and FINALIZE reservations for COD orders immediately
+    // COD orders don't go through payment verification, so we finalize right away
     const ttlMinutes = Number(process.env.PAYMENT_RESERVATION_TTL_MINUTES || 30);
     const expiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000).toISOString();
+    const finalizedAt = new Date().toISOString();
+
     const reservationsPayload = normalized.map(it => ({
       order_id: order.id,
       product_id: it.product_id,
       variant_id: null,
       qty: it.quantity,
       expires_at: expiresAt,
+      finalized_at: finalizedAt, // ✅ Finalize immediately for COD to trigger stock decrement
     }));
+
     if (reservationsPayload.length > 0) {
       const { error: resErr } = await supabase.from('stock_reservations').insert(reservationsPayload as any);
       if (resErr) {
@@ -208,6 +213,7 @@ export async function POST(request: NextRequest) {
         const msg = getTranslationKey(commonNs, 'common.error') || 'Reservation failed';
         return NextResponse.json({ error: msg }, { status: 409 });
       }
+      console.log('[COD API] Stock reservations created and finalized immediately');
     }
 
     if (idemKey && !isDev && hasRedis) {
