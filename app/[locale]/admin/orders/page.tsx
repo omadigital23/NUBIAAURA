@@ -606,34 +606,34 @@ export default function AdminOrdersPage() {
       <main className="flex-1 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
-          <div className="flex items-center gap-4 mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
             <button
               onClick={() => router.push(`/${locale}/admin/dashboard`)}
-              className="p-2 hover:bg-nubia-gold/10 rounded-lg transition-colors"
+              className="p-2 hover:bg-nubia-gold/10 rounded-lg transition-colors w-fit"
             >
               <ArrowLeft size={24} className="text-nubia-gold" />
             </button>
             <div>
-              <h1 className="font-playfair text-4xl font-bold text-nubia-black">
-                Gestion des Commandes
+              <h1 className="font-playfair text-3xl sm:text-4xl font-bold text-nubia-black">
+                {t('admin.orders.title', 'Gestion des Commandes')}
               </h1>
-              <p className="text-nubia-black/60 mt-1">
-                Suivi et gestion de la livraison des commandes
+              <p className="text-nubia-black/60 mt-1 text-sm sm:text-base">
+                {t('admin.orders.subtitle', 'Suivi et gestion de la livraison des commandes')}
               </p>
             </div>
           </div>
 
           {/* Filters & Search */}
-          <div className="bg-white p-4 rounded-lg border border-nubia-gold/20 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="flex items-center gap-4 w-full md:w-auto">
-              <div className="relative flex-1 md:w-64">
+          <div className="bg-white p-4 rounded-lg border border-nubia-gold/20 mb-6 flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
+              <div className="relative flex-1 sm:w-64">
                 <input
                   type="text"
-                  placeholder="Rechercher une commande..."
+                  placeholder={t('admin.orders.search_placeholder', 'Rechercher une commande...')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && loadOrders()}
-                  className="w-full pl-4 pr-10 py-2 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"
+                  className="w-full pl-4 pr-10 py-2 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold text-sm"
                 />
                 <button
                   onClick={() => loadOrders()}
@@ -642,89 +642,29 @@ export default function AdminOrdersPage() {
                   <Eye size={18} />
                 </button>
               </div>
+
+              <button
+                onClick={() => loadOrders()}
+                className="text-sm text-nubia-gold hover:underline flex items-center gap-1 justify-center sm:justify-start whitespace-nowrap"
+              >
+                <Edit2 size={14} /> {t('admin.orders.apply_filters', 'Appliquer les filtres / Rafraîchir')}
+              </button>
             </div>
 
-            <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0">
               {['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((status) => (
                 <button
                   key={status}
-                  onClick={() => {
-                    setFilterStatus(status);
-                    // Trigger load immediately after state update (need to use effect or pass param)
-                    // For simplicity, we'll let the user click search or we can use an effect, 
-                    // but here we'll just update state and user can refresh or we add an effect on filterStatus
-                  }}
-                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${filterStatus === status
+                  onClick={() => setFilterStatus(status)}
+                  className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-colors ${filterStatus === status
                     ? 'bg-nubia-gold text-nubia-black'
                     : 'bg-nubia-gold/5 text-nubia-black/60 hover:bg-nubia-gold/10'
-                    }`}
+                  }`}
                 >
-                  {status === 'all' ? 'Toutes' : getStatusLabel(status)}
+                  {status === 'all' ? t('admin.orders.filter_all', 'Toutes') : getStatusLabel(status)}
                 </button>
               ))}
             </div>
-          </div>
-
-          {/* Effect to reload when filter changes */}
-          {/* We can't put useEffect inside return, so we'll add a button or rely on the user to search/refresh. 
-              Better: Add a "Filtrer" button or make the buttons trigger reload. 
-              Let's add a "Rafraîchir" button.
-          */}
-          <div className="flex justify-end mb-4">
-            <button
-              onClick={() => loadOrders()}
-              className="text-sm text-nubia-gold hover:underline flex items-center gap-1"
-            >
-              <Edit2 size={14} /> Appliquer les filtres / Rafraîchir
-            </button>
-          </div>
-
-          {/* Filters & Search */}
-          <div className="bg-white p-4 rounded-lg border border-nubia-gold/20 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="flex items-center gap-4 w-full md:w-auto">
-              <div className="relative flex-1 md:w-64">
-                <input
-                  type="text"
-                  placeholder="Rechercher une commande..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && loadOrders()}
-                  className="w-full pl-4 pr-10 py-2 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"
-                />
-                <button
-                  onClick={() => loadOrders()}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-nubia-gold hover:text-nubia-black"
-                >
-                  <Eye size={18} />
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-              {['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((status) => (
-                <button
-                  key={status}
-                  onClick={() => {
-                    setFilterStatus(status);
-                  }}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${filterStatus === status
-                      ? 'bg-nubia-gold text-nubia-black'
-                      : 'bg-nubia-gold/5 text-nubia-black/60 hover:bg-nubia-gold/10'
-                    }`}
-                >
-                  {status === 'all' ? 'Toutes' : getStatusLabel(status)}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex justify-end mb-4">
-            <button
-              onClick={() => loadOrders()}
-              className="text-sm text-nubia-gold hover:underline flex items-center gap-1"
-            >
-              <Edit2 size={14} /> Appliquer les filtres / Rafraîchir
-            </button>
           </div>
 
           {/* Messages */}
@@ -743,7 +683,7 @@ export default function AdminOrdersPage() {
           {/* Loading */}
           {loading ? (
             <div className="text-center py-12">
-              <p className="text-nubia-black/70">Chargement des commandes...</p>
+              <p className="text-nubia-black/70">{t('admin.orders.loading', 'Chargement des commandes...')}</p>
             </div>
           ) : (
             <div className="space-y-6">
