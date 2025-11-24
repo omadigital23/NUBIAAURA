@@ -58,7 +58,7 @@ export default function OrdersPage() {
       setLoading(false);
       router.push(`/${locale}/auth/login?callbackUrl=/${locale}/commandes`);
     }
-  }, [token, tokenLoading, locale, router]);
+  }, [token, tokenLoading, locale]);
 
   const fetchOrders = async () => {
     try {
