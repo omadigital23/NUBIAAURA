@@ -20,6 +20,7 @@ export interface CartContextType extends CartState {
   removeItem: (id: string) => Promise<void>;
   updateQuantity: (id: string, quantity: number) => Promise<void>;
   clearCart: () => void;
+  refetchCart: () => Promise<void>;
 }
 
 export interface PersistedCartItem extends CartItem {
@@ -35,7 +36,7 @@ export interface CartApiResponse {
 }
 
 // Types pour les actions du panier
-export type CartAction = 
+export type CartAction =
   | { type: 'ADD_ITEM'; payload: CartItem }
   | { type: 'REMOVE_ITEM'; payload: { id: string } }
   | { type: 'UPDATE_QUANTITY'; payload: { id: string; quantity: number } }

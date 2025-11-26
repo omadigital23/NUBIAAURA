@@ -10,6 +10,7 @@ interface UseCartResult extends CartState {
   removeItem: (id: string) => Promise<void>;
   updateQuantity: (id: string, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
+  refetchCart: () => Promise<void>;
 }
 
 export function useCart(): UseCartResult {
@@ -28,7 +29,7 @@ export function useCart(): UseCartResult {
         if (getAuthHeaders.Authorization) {
           headers.Authorization = getAuthHeaders.Authorization;
         }
-        
+
         const response = await fetch('/api/cart', {
           method: 'POST',
           headers,
@@ -56,7 +57,7 @@ export function useCart(): UseCartResult {
     if (token) {
       loadCartFromDB();
     }
-    
+
     // Listen for token changes (e.g., after login)
     const handleTokenChange = (e: CustomEvent) => {
       console.log('[useCart] Token changed event received:', e.detail ? 'token present' : 'token cleared');
@@ -70,8 +71,8 @@ export function useCart(): UseCartResult {
     };
 
     window.addEventListener('token-changed', handleTokenChange as EventListener);
-    
-    return () => { 
+
+    return () => {
       mounted = false;
       window.removeEventListener('token-changed', handleTokenChange as EventListener);
     };
@@ -83,12 +84,12 @@ export function useCart(): UseCartResult {
     try {
       setLoading(true);
       console.log('[useCart] Adding item:', item);
-      
+
       const headers: any = { 'Content-Type': 'application/json' };
       if (getAuthHeaders.Authorization) {
         headers.Authorization = getAuthHeaders.Authorization;
       }
-      
+
       const response = await fetch('/api/cart', {
         method: 'POST',
         headers,
@@ -101,10 +102,10 @@ export function useCart(): UseCartResult {
         console.error('[useCart] API error:', errorData);
         throw new Error(errorData.error || 'Failed to add item');
       }
-      
+
       const data = await response.json();
       console.log('[useCart] API response:', data);
-      
+
       // Mettre à jour l'état local immédiatement
       if (data.success && data.item) {
         setItems(prevItems => {
@@ -123,7 +124,7 @@ export function useCart(): UseCartResult {
           }
         });
       }
-      
+
       setError(null);
     } catch (err) {
       console.error('[useCart] Add item error:', err);
@@ -136,12 +137,12 @@ export function useCart(): UseCartResult {
   const removeItem = useCallback(async (id: string) => {
     try {
       setLoading(true);
-      
+
       const headers: any = { 'Content-Type': 'application/json' };
       if (getAuthHeaders.Authorization) {
         headers.Authorization = getAuthHeaders.Authorization;
       }
-      
+
       const response = await fetch('/api/cart', {
         method: 'POST',
         headers,
@@ -160,21 +161,21 @@ export function useCart(): UseCartResult {
       if (getAuthHeaders.Authorization) {
         cartHeaders.Authorization = getAuthHeaders.Authorization;
       }
-      
+
       const cartResponse = await fetch('/api/cart', {
         method: 'POST',
         headers: cartHeaders,
         body: JSON.stringify({ action: 'get' }),
         credentials: 'include',
       });
-      
+
       if (cartResponse.ok) {
         const cartData = await cartResponse.json();
         if (cartData.items) {
           setItems(cartData.items);
         }
       }
-      
+
       setError(null);
     } catch (err) {
       console.error('[useCart] Remove item error:', err);
@@ -187,12 +188,12 @@ export function useCart(): UseCartResult {
   const updateQuantity = useCallback(async (id: string, quantity: number) => {
     try {
       setLoading(true);
-      
+
       const headers: any = { 'Content-Type': 'application/json' };
       if (getAuthHeaders.Authorization) {
         headers.Authorization = getAuthHeaders.Authorization;
       }
-      
+
       const response = await fetch('/api/cart', {
         method: 'POST',
         headers,
@@ -205,27 +206,27 @@ export function useCart(): UseCartResult {
         console.error('[useCart] API error:', errorData);
         throw new Error(errorData.error || 'Failed to update quantity');
       }
-      
+
       // Recharger le panier depuis la DB après mise à jour
       const cartHeaders: any = { 'Content-Type': 'application/json' };
       if (getAuthHeaders.Authorization) {
         cartHeaders.Authorization = getAuthHeaders.Authorization;
       }
-      
+
       const cartResponse = await fetch('/api/cart', {
         method: 'POST',
         headers: cartHeaders,
         body: JSON.stringify({ action: 'get' }),
         credentials: 'include',
       });
-      
+
       if (cartResponse.ok) {
         const cartData = await cartResponse.json();
         if (cartData.items) {
           setItems(cartData.items);
         }
       }
-      
+
       setError(null);
     } catch (err) {
       console.error('[useCart] Update quantity error:', err);
@@ -238,12 +239,12 @@ export function useCart(): UseCartResult {
   const clearCart = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       const headers: any = { 'Content-Type': 'application/json' };
       if (getAuthHeaders.Authorization) {
         headers.Authorization = getAuthHeaders.Authorization;
       }
-      
+
       const response = await fetch('/api/cart/clear', {
         method: 'POST',
         headers,
@@ -255,13 +256,45 @@ export function useCart(): UseCartResult {
         console.error('[useCart] Clear cart API error:', errorData);
         throw new Error(errorData.error || 'Failed to clear cart');
       }
-      
+
       setItems([]);
       setError(null);
       console.log('[useCart] Cart cleared successfully');
     } catch (err) {
       console.error('[useCart] Clear cart error:', err);
       setError(err instanceof Error ? err.message : 'Error clearing cart');
+    } finally {
+      setLoading(false);
+    }
+  }, [getAuthHeaders]);
+
+  const refetchCart = useCallback(async () => {
+    try {
+      setLoading(true);
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (getAuthHeaders.Authorization) {
+        headers.Authorization = getAuthHeaders.Authorization;
+      }
+
+      const response = await fetch('/api/cart', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ action: 'get' }),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        console.error('[useCart] Failed to refetch cart:', response.status);
+        return;
+      }
+
+      const data = await response.json();
+      if (data.items) {
+        setItems(data.items);
+        console.log('[useCart] Cart refetched successfully:', data.items.length, 'items');
+      }
+    } catch (err) {
+      console.error('[useCart] Error refetching cart:', err);
     } finally {
       setLoading(false);
     }
@@ -274,6 +307,7 @@ export function useCart(): UseCartResult {
     removeItem,
     updateQuantity,
     clearCart,
+    refetchCart,
     loading,
     error,
   };

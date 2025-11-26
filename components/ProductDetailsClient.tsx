@@ -53,7 +53,7 @@ type Product = {
 
 export default function ProductDetailsClient({ product, locale }: { product: Product | null; locale: string }) {
   const { t } = useTranslation();
-  const { addItem, loading: cartLoading } = useCartContext();
+  const { addItem, loading: cartLoading, refetchCart } = useCartContext();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
@@ -204,6 +204,9 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
             image: imageSrc,
           });
 
+          // Refetch cart to ensure UI is synchronized
+          await refetchCart();
+
           // Track add to cart event
           try {
             trackAddToCart({
@@ -230,7 +233,7 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
       };
       executeAddToCart();
     }
-  }, [isAuthenticated, authLoading, canAdd, quantity, availableStock, locale, product, addItem, name, imageSrc, t]);
+  }, [isAuthenticated, authLoading, canAdd, quantity, availableStock, locale, product, addItem, name, imageSrc, t, refetchCart]);
 
   const handleAddToCart = async () => {
     // ✅ VÉRIFICATION OBLIGATOIRE: Bloquer si non authentifié
