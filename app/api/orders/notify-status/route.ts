@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { sendWhatsAppMessage } from '@/lib/whatsapp';
+import { sendWhatsAppMessage } from '@/lib/whatsapp-notifications';
 import { sendOrderShippedEmail, sendOrderDeliveredEmail } from '@/lib/sendgrid';
 
 const supabase = createClient(

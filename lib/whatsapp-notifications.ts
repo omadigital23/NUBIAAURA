@@ -21,7 +21,7 @@ interface WhatsAppNotification {
  * 2. Envoyer: "I allow callmebot to send me messages"
  * 3. Copier l'API key reçue dans .env.local
  */
-export async function sendWhatsAppNotification(data: WhatsAppNotification): Promise<boolean> {
+async function sendWhatsAppNotification(data: WhatsAppNotification): Promise<boolean> {
   try {
     if (!CALLMEBOT_API_KEY) {
       console.warn('⚠️ CallMeBot API key not configured - WhatsApp notification skipped');
@@ -51,6 +51,14 @@ export async function sendWhatsAppNotification(data: WhatsAppNotification): Prom
     console.error('❌ WhatsApp notification error:', error.message);
     return false;
   }
+}
+
+/**
+ * Envoyer un message WhatsApp simple (fonction publique pour compatibilité)
+ * Utilisée pour les notifications client et autres messages simples
+ */
+export async function sendWhatsAppMessage(phone: string, message: string): Promise<boolean> {
+  return sendWhatsAppNotification({ phone, message });
 }
 
 /**

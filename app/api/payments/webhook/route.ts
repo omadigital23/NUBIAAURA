@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
-import { sendWhatsAppMessage } from '@/lib/whatsapp';
+import { sendWhatsAppMessage } from '@/lib/whatsapp-notifications';
 import { notifyManagerNewOrder } from '@/lib/whatsapp-notifications';
 import { sendOrderConfirmationEmail, notifyManagerEmail } from '@/lib/sendgrid';
 import { Redis } from '@upstash/redis';

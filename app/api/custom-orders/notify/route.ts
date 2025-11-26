@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { sendWhatsAppMessage } from '@/lib/whatsapp';
+import { sendWhatsAppMessage } from '@/lib/whatsapp-notifications';
 import { sendCustomOrderConfirmationEmail, notifyManagerEmail } from '@/lib/sendgrid';
 
 // Validation schema
