@@ -6,7 +6,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Mail, ArrowLeft, Loader, AlertCircle, CheckCircle } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
 export default function ForgotPasswordPage() {
   const { t, locale } = useTranslation();
@@ -21,11 +21,6 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
-
       // Use Supabase native password reset
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(
         email,
