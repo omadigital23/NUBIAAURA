@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useCartContext } from "@/contexts/CartContext";
 import { useAuth } from "@/hooks/useAuth";
@@ -64,6 +64,7 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const pendingAddToCart = useRef(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -175,6 +176,61 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
 
   const currentImage = gallery[activeImageIndex] || imageSrc;
   const canAdd = inStock && (!sizes.length || selectedSize) && (!colors.length || selectedColor);
+
+  // Execute pending add to cart after authentication
+  useEffect(() => {
+    if (isAuthenticated && !authLoading && pendingAddToCart.current) {
+      pendingAddToCart.current = false;
+      // Execute the add to cart action
+      const executeAddToCart = async () => {
+        if (!canAdd) return;
+        if (quantity > availableStock) {
+          setAddError(locale === 'fr'
+            ? `Stock insuffisant. Seulement ${availableStock} articles disponibles.`
+            : `Insufficient stock. Only ${availableStock} items available.`
+          );
+          return;
+        }
+
+        try {
+          setAdding(true);
+          setAddError(null);
+          const price = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
+          await addItem({
+            id: product.id,
+            name,
+            price,
+            quantity,
+            image: imageSrc,
+          });
+
+          // Track add to cart event
+          try {
+            trackAddToCart({
+              id: product.id,
+              name,
+              price,
+              quantity,
+            });
+          } catch (e) {
+            console.error('Analytics tracking error:', e);
+          }
+
+          // Show success message
+          setShowSuccess(true);
+          setTimeout(() => setShowSuccess(false), 3000);
+          setAddError(null);
+        } catch (err) {
+          console.error('Error adding to cart:', err);
+          const errorMessage = err instanceof Error ? err.message : t('cart.add.error', 'Erreur lors de l\'ajout au panier');
+          setAddError(errorMessage);
+        } finally {
+          setAdding(false);
+        }
+      };
+      executeAddToCart();
+    }
+  }, [isAuthenticated, authLoading, canAdd, quantity, availableStock, locale, product, addItem, name, imageSrc, t]);
 
   const handleAddToCart = async () => {
     // ✅ VÉRIFICATION OBLIGATOIRE: Bloquer si non authentifié
@@ -505,8 +561,8 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
         onClose={() => setShowAuthModal(false)}
         onLoginSuccess={() => {
           setShowAuthModal(false);
-          // Ajouter automatiquement au panier après connexion
-          handleAddToCart();
+          // Marquer qu'il faut ajouter au panier après connexion
+          pendingAddToCart.current = true;
         }}
       />
     </div>
