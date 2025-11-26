@@ -62,6 +62,27 @@ export function useAuth(): UseAuthResult {
     fetchUser();
   }, [fetchUser]);
 
+  // Écouter les changements de token (après login/logout)
+  useEffect(() => {
+    const handleTokenChange = (e: CustomEvent) => {
+      console.log('[useAuth] Token changed, refetching user...', e.detail ? 'token present' : 'token cleared');
+      if (e.detail) {
+        // Token ajouté/modifié - refetch user
+        fetchUser();
+      } else {
+        // Token supprimé - clear user
+        setUser(null);
+        setIsAuthenticated(false);
+      }
+    };
+
+    window.addEventListener('token-changed', handleTokenChange as EventListener);
+
+    return () => {
+      window.removeEventListener('token-changed', handleTokenChange as EventListener);
+    };
+  }, [fetchUser]);
+
   const logout = useCallback(async () => {
     try {
       await fetch('/api/auth/logout', {
@@ -76,7 +97,7 @@ export function useAuth(): UseAuthResult {
       setIsAuthenticated(false);
       // Ne pas rediriger ici — laisser le composant UserMenu gérer la redirection
       // après avoir fermé le dropdown
-      
+
       // Forcer un refetch pour s'assurer que l'état est à jour
       await fetchUser();
     } catch (error) {
