@@ -1,0 +1,57 @@
+# 🎯 RÉSUMÉ - FIX Real-Time Updates
+
+## 🔴 PROBLÈME
+Les commandes restaient affichées dans le dashboard admin même après suppression de Supabase.
+**Raison:** Les données étaient mises en cache et ne se mettaient pas à jour.
+
+---
+
+## ✅ SOLUTION
+**3 approches combinées pour forcer la mise à jour en temps réel:**
+
+### 1️⃣ API sans cache
+```typescript
+export const dynamic = 'force-dynamic';  // Pas de cache serveur
+export const revalidate = 0;             // Jamais en cache
+```
+
+### 2️⃣ Fetch sans cache côté client
+```typescript
+cache: 'no-store',
+'Cache-Control': 'no-cache, no-store, must-revalidate'
+```
+
+### 3️⃣ Auto-refresh + Refresh immédiat
+- Rafraîchir automatiquement toutes les 5 secondes
+- Rafraîchir immédiatement après chaque action (delete/update)
+- Bouton "Rafraîchir" disponible manuellement
+
+---
+
+## 📊 RÉSULTATS
+
+| Avant | Après |
+|-------|-------|
+| ❌ Données en cache | ✅ Données fraîches toujours |
+| ❌ Suppression pas visible | ✅ Suppression visible sous 5 sec |
+| ❌ Pas d'auto-refresh | ✅ Auto-refresh 5 sec |
+| ❌ Pas de bouton refresh | ✅ Bouton refresh manuel |
+
+---
+
+## 🧪 TESTER
+
+1. **Suppression dans Supabase** → Disparaît du tableau en <5 sec ✅
+2. **Cliquer "Delete"** → Suppression immédiate ✅
+3. **Cliquer "🔄 Rafraîchir"** → Mise à jour instantanée ✅
+
+---
+
+## 📝 FICHIERS MODIFIÉS
+
+- ✅ `app/api/admin/orders/route.ts` - Désactiver cache serveur
+- ✅ `app/[locale]/admin/page.tsx` - Force no-cache + auto-refresh
+
+---
+
+**Status:** ✅ FIXED - Les mises à jour sont maintenant en temps réel!

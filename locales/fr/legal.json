@@ -1,0 +1,29 @@
+{
+  "legal": {
+    "legal_notice": {
+      "title": "Mentions légales",
+      "intro": "Informations légales concernant Nubia Aura."
+    },
+    "privacy_policy": {
+      "title": "Politique de confidentialité",
+      "intro": "Cette politique explique comment nous collectons et utilisons vos données personnelles."
+    },
+    "terms": {
+      "title": "Conditions générales",
+      "intro": "Veuillez lire attentivement ces conditions générales avant d'utiliser nos services."
+    },
+    "updated": "Dernière mise à jour",
+    "company": "Société",
+    "company_details": "Nubia Aura, société enregistrée.",
+    "contact": "Contact",
+    "contact_details": "Pour toute question, contactez-nous via la page Contact.",
+    "data_collection": "Collecte des données",
+    "data_collection_details": "Nous collectons uniquement les données nécessaires pour la fourniture de nos services.",
+    "rights": "Vos droits",
+    "rights_details": "Vous pouvez exercer vos droits d'accès, de rectification et de suppression en nous contactant.",
+    "orders": "Commandes",
+    "orders_details": "Les commandes sont traitées selon nos politiques de paiement et de livraison.",
+    "returns": "Retours",
+    "returns_details": "Vous disposez d'un délai de 30 jours pour retourner un article non porté."
+  }
+}

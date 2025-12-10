@@ -1,0 +1,56 @@
+<svg viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="300" height="400" fill="#F5F1E8"/>
+  
+  <!-- Head -->
+  <circle cx="150" cy="60" r="25" fill="#D4A574"/>
+  
+  <!-- Hair -->
+  <path d="M 125 50 Q 150 30 175 50" stroke="#2C1810" stroke-width="8" fill="none"/>
+  
+  <!-- Earrings -->
+  <circle cx="125" cy="70" r="4" fill="#D4AF37"/>
+  <circle cx="175" cy="70" r="4" fill="#D4AF37"/>
+  
+  <!-- Neck -->
+  <rect x="145" y="85" width="10" height="8" fill="#D4A574"/>
+  
+  <!-- Necklace -->
+  <path d="M 130 93 Q 150 100 170 93" stroke="#D4AF37" stroke-width="3" fill="none"/>
+  
+  <!-- Evening Dress - elegant -->
+  <path d="M 125 93 L 105 180 Q 100 240 110 300 L 190 300 Q 200 240 195 180 L 175 93 Z" fill="#1A0033" stroke="#D4AF37" stroke-width="2"/>
+  
+  <!-- Dress shimmer effect -->
+  <circle cx="130" cy="130" r="3" fill="#D4AF37" opacity="0.8"/>
+  <circle cx="170" cy="130" r="3" fill="#D4AF37" opacity="0.8"/>
+  <circle cx="125" cy="170" r="2" fill="#D4AF37" opacity="0.6"/>
+  <circle cx="175" cy="170" r="2" fill="#D4AF37" opacity="0.6"/>
+  <circle cx="130" cy="220" r="2" fill="#D4AF37" opacity="0.6"/>
+  <circle cx="170" cy="220" r="2" fill="#D4AF37" opacity="0.6"/>
+  <circle cx="135" cy="260" r="2" fill="#D4AF37" opacity="0.6"/>
+  <circle cx="165" cy="260" r="2" fill="#D4AF37" opacity="0.6"/>
+  
+  <!-- Sleeveless arms -->
+  <ellipse cx="105" cy="120" rx="10" ry="40" fill="#D4A574"/>
+  <ellipse cx="195" cy="120" rx="10" ry="40" fill="#D4A574"/>
+  
+  <!-- Hands -->
+  <circle cx="105" cy="160" r="6" fill="#D4A574"/>
+  <circle cx="195" cy="160" r="6" fill="#D4A574"/>
+  
+  <!-- Bracelets -->
+  <circle cx="105" cy="155" r="8" fill="none" stroke="#D4AF37" stroke-width="2"/>
+  <circle cx="195" cy="155" r="8" fill="none" stroke="#D4AF37" stroke-width="2"/>
+  
+  <!-- Legs -->
+  <rect x="135" y="300" width="8" height="50" fill="#D4A574"/>
+  <rect x="157" y="300" width="8" height="50" fill="#D4A574"/>
+  
+  <!-- High heels -->
+  <path d="M 135 350 L 133 355 L 145 355 Z" fill="#D4AF37"/>
+  <path d="M 157 350 L 155 355 L 167 355 Z" fill="#D4AF37"/>
+  
+  <!-- Label -->
+  <text x="150" y="370" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#000">Robe de Soirée</text>
+</svg>

@@ -1,0 +1,22 @@
+{
+  "title": "Our Catalog",
+  "subtitle": "Discover our complete collection of creations",
+  "browse_by_category": "Browse by category",
+  "loading": "Loading products...",
+  "filters.category": "Category",
+  "filters.color": "Color",
+  "filters.price": "Price",
+  "filters.size": "Size",
+  "filters.reset": "Reset filters",
+  "sort.newest": "Newest",
+  "sort.price_low": "Price: Low to High",
+  "sort.price_high": "Price: High to Low",
+  "sort.popular": "Most Popular",
+  "category.ready_to_wear": "Ready to Wear",
+  "category.custom": "Custom",
+  "category.accessories": "Accessories",
+  "no_products": "No products found",
+  "no_products_text": "Try adjusting your filters or search",
+  "product_count": "{count} product(s) found",
+  "view_product": "View Details"
+}

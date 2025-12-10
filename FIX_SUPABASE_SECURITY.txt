@@ -1,0 +1,73 @@
+CORRECTIFS DE SÉCURITÉ SUPABASE
+================================
+
+PROBLÈME 1: Fonction avec search_path vulnérable
+-------------------------------------------------
+✅ SOLUTION: Exécutez ce SQL dans Supabase SQL Editor:
+
+DROP FUNCTION IF EXISTS public.products_sync_image();
+
+CREATE OR REPLACE FUNCTION public.products_sync_image()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  IF NEW.image IS NULL OR NEW.image = '' THEN
+    NEW.image := NEW.image_url;
+  END IF;
+  IF NEW.image_url IS NULL OR NEW.image_url = '' THEN
+    NEW.image_url := NEW.image;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER products_sync_image_trigger
+BEFORE INSERT OR UPDATE ON products
+FOR EACH ROW
+EXECUTE FUNCTION public.products_sync_image();
+
+
+PROBLÈME 2: Protection mots de passe compromis désactivée
+----------------------------------------------------------
+✅ SOLUTION: Dans Supabase Dashboard
+
+1. Allez sur https://supabase.com/dashboard
+2. Sélectionnez votre projet
+3. Authentication > Settings
+4. Cherchez "Password Protection" ou "Security"
+5. Activez "Check passwords against HaveIBeenPwned.org"
+6. Sauvegardez
+
+
+PROBLÈME 3: Trop peu d'options MFA activées
+--------------------------------------------
+✅ SOLUTION: Dans Supabase Dashboard
+
+1. Authentication > Settings
+2. Section "Multi-Factor Authentication"
+3. Activez au minimum:
+   ☑ TOTP (Time-based One-Time Password) - RECOMMANDÉ
+   ☑ Email OTP (optionnel)
+4. Sauvegardez
+
+
+VÉRIFICATION
+------------
+Après avoir appliqué les correctifs:
+
+1. Fonction corrigée:
+   SELECT routine_name FROM information_schema.routines 
+   WHERE routine_name = 'products_sync_image';
+
+2. Dashboard > Authentication > Settings
+   - Password Protection: ON ✅
+   - MFA TOTP: ON ✅
+
+
+COMMANDES RAPIDES
+-----------------
+node scripts/apply-security-fixes.js  # Affiche le SQL à copier
+node scripts/check-supabase-security.js  # Vérifie la sécurité

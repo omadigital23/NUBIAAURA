@@ -1,0 +1,80 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { z } from 'zod';
+
+const CartSchema = z.object({
+  action: z.enum(['add', 'remove', 'update', 'get']),
+  user_id: z.string().uuid().optional(),
+  items: z.array(z.object({
+    product_id: z.string().uuid(),
+    quantity: z.number().int().positive(),
+    price: z.number().positive()
+  })).optional()
+});
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const parsed = CartSchema.parse(body);
+
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    if (parsed.action === 'get') {
+      if (!parsed.user_id) {
+        return NextResponse.json({ items: [] });
+      }
+
+      // Récupérer ou créer le panier
+      const { data: cart, error: cartError } = await supabase
+        .from('carts')
+        .select('id')
+        .eq('user_id', parsed.user_id)
+        .single();
+
+      if (cartError && cartError.code !== 'PGRST116') {
+        console.error('[Cart API] Cart error:', cartError);
+        return NextResponse.json({ error: cartError.message }, { status: 500 });
+      }
+
+      let cartId = cart?.id;
+      if (!cart) {
+        const { data: newCart, error: newCartError } = await supabase
+          .from('carts')
+          .insert({ user_id: parsed.user_id })
+          .select('id')
+          .single();
+        
+        if (newCartError) {
+          console.error('[Cart API] Create cart error:', newCartError);
+          return NextResponse.json({ error: newCartError.message }, { status: 500 });
+        }
+        cartId = newCart.id;
+      }
+
+      const { data: items, error: itemsError } = await supabase
+        .from('cart_items')
+        .select(`
+          *,
+          products(id, name, name_fr, name_en, price, image, inStock)
+        `)
+        .eq('cart_id', cartId);
+
+      if (itemsError) {
+        console.error('[Cart API] Items error:', itemsError);
+        return NextResponse.json({ error: itemsError.message }, { status: 500 });
+      }
+
+      return NextResponse.json({ items: items || [] });
+    }
+
+    // Pour add/remove/update - implémentation future
+    return NextResponse.json({ success: true });
+
+  } catch (error) {
+    console.error('[Cart API] Validation error:', error);
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+  }
+}

@@ -1,0 +1,359 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 14px; /* Mobile base */
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px; /* Desktop */
+  }
+}
+
+body {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  background-color: #FFFFFF;
+  color: #000000;
+  overflow-x: hidden;
+  max-width: 100vw;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-playfair), 'Playfair Display', serif;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Mobile-first typography */
+h1 {
+  font-size: 1.875rem; /* 30px on mobile */
+}
+
+h2 {
+  font-size: 1.5rem; /* 24px on mobile */
+}
+
+h3 {
+  font-size: 1.25rem; /* 20px on mobile */
+}
+
+@media (min-width: 768px) {
+  h1 {
+    font-size: 3rem; /* 48px on desktop */
+  }
+
+  h2 {
+    font-size: 2.25rem; /* 36px on desktop */
+  }
+
+  h3 {
+    font-size: 1.875rem; /* 30px on desktop */
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideLeft {
+  from {
+    transform: translateX(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideRight {
+  from {
+    transform: translateX(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s ease-out;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.5s ease-out;
+}
+
+.animate-slide-left {
+  animation: slideLeft 0.5s ease-out;
+}
+
+.animate-slide-right {
+  animation: slideRight 0.5s ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.5s ease-out;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F5F1E8;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D4AF37;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #B8960F;
+}
+
+/* Selection */
+::selection {
+  background-color: #D4AF37;
+  color: #000000;
+}
+
+::-moz-selection {
+  background-color: #D4AF37;
+  color: #000000;
+}
+
+/* Focus Styles */
+:focus-visible {
+  outline: 2px solid #D4AF37;
+  outline-offset: 2px;
+}
+
+/* Links */
+a {
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: #D4AF37;
+}
+
+/* Buttons */
+button {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Forms */
+input,
+textarea,
+select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+/* Images */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
+/* Prevent layout overflow */
+.container,
+section,
+div {
+  max-width: 100%;
+}
+
+/* Responsive containers */
+.max-w-7xl,
+.max-w-6xl,
+.max-w-5xl,
+.max-w-4xl,
+.max-w-3xl,
+.max-w-2xl {
+  width: 100%;
+}
+
+/* Utility Classes */
+.text-gradient {
+  background: linear-gradient(135deg, #D4AF37 0%, #FFFFFF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.shadow-gold {
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+}
+
+.border-gold {
+  border-color: #D4AF37;
+}
+
+.bg-gradient-gold {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 55, 0.05) 100%);
+}
+
+/* Mobile-first spacing utilities */
+.section-padding {
+  padding: 2rem 1rem; /* Mobile: 32px vertical, 16px horizontal */
+}
+
+@media (min-width: 768px) {
+  .section-padding {
+    padding: 5rem 2rem; /* Desktop: 80px vertical, 32px horizontal */
+  }
+}
+
+.container-padding {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container-padding {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-padding {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* Touch-friendly buttons on mobile */
+button,
+a.button,
+.btn {
+  min-height: 44px; /* iOS recommended touch target */
+  min-width: 44px;
+  padding: 0.75rem 1.5rem;
+}
+
+@media (min-width: 768px) {
+  button,
+  a.button,
+  .btn {
+    min-height: 40px;
+    padding: 0.625rem 1.25rem;
+  }
+}
+
+/* Tablet specific styles */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .tablet\:flex-col {
+    flex-direction: column;
+  }
+  
+  .tablet\:w-full {
+    width: 100%;
+  }
+  
+  .tablet\:aspect-square {
+    aspect-ratio: 1 / 1;
+  }
+  
+  /* Ensure images load properly on iPad */
+  img {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+  
+  /* Fix for image rendering on iPad */
+  .object-cover {
+    object-fit: cover;
+    object-position: center;
+  }
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background-color: white;
+  }
+
+  a {
+    text-decoration: underline;
+  }
+}

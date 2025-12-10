@@ -1,0 +1,93 @@
+SUPABASE SECURITY FIXES - INSTRUCTIONS
+======================================
+
+ÉTAPE 1: ACTIVER LA PROTECTION CONTRE LES MOTS DE PASSE COMPROMIS
+------------------------------------------------------------------
+
+1. Allez sur https://supabase.com/dashboard
+2. Sélectionnez votre projet
+3. Cliquez sur "Authentication" dans le menu
+4. Cliquez sur "Policies" ou "Settings"
+5. Cherchez "Password Protection" ou "Leaked Password Protection"
+6. Activez "Check passwords against HaveIBeenPwned.org"
+7. Sauvegardez
+
+OU via SQL:
+
+-- Exécutez dans SQL Editor:
+ALTER SYSTEM SET auth.enable_password_leak_protection = 'on';
+
+
+ÉTAPE 2: ACTIVER PLUS D'OPTIONS MFA
+------------------------------------
+
+1. Dans le Dashboard Supabase
+2. Authentication > Settings
+3. Section "Multi-Factor Authentication (MFA)"
+4. Activez les options suivantes:
+   ☑ TOTP (Time-based One-Time Password) - Recommandé
+   ☑ SMS (si vous avez Twilio configuré)
+   ☑ Email OTP
+5. Sauvegardez
+
+
+ÉTAPE 3: CORRIGER LA FONCTION products_sync_image
+--------------------------------------------------
+
+Exécutez le fichier SQL dans SQL Editor:
+supabase/migrations/fix_security_issues.sql
+
+OU copiez-collez ce code:
+
+DROP FUNCTION IF EXISTS public.products_sync_image();
+
+CREATE OR REPLACE FUNCTION public.products_sync_image()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  IF NEW.image IS NULL OR NEW.image = '' THEN
+    NEW.image := NEW.image_url;
+  END IF;
+  
+  IF NEW.image_url IS NULL OR NEW.image_url = '' THEN
+    NEW.image_url := NEW.image;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER products_sync_image_trigger
+BEFORE INSERT OR UPDATE ON products
+FOR EACH ROW
+EXECUTE FUNCTION public.products_sync_image();
+
+
+VÉRIFICATION
+------------
+
+1. Allez dans SQL Editor
+2. Exécutez:
+
+SELECT 
+  routine_name,
+  routine_type,
+  security_type,
+  routine_definition
+FROM information_schema.routines
+WHERE routine_name = 'products_sync_image';
+
+3. Vérifiez que "SET search_path" est présent dans routine_definition
+
+
+RÉSUMÉ DES CORRECTIONS
+----------------------
+
+✅ Fonction products_sync_image: search_path sécurisé
+✅ Protection mots de passe compromis: À activer manuellement
+✅ MFA: À activer manuellement (TOTP recommandé)
+
+Les paramètres Auth ne peuvent pas être modifiés via SQL, seulement via le Dashboard Supabase.

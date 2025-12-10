@@ -1,0 +1,50 @@
+<svg viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="300" height="400" fill="#F5F1E8"/>
+  
+  <!-- Head -->
+  <circle cx="150" cy="60" r="25" fill="#D4A574"/>
+  
+  <!-- Hair -->
+  <path d="M 125 50 Q 150 35 175 50" stroke="#2C1810" stroke-width="8" fill="none"/>
+  
+  <!-- Neck -->
+  <rect x="145" y="85" width="10" height="8" fill="#D4A574"/>
+  
+  <!-- Casual Dress -->
+  <path d="M 120 93 L 110 200 Q 110 250 130 300 L 170 300 Q 190 250 190 200 L 180 93 Z" fill="#FF6B9D" stroke="#D4AF37" stroke-width="2"/>
+  
+  <!-- Dress pattern - stripes -->
+  <line x1="125" y1="120" x2="175" y2="120" stroke="#D4AF37" stroke-width="2" opacity="0.7"/>
+  <line x1="125" y1="150" x2="175" y2="150" stroke="#D4AF37" stroke-width="2" opacity="0.7"/>
+  <line x1="125" y1="180" x2="175" y2="180" stroke="#D4AF37" stroke-width="2" opacity="0.7"/>
+  <line x1="125" y1="210" x2="175" y2="210" stroke="#D4AF37" stroke-width="2" opacity="0.7"/>
+  <line x1="125" y1="240" x2="175" y2="240" stroke="#D4AF37" stroke-width="2" opacity="0.7"/>
+  
+  <!-- Sleeves -->
+  <ellipse cx="105" cy="110" rx="12" ry="35" fill="#FF6B9D" stroke="#D4AF37" stroke-width="1"/>
+  <ellipse cx="195" cy="110" rx="12" ry="35" fill="#FF6B9D" stroke="#D4AF37" stroke-width="1"/>
+  
+  <!-- Arms -->
+  <ellipse cx="105" cy="130" rx="10" ry="30" fill="#D4A574"/>
+  <ellipse cx="195" cy="130" rx="10" ry="30" fill="#D4A574"/>
+  
+  <!-- Hands -->
+  <circle cx="105" cy="160" r="6" fill="#D4A574"/>
+  <circle cx="195" cy="160" r="6" fill="#D4A574"/>
+  
+  <!-- Belt -->
+  <rect x="120" y="145" width="60" height="6" fill="#D4AF37" rx="3"/>
+  <circle cx="150" cy="148" r="4" fill="#8B6914"/>
+  
+  <!-- Legs -->
+  <rect x="135" y="300" width="8" height="50" fill="#D4A574"/>
+  <rect x="157" y="300" width="8" height="50" fill="#D4A574"/>
+  
+  <!-- Shoes -->
+  <ellipse cx="139" cy="355" rx="10" ry="7" fill="#D4AF37"/>
+  <ellipse cx="161" cy="355" rx="10" ry="7" fill="#D4AF37"/>
+  
+  <!-- Label -->
+  <text x="150" y="370" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#000">Robe de Ville</text>
+</svg>

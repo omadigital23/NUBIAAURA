@@ -1,0 +1,22 @@
+{
+  "title": "Notre Catalogue",
+  "subtitle": "Découvrez notre collection complète de créations",
+  "browse_by_category": "Parcourir par catégorie",
+  "loading": "Chargement des produits...",
+  "filters.category": "Catégorie",
+  "filters.color": "Couleur",
+  "filters.price": "Prix",
+  "filters.size": "Taille",
+  "filters.reset": "Réinitialiser les filtres",
+  "sort.newest": "Plus récent",
+  "sort.price_low": "Prix croissant",
+  "sort.price_high": "Prix décroissant",
+  "sort.popular": "Plus populaire",
+  "category.ready_to_wear": "Prêt-à-porter",
+  "category.custom": "Sur-mesure",
+  "category.accessories": "Accessoires",
+  "no_products": "Aucun produit trouvé",
+  "no_products_text": "Essayez d'ajuster vos filtres ou votre recherche",
+  "product_count": "{count} produit(s) trouvé(s)",
+  "view_product": "Voir les détails"
+}

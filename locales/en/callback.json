@@ -1,0 +1,23 @@
+{
+  "callback": {
+    "loading_title": "Payment Verification",
+    "loading_message": "Verifying your payment...",
+    "success_title": "Payment Successful!",
+    "success_message": "Payment verified successfully!",
+    "details_title": "Order Details",
+    "details": {
+      "order_id": "Order ID:",
+      "payment_status": "Payment Status:",
+      "order_status": "Order Status:"
+    },
+    "redirecting": "You will be redirected to the confirmation page in a few seconds...",
+    "buttons": {
+      "go_to_confirmation": "Go to Confirmation",
+      "retry_payment": "Retry Payment",
+      "back_to_catalog": "Back to Catalog"
+    },
+    "failed_title": "Payment Failed",
+    "failed_message": "The payment could not be verified",
+    "missing_params": "Missing payment parameters"
+  }
+}

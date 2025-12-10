@@ -1,0 +1,207 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getSupabaseServerClient } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+import { z } from 'zod';
+import { getLocaleFromPath, getTranslations, getTranslationKey } from '@/lib/i18n';
+import { checkRateLimit, formRatelimit } from '@/lib/rate-limit';
+
+// Cart management API
+// In production, this would use sessions or database
+
+function getClientIdentifier(req: NextRequest) {
+  const ip = req.ip || req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'global';
+  return `cart:${String(ip).split(',')[0].trim()}`;
+}
+
+// ✅ Vérifier l'authentification
+async function checkAuth(request: NextRequest) {
+  try {
+    const token = request.cookies.get('sb-auth-token')?.value;
+    
+    if (!token) {
+      return { authenticated: false, user: null };
+    }
+
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    
+    if (error || !user) {
+      return { authenticated: false, user: null };
+    }
+
+    return { authenticated: true, user };
+  } catch (err) {
+    console.error('[Cart API] Auth check error:', err);
+    return { authenticated: false, user: null };
+  }
+}
+
+const BodySchema = z.object({
+  action: z.enum(['add', 'remove', 'update']),
+  item: z
+    .object({
+      id: z.string().min(1),
+      quantity: z.number().int().positive().optional(),
+    })
+    .optional(),
+});
+
+export async function POST(request: NextRequest) {
+  try {
+    // Resolve locale from referer path (fallback fr)
+    const referer = request.headers.get('referer') || '';
+    const path = (() => {
+      try {
+        return new URL(referer).pathname;
+      } catch {
+        return referer;
+      }
+    })();
+    const locale: 'fr' | 'en' = getLocaleFromPath(path);
+    const commonNs = await getTranslations(locale, 'common');
+    const productNs = await getTranslations(locale, 'product');
+
+    // ✅ Vérifier l'authentification
+    const { authenticated, user } = await checkAuth(request);
+    if (!authenticated || !user) {
+      console.log('[Cart API] Unauthorized access attempt');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    console.log('[Cart API] Authenticated user:', user.id);
+
+    // Rate limit
+    const rl = await checkRateLimit(getClientIdentifier(request), formRatelimit);
+    if (!rl.success) {
+      const msg = getTranslationKey(commonNs, 'common.error') || 'Too many requests';
+      return NextResponse.json({ error: msg }, { status: 429 });
+    }
+
+    const body = await request.json();
+    const parsed = BodySchema.safeParse(body);
+    if (!parsed.success) {
+      const msg = getTranslationKey(commonNs, 'common.error') || 'Invalid request';
+      return NextResponse.json({ error: msg }, { status: 400 });
+    }
+    const { action, item } = parsed.data;
+
+    if (action === 'add') {
+      // Add item to cart (validate against DB)
+      console.log('[Cart API] Add item:', JSON.stringify(item));
+      if (!item || !item.id) {
+        const msg = getTranslationKey(commonNs, 'common.error') || 'Invalid item';
+        return NextResponse.json({ error: msg }, { status: 400 });
+      }
+      const qty = typeof item.quantity === 'string' ? parseInt(item.quantity, 10) : (item.quantity || 1);
+      console.log('[Cart API] Parsed qty:', qty, 'type:', typeof qty);
+      if (qty <= 0 || isNaN(qty)) {
+        console.error('[Cart API] Invalid qty:', qty);
+        const msg = getTranslationKey(commonNs, 'common.error') || 'Invalid quantity';
+        return NextResponse.json({ error: msg }, { status: 400 });
+      }
+      const supabase = getSupabaseServerClient();
+      const { data: p, error } = await supabase
+        .from('products')
+        .select('id, name, name_fr, name_en, price, "inStock", image, slug, product_variants(stock)')
+        .eq('id', item.id)
+        .maybeSingle();
+      console.log('[Cart API] Product query result:', { id: item.id, product: p, error });
+      if (error) return NextResponse.json({ error: getTranslationKey(commonNs, 'common.error') || 'Server error' }, { status: 500 });
+      if (!p) return NextResponse.json({ error: getTranslationKey(commonNs, 'product.not_found') || 'Product not found' }, { status: 404 });
+      console.log('[Cart API] Product inStock:', p.inStock, 'variants:', p.product_variants);
+      if (!p.inStock) return NextResponse.json({ error: getTranslationKey(productNs, 'product.out_of_stock') || 'Out of stock' }, { status: 400 });
+      // Check stock from variants if they exist, otherwise trust inStock flag
+      const hasVariants = Array.isArray(p.product_variants) && p.product_variants.length > 0;
+      const totalStock = hasVariants ? p.product_variants.reduce((s: number, v: any) => s + (v?.stock || 0), 0) : null;
+      console.log('[Cart API] Total stock calculated:', totalStock, 'qty requested:', qty, 'hasVariants:', hasVariants);
+      if (totalStock !== null && totalStock < qty) {
+        console.log('[Cart API] Stock check failed:', { totalStock, qty });
+        return NextResponse.json({ error: getTranslationKey(productNs, 'product.out_of_stock') || 'Out of stock' }, { status: 400 });
+      }
+      const name = p.name_fr ?? p.name ?? p.name_en ?? 'Produit';
+      const price = typeof p.price === 'string' ? parseFloat(p.price) : p.price;
+      const normalized = { id: p.id, name, price, quantity: qty, image: p.image };
+      return NextResponse.json({ success: true, item: normalized });
+    }
+
+    if (action === 'remove') {
+      // Remove item from cart
+      if (!item || !item.id) {
+        const msg = getTranslationKey(commonNs, 'common.error') || 'Invalid item';
+        return NextResponse.json({ error: msg }, { status: 400 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Item removed from cart',
+      });
+    }
+
+    if (action === 'update') {
+      // Update item quantity (validate against DB)
+      if (!item || !item.id) {
+        const msg = getTranslationKey(commonNs, 'common.error') || 'Invalid item';
+        return NextResponse.json({ error: msg }, { status: 400 });
+      }
+      const qty = typeof item.quantity === 'string' ? parseInt(item.quantity, 10) : (item.quantity || 1);
+      if (qty <= 0 || isNaN(qty)) {
+        const msg = getTranslationKey(commonNs, 'common.error') || 'Invalid quantity';
+        return NextResponse.json({ error: msg }, { status: 400 });
+      }
+      const supabase = getSupabaseServerClient();
+      const { data: p, error } = await supabase
+        .from('products')
+        .select('id, name, name_fr, name_en, price, "inStock", image, slug, product_variants(stock)')
+        .eq('id', item.id)
+        .maybeSingle();
+      console.log('[Cart API] Update - Product query result:', { id: item.id, product: p, error });
+      if (error) return NextResponse.json({ error: getTranslationKey(commonNs, 'common.error') || 'Server error' }, { status: 500 });
+      if (!p) return NextResponse.json({ error: getTranslationKey(commonNs, 'product.not_found') || 'Product not found' }, { status: 404 });
+      console.log('[Cart API] Update - Product inStock:', p.inStock, 'variants:', p.product_variants);
+      if (!p.inStock) return NextResponse.json({ error: getTranslationKey(productNs, 'product.out_of_stock') || 'Out of stock' }, { status: 400 });
+      // Check stock from variants if they exist, otherwise trust inStock flag
+      const hasVariants = Array.isArray(p.product_variants) && p.product_variants.length > 0;
+      const totalStock = hasVariants ? p.product_variants.reduce((s: number, v: any) => s + (v?.stock || 0), 0) : null;
+      console.log('[Cart API] Update - Total stock calculated:', totalStock, 'qty requested:', qty, 'hasVariants:', hasVariants);
+      if (totalStock !== null && totalStock < qty) {
+        console.log('[Cart API] Update - Stock check failed:', { totalStock, qty });
+        return NextResponse.json({ error: getTranslationKey(productNs, 'product.out_of_stock') || 'Out of stock' }, { status: 400 });
+      }
+      const name = p.name_fr ?? p.name ?? p.name_en ?? 'Produit';
+      const price = typeof p.price === 'string' ? parseFloat(p.price) : p.price;
+      const normalized = { id: p.id, name, price, quantity: qty, image: p.image };
+      return NextResponse.json({ success: true, item: normalized });
+    }
+
+    return NextResponse.json(
+      { error: getTranslationKey(commonNs, 'common.error') || 'Invalid action' },
+      { status: 400 }
+    );
+  } catch (error) {
+    console.error('Cart error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET() {
+  try {
+    // Get cart items from session/database
+    // For now, return empty cart
+    return NextResponse.json({
+      items: [],
+      total: 0,
+    });
+  } catch (error) {
+    console.error('Error fetching cart:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

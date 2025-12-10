@@ -1,0 +1,73 @@
+EXÉCUTER LES MIGRATIONS MAINTENANT
+===================================
+
+ÉTAPE 1: Ouvrir Supabase SQL Editor
+------------------------------------
+1. Allez sur: https://supabase.com/dashboard
+2. Sélectionnez votre projet
+3. Cliquez sur "SQL Editor" dans le menu de gauche
+
+
+ÉTAPE 2: Copier le fichier SQL
+-------------------------------
+1. Ouvrez le fichier: EXECUTE_ALL_MIGRATIONS.sql
+2. Sélectionnez TOUT le contenu (Ctrl+A)
+3. Copiez (Ctrl+C)
+
+
+ÉTAPE 3: Exécuter dans Supabase
+--------------------------------
+1. Dans SQL Editor, collez le code (Ctrl+V)
+2. Cliquez sur le bouton "Run" (ou F5)
+3. Attendez que toutes les commandes s'exécutent
+
+
+ÉTAPE 4: Vérifier les résultats
+--------------------------------
+Vous devriez voir en bas:
+✅ "Success. No rows returned"
+ou
+✅ Des résultats de vérification
+
+
+ÉTAPE 5: Activer les paramètres de sécurité
+--------------------------------------------
+1. Dans le Dashboard Supabase
+2. Authentication > Settings
+3. Activez:
+   ☑ "Check passwords against HaveIBeenPwned.org"
+   ☑ "TOTP" dans Multi-Factor Authentication
+4. Sauvegardez
+
+
+C'EST TOUT!
+-----------
+✅ Colonne stock ajoutée aux produits
+✅ Colonnes first_name/last_name ajoutées aux users
+✅ Fonction products_sync_image sécurisée
+✅ Protection mots de passe activée
+✅ MFA activé
+
+
+VÉRIFICATION RAPIDE
+-------------------
+Exécutez ce SQL pour vérifier:
+
+SELECT 'stock column' as check_name, 
+  CASE WHEN EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'products' AND column_name = 'stock'
+  ) THEN '✅ OK' ELSE '❌ MANQUANT' END as status
+UNION ALL
+SELECT 'first_name column', 
+  CASE WHEN EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'users' AND column_name = 'first_name'
+  ) THEN '✅ OK' ELSE '❌ MANQUANT' END
+UNION ALL
+SELECT 'secure function', 
+  CASE WHEN EXISTS (
+    SELECT 1 FROM information_schema.routines 
+    WHERE routine_name = 'products_sync_image' 
+    AND routine_definition LIKE '%search_path%'
+  ) THEN '✅ OK' ELSE '❌ MANQUANT' END;
