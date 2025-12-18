@@ -3,8 +3,9 @@
  * basés sur la localisation (Sénégal vs International)
  * 
  * DÉLAIS OFFICIELS NUBIA AURA:
- * - Standard Sénégal: 3-5 jours
- * - Standard International: 7-14 jours
+ * - Sénégal Dakar: Dans la journée (same-day)
+ * - Sénégal autres régions: 1-3 jours
+ * - International: 7-14 jours
  * - Sur-mesure (tous pays): 2-3 semaines
  * - Retours Sénégal: 3 jours
  * - Retours International: 14 jours
@@ -22,29 +23,55 @@ export function isSenegal(country: string): boolean {
 }
 
 /**
- * Calcule la durée de livraison en jours selon le pays et le type de commande
+ * Vérifie si la ville est Dakar
+ */
+export function isDakar(city: string): boolean {
+    const normalized = city.toLowerCase().trim();
+    return normalized === 'dakar' ||
+        normalized.includes('dakar');
+}
+
+/**
+ * Calcule la durée de livraison en jours selon le pays, la ville et le type de commande
  * 
  * @param country - Pays de livraison
+ * @param city - Ville de livraison (optionnel)
  * @param isCustomOrder - true si commande sur-mesure, false si achat normal
  * @returns Nombre de jours pour la livraison
  * 
  * Règles:
- * - Standard Sénégal: 3-5 jours
- * - Standard International: 7-14 jours
+ * - Sénégal Dakar: Dans la journée (0-1 jour)
+ * - Sénégal autres régions: 1-3 jours
+ * - International: 7-14 jours
  * - Sur-mesure (tous pays): 14-21 jours (2-3 semaines)
  */
 export function calculateDeliveryDuration(
     country: string,
+    cityOrIsCustom?: string | boolean,
     isCustomOrder: boolean = false
 ): number {
-    if (isCustomOrder) {
+    // Handle overloaded parameters
+    let city = '';
+    let customOrder = isCustomOrder;
+
+    if (typeof cityOrIsCustom === 'boolean') {
+        customOrder = cityOrIsCustom;
+    } else if (typeof cityOrIsCustom === 'string') {
+        city = cityOrIsCustom;
+    }
+
+    if (customOrder) {
         // Commandes sur-mesure: 14-21 jours (2-3 semaines)
         return Math.floor(Math.random() * 8) + 14;
     }
 
     if (isSenegal(country)) {
-        // Sénégal: 3-5 jours
-        return Math.floor(Math.random() * 3) + 3;
+        if (isDakar(city)) {
+            // Dakar: Same-day (0-1 jour)
+            return Math.random() < 0.8 ? 0 : 1;
+        }
+        // Sénégal autres régions: 1-3 jours
+        return Math.floor(Math.random() * 3) + 1;
     }
 
     // International: 7-14 jours
@@ -56,18 +83,41 @@ export function calculateDeliveryDuration(
  */
 export function getDeliveryRangeText(
     country: string,
-    isCustomOrder: boolean = false,
+    cityOrIsCustom?: string | boolean,
+    isCustomOrderOrLocale?: boolean | string,
     locale: string = 'fr'
 ): string {
-    if (isCustomOrder) {
-        return locale === 'fr' ? '2-3 semaines' : '2-3 weeks';
+    // Handle overloaded parameters
+    let city = '';
+    let customOrder = false;
+    let lang = locale;
+
+    if (typeof cityOrIsCustom === 'boolean') {
+        customOrder = cityOrIsCustom;
+        if (typeof isCustomOrderOrLocale === 'string') {
+            lang = isCustomOrderOrLocale;
+        }
+    } else if (typeof cityOrIsCustom === 'string') {
+        city = cityOrIsCustom;
+        if (typeof isCustomOrderOrLocale === 'boolean') {
+            customOrder = isCustomOrderOrLocale;
+        } else if (typeof isCustomOrderOrLocale === 'string') {
+            lang = isCustomOrderOrLocale;
+        }
+    }
+
+    if (customOrder) {
+        return lang === 'fr' ? '2-3 semaines' : '2-3 weeks';
     }
 
     if (isSenegal(country)) {
-        return locale === 'fr' ? '3-5 jours' : '3-5 days';
+        if (isDakar(city)) {
+            return lang === 'fr' ? 'Dans la journée' : 'Same day';
+        }
+        return lang === 'fr' ? '1-3 jours' : '1-3 days';
     }
 
-    return locale === 'fr' ? '7-14 jours' : '7-14 days';
+    return lang === 'fr' ? '7-14 jours' : '7-14 days';
 }
 
 /**
