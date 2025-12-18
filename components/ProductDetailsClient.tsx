@@ -10,6 +10,7 @@ import WishlistButton from "@/components/WishlistButton";
 import { withImageParams } from "@/lib/image-formats";
 import { trackProductView, trackAddToCart } from "@/lib/analytics-config";
 import OptimizedImage from "@/components/OptimizedImage";
+import ProductReviews from "@/components/ProductReviews";
 
 type ProductImage = {
   url: string;
@@ -576,6 +577,9 @@ export default function ProductDetailsClient({ product, locale }: { product: Pro
           pendingAddToCart.current = true;
         }}
       />
+
+      {/* Product Reviews */}
+      <ProductReviews productId={product.id} />
     </div>
   );
 }

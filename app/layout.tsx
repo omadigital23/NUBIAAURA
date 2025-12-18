@@ -86,9 +86,33 @@ export default function RootLayout({
     <html lang="fr" className={`${inter.variable} ${playfair.variable}`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#000000" />
+        <meta name="theme-color" content="#D4AF37" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="NUBIA AURA" />
+        <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <GoogleAnalytics />
+        {/* Service Worker Registration */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').then(
+                    function(registration) {
+                      console.log('[PWA] Service Worker registered:', registration.scope);
+                    },
+                    function(err) {
+                      console.log('[PWA] Service Worker registration failed:', err);
+                    }
+                  );
+                });
+              }
+            `,
+          }}
+        />
       </head>
       <body className="font-inter bg-nubia-white text-nubia-black antialiased">
         <CartProvider>

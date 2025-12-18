@@ -1,10 +1,21 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { sendEmail } from '@/lib/sendgrid';
 import { getNewsletterWelcomeEmail } from '@/lib/email-templates';
+import { checkRateLimit, formRatelimit } from '@/lib/rate-limit';
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    // Rate limiting
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'global';
+    const rl = await checkRateLimit(`newsletter:${String(ip).split(',')[0].trim()}`, formRatelimit);
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: 'Trop de requêtes. Veuillez réessayer dans quelques instants.' },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json().catch(() => ({}));
     const email = (body?.email || '').toString().trim().toLowerCase();
     const name = (body?.name || '').toString().trim() || null;

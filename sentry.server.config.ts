@@ -20,9 +20,9 @@ if (sentryConfig.dsn) {
         // Before send hook
         beforeSend: sentryConfig.beforeSend,
 
-        // Server-specific integrations
+        // Server-specific integrations (Sentry v10 API)
         integrations: [
-            new Sentry.Integrations.Http({ tracing: true }),
+            Sentry.httpIntegration(),
         ],
     });
 }

@@ -86,6 +86,7 @@ test-admin-auth.js
 test-*.js
 *-test.js
 test-cart-api.js
+scripts/tests/
 
 # Security audit files (keep local)
 scripts/SECURITY_AUDIT.md

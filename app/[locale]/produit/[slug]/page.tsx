@@ -8,7 +8,7 @@ import type { Metadata } from 'next';
 import RelatedProducts from '@/components/RelatedProducts';
 import { withImageParams } from '@/lib/image-formats';
 
-type Params = { params: { locale: string; slug: string } };
+type Params = { params: Promise<{ locale: string; slug: string }> };
 
 async function fetchProduct(slug: string) {
   const supabase = getSupabaseServerClient();
@@ -21,7 +21,7 @@ async function fetchProduct(slug: string) {
     `)
     .eq('slug', slug)
     .single();
-  
+
   // 🔍 DEBUG: Log pour diagnostiquer le problème de description
   console.log('🔍 [ServerSide] Product fetched from Supabase:', {
     slug,
@@ -33,12 +33,13 @@ async function fetchProduct(slug: string) {
       description_en: data.description_en
     } : null
   });
-  
+
   return data as any | null;
 }
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
-  const product = await fetchProduct(params.slug);
+  const { slug } = await params;
+  const product = await fetchProduct(slug);
   const titleBase = product?.name_fr || product?.name_en || product?.name || 'Produit';
   const description = product?.description || 'Découvrez nos créations Nubia Aura.';
   const image = product?.image || product?.image_url || undefined;
@@ -54,12 +55,13 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 }
 
 export default async function ProductDetailsPage({ params }: Params) {
-  const product = await fetchProduct(params.slug);
-  
+  const { locale, slug } = await params;
+  const product = await fetchProduct(slug);
+
   // 🔍 DEBUG: Log pour vérifier la locale reçue
   console.log('🔍 [ServerSide] Page params:', {
-    locale: params.locale,
-    slug: params.slug
+    locale,
+    slug
   });
 
   return (
@@ -67,15 +69,15 @@ export default async function ProductDetailsPage({ params }: Params) {
       <Header />
       <main className="flex-1 py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <ProductDetailsClient product={product} locale={params.locale} />
+          <ProductDetailsClient product={product} locale={locale} />
           {product && (
             <>
               <ProductShipping />
-              <ProductActions 
-                productName={(product as any).name_fr || (product as any).name || 'Produit'} 
-                productUrl={`${process.env.NEXT_PUBLIC_BASE_URL || 'https://nubiaaura.com'}/${params.locale}/produit/${params.slug}`}
+              <ProductActions
+                productName={(product as any).name_fr || (product as any).name || 'Produit'}
+                productUrl={`${process.env.NEXT_PUBLIC_BASE_URL || 'https://nubiaaura.com'}/${locale}/produit/${slug}`}
               />
-              <RelatedProducts category={(product as any).category} excludeId={(product as any).id} locale={params.locale} />
+              <RelatedProducts category={(product as any).category} excludeId={(product as any).id} locale={locale} />
             </>
           )}
         </div>

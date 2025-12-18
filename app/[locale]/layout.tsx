@@ -2,14 +2,14 @@ import type { Metadata, Viewport } from 'next';
 import { Inter, Playfair_Display } from 'next/font/google';
 import '@/app/globals.css';
 
-const inter = Inter({ 
-  subsets: ['latin'], 
+const inter = Inter({
+  subsets: ['latin'],
   variable: '--font-inter',
   display: 'swap',
   preload: true,
 });
-const playfair = Playfair_Display({ 
-  subsets: ['latin'], 
+const playfair = Playfair_Display({
+  subsets: ['latin'],
   variable: '--font-playfair',
   display: 'swap',
   preload: true,
@@ -29,9 +29,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-    title: 'Nubia Aura - Mode Africaine à Dakar | Robes de cérémonie, Mariage & Costumes',
+  title: 'Nubia Aura - Mode Africaine à Dakar | Robes de cérémonie, Mariage & Costumes',
   description:
-      "Boutique de mode africaine à Dakar, Sénégal. Robes de cérémonie, robes de mariage, chemises wax, costumes africains, robes en wax. Prêt-à-porter et sur-mesure.",
+    "Boutique de mode africaine à Dakar, Sénégal. Robes de cérémonie, robes de mariage, chemises wax, costumes africains, robes en wax. Prêt-à-porter et sur-mesure.",
   keywords: 'mode africaine Dakar, robe de soirée Dakar, robe de mariage Sénégal, chemise wax, costume africain, robe en wax, robe de ville, prêt-à-porter Dakar, sur-mesure Sénégal, Nubia Aura, fashion africaine',
   authors: [{ name: 'OMA Digital' }],
   creator: 'OMA Digital',
@@ -57,16 +57,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function LocaleLayout({
+export default async function LocaleLayout({
   children,
   params,
 }: {
   children: React.ReactNode;
-  params: { locale: 'fr' | 'en' };
+  params: Promise<{ locale: string }>;
 }) {
-  const { locale } = params;
+  const { locale } = await params;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  
+
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'ClothingStore',
@@ -132,7 +132,7 @@ export default function LocaleLayout({
       ],
     },
   };
-  
+
   return (
     <html lang={locale} className={`${inter.variable} ${playfair.variable}`}>
       <head>

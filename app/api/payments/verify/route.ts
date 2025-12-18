@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     const rl = await checkRateLimit((() => {
-      const ip = request.ip || request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'global';
+      const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'global';
       return `payverify:${String(ip).split(',')[0].trim()}`;
     })(), paymentRatelimit);
     if (!rl.success) {

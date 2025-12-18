@@ -3,11 +3,11 @@ import { getSupabaseServerClient } from '@/lib/supabase';
 
 export async function POST(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = getSupabaseServerClient();
-    const orderId = params.id;
+    const { id: orderId } = await params;
 
     // Récupérer les réservations de stock pour cette commande
     const { data: reservations, error: fetchError } = await supabase

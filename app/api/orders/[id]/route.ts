@@ -8,23 +8,24 @@ const supabase = createClient(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    console.log('[Orders API] Fetching order:', params.id);
-    
+    const { id } = await params;
+    console.log('[Orders API] Fetching order:', id);
+
     // Get token from cookie or Authorization header
     let token = request.cookies.get('sb-auth-token')?.value;
-    
+
     if (!token) {
       const authHeader = request.headers.get('authorization');
       if (authHeader?.startsWith('Bearer ')) {
         token = authHeader.substring(7);
       }
     }
-    
+
     let userId: string | null = null;
-    
+
     if (token) {
       try {
         // Create a client with the token to get the authenticated user
@@ -53,7 +54,7 @@ export async function GET(
     } else {
       console.warn('[Orders API] No token found');
     }
-    
+
     // If no userId, return 401
     if (!userId) {
       return NextResponse.json(
@@ -61,7 +62,7 @@ export async function GET(
         { status: 401 }
       );
     }
-    
+
     // Get order and verify it belongs to the user
     const { data: order, error } = await supabase
       .from('orders')
@@ -80,7 +81,7 @@ export async function GET(
         )
       `
       )
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', userId)
       .single();
 
@@ -93,7 +94,7 @@ export async function GET(
     }
 
     if (!order) {
-      console.error('[Orders API] Order not found for user:', userId, 'Order ID:', params.id);
+      console.error('[Orders API] Order not found for user:', userId, 'Order ID:', id);
       return NextResponse.json(
         { error: 'Order not found' },
         { status: 404 }

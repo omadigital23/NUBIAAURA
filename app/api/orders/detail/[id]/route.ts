@@ -6,8 +6,9 @@ export const revalidate = 0;
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     // Get token from Authorization header or cookie
     let token: string | null = null;
@@ -55,7 +56,7 @@ export async function GET(
         )
       `
       )
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .single();
 

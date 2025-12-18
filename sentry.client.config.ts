@@ -24,17 +24,10 @@ if (sentryConfig.dsn) {
     // Before send hook
     beforeSend: sentryConfig.beforeSend,
 
-    // Integrations
+    // Integrations (Sentry v10 API)
     integrations: [
-      new Sentry.BrowserTracing({
-        // Track navigation performance
-        tracePropagationTargets: [
-          'localhost',
-          /^https:\/\/.*\.vercel\.app/,
-          process.env.NEXT_PUBLIC_APP_URL || '',
-        ].filter(Boolean),
-      }),
-      new Sentry.Replay({
+      Sentry.browserTracingIntegration(),
+      Sentry.replayIntegration({
         // Privacy settings for session replay
         maskAllText: true,
         blockAllMedia: true,

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { sendEmail } from '@/lib/sendgrid';
 import { getContactConfirmationEmail, getContactManagerNotification } from '@/lib/email-templates';
 import { notifyManagerNewContact } from '@/lib/whatsapp-notifications';
+import { checkRateLimit, formRatelimit } from '@/lib/rate-limit';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,6 +22,16 @@ const ContactSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'global';
+    const rl = await checkRateLimit(`contact:${String(ip).split(',')[0].trim()}`, formRatelimit);
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: 'Trop de messages. Veuillez réessayer dans quelques instants.' },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
 
     // Validate input

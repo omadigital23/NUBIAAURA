@@ -360,3 +360,168 @@ export function getCustomOrderManagerNotification(data: CustomOrderEmailData) {
     `,
   };
 }
+
+/**
+ * Données pour l'email de mise à jour de livraison
+ */
+export interface ShippingUpdateEmailData {
+  customerName: string;
+  orderNumber: string;
+  status: 'processing' | 'shipped' | 'delivered';
+  trackingNumber?: string;
+  carrier?: string;
+  estimatedDelivery?: string;
+  deliveredAt?: string;
+}
+
+/**
+ * Email de mise à jour du statut de livraison
+ */
+export function getShippingUpdateEmail(data: ShippingUpdateEmailData) {
+  const statusConfig = {
+    processing: {
+      emoji: '📦',
+      title: 'Votre commande est en préparation',
+      message: 'Notre équipe prépare votre commande avec soin. Vous recevrez une notification dès qu\'elle sera expédiée.',
+      color: '#ffc107',
+      bgColor: '#fff3cd',
+    },
+    shipped: {
+      emoji: '🚚',
+      title: 'Votre commande est en route !',
+      message: 'Votre colis a été expédié et est en chemin vers vous.',
+      color: '#17a2b8',
+      bgColor: '#d1ecf1',
+    },
+    delivered: {
+      emoji: '✅',
+      title: 'Votre commande a été livrée !',
+      message: 'Nous espérons que vous apprécierez vos achats. N\'hésitez pas à nous laisser un avis !',
+      color: '#28a745',
+      bgColor: '#d4edda',
+    },
+  };
+
+  const config = statusConfig[data.status];
+
+  return {
+    subject: `${config.emoji} ${config.title} - Commande ${data.orderNumber}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body { font-family: Arial, sans-serif; color: #333; margin: 0; padding: 0; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { 
+              background: linear-gradient(135deg, #000000 0%, #D4AF37 100%); 
+              color: white; 
+              padding: 30px 20px; 
+              text-align: center; 
+              border-radius: 10px 10px 0 0;
+            }
+            .content { padding: 30px; background: #f9f9f9; }
+            .status-box { 
+              background: ${config.bgColor}; 
+              border-left: 4px solid ${config.color}; 
+              padding: 20px; 
+              border-radius: 5px; 
+              margin: 20px 0; 
+              text-align: center;
+            }
+            .status-emoji { font-size: 48px; }
+            .info-box { background: white; padding: 15px; border-radius: 5px; margin: 15px 0; }
+            .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+            .button { 
+              background: #D4AF37; 
+              color: #000; 
+              padding: 15px 40px; 
+              text-decoration: none; 
+              border-radius: 5px; 
+              display: inline-block; 
+              margin: 20px 0;
+              font-weight: bold;
+            }
+            .tracking-box {
+              background: #f0f0f0;
+              padding: 15px;
+              border-radius: 5px;
+              margin: 15px 0;
+              text-align: center;
+              font-family: monospace;
+              font-size: 18px;
+              letter-spacing: 2px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1 style="margin: 0;">✨ Nubia Aura</h1>
+              <p style="margin: 10px 0 0 0;">Mise à jour de votre commande</p>
+            </div>
+
+            <div class="content">
+              <h2 style="color: #D4AF37;">Bonjour ${data.customerName},</h2>
+              
+              <div class="status-box">
+                <div class="status-emoji">${config.emoji}</div>
+                <h3 style="color: ${config.color}; margin: 10px 0;">${config.title}</h3>
+                <p style="margin: 0;">${config.message}</p>
+              </div>
+
+              <div class="info-box">
+                <p><strong>Numéro de commande :</strong> ${data.orderNumber}</p>
+                ${data.trackingNumber ? `
+                  <p><strong>Transporteur :</strong> ${data.carrier || 'Nubia Express'}</p>
+                  <div class="tracking-box">
+                    ${data.trackingNumber}
+                  </div>
+                ` : ''}
+                ${data.estimatedDelivery ? `
+                  <p><strong>Livraison estimée :</strong> ${data.estimatedDelivery}</p>
+                ` : ''}
+                ${data.deliveredAt ? `
+                  <p><strong>Livré le :</strong> ${data.deliveredAt}</p>
+                ` : ''}
+              </div>
+
+              ${data.status === 'delivered' ? `
+                <center>
+                  <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://nubiaaura.com'}/fr/commandes" class="button">
+                    Voir mes commandes
+                  </a>
+                </center>
+                <p style="text-align: center; color: #666;">
+                  Vous avez 14 jours pour initier un retour si nécessaire.
+                </p>
+              ` : `
+                <center>
+                  <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://nubiaaura.com'}/fr/commandes" class="button">
+                    Suivre ma commande
+                  </a>
+                </center>
+              `}
+
+              <p>Pour toute question :</p>
+              <ul>
+                <li>📧 Email : contact@nubiaaura.com</li>
+                <li>📱 WhatsApp : +221 77 123 45 67</li>
+              </ul>
+
+              <p>Cordialement,</p>
+              <p style="color: #D4AF37; font-weight: bold;">L'équipe Nubia Aura</p>
+            </div>
+
+            <div class="footer">
+              <p>© 2025 Nubia Aura. Tous droits réservés.</p>
+              <p>Thiès, Sénégal | Casablanca, Maroc</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+  };
+}
+

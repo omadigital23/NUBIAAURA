@@ -1,0 +1,123 @@
+{
+    "name": "NUBIA AURA",
+    "short_name": "NUBIA",
+    "description": "Mode Africaine Éthique & Sur-Mesure - Plateforme e-commerce de vêtements et accessoires de luxe",
+    "start_url": "/",
+    "display": "standalone",
+    "orientation": "portrait-primary",
+    "background_color": "#FFFBF5",
+    "theme_color": "#D4AF37",
+    "categories": [
+        "shopping",
+        "fashion",
+        "lifestyle"
+    ],
+    "lang": "fr",
+    "dir": "ltr",
+    "icons": [
+        {
+            "src": "/icons/icon-72x72.png",
+            "sizes": "72x72",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/icons/icon-96x96.png",
+            "sizes": "96x96",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/icons/icon-128x128.png",
+            "sizes": "128x128",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/icons/icon-144x144.png",
+            "sizes": "144x144",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/icons/icon-152x152.png",
+            "sizes": "152x152",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/icons/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/icons/icon-384x384.png",
+            "sizes": "384x384",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/icons/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable any"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "/screenshots/home.png",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "Page d'accueil NUBIA AURA"
+        },
+        {
+            "src": "/screenshots/mobile.png",
+            "sizes": "750x1334",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "Application mobile"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Catalogue",
+            "short_name": "Catalogue",
+            "description": "Voir tous nos produits",
+            "url": "/fr/catalogue",
+            "icons": [
+                {
+                    "src": "/icons/icon-96x96.png",
+                    "sizes": "96x96"
+                }
+            ]
+        },
+        {
+            "name": "Mon Panier",
+            "short_name": "Panier",
+            "description": "Voir votre panier",
+            "url": "/fr/panier",
+            "icons": [
+                {
+                    "src": "/icons/icon-96x96.png",
+                    "sizes": "96x96"
+                }
+            ]
+        },
+        {
+            "name": "Sur-Mesure",
+            "short_name": "Sur-Mesure",
+            "description": "Commander un article sur-mesure",
+            "url": "/fr/sur-mesure",
+            "icons": [
+                {
+                    "src": "/icons/icon-96x96.png",
+                    "sizes": "96x96"
+                }
+            ]
+        }
+    ],
+    "related_applications": [],
+    "prefer_related_applications": false
+}

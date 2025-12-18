@@ -15,8 +15,9 @@ const UpdateReturnSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     // Get auth token
     const token = request.cookies.get('sb-auth-token')?.value;
@@ -34,7 +35,7 @@ export async function GET(
     const { data: returnRequest, error: returnError } = await supabase
       .from('returns')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .single();
 
@@ -73,8 +74,9 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     // Get auth token
     const token = request.cookies.get('sb-auth-token')?.value;
@@ -96,7 +98,7 @@ export async function PUT(
     const { data: returnRequest, error: returnError } = await supabase
       .from('returns')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .single();
 
@@ -115,7 +117,7 @@ export async function PUT(
         notes: validated.notes || null,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', params.id)
+      .eq('id', id)
       .select()
       .single();
 
@@ -135,7 +137,7 @@ export async function PUT(
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             type: 'return_status_update',
-            returnId: params.id,
+            returnId: id,
             returnNumber: returnRequest.return_number,
             status: validated.status,
             userId: user.id,
@@ -173,8 +175,9 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     // Get auth token
     const token = request.cookies.get('sb-auth-token')?.value;
@@ -192,7 +195,7 @@ export async function DELETE(
     const { data: returnRequest, error: returnError } = await supabase
       .from('returns')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .single();
 
@@ -215,7 +218,7 @@ export async function DELETE(
     const { error: deleteError } = await supabase
       .from('returns')
       .delete()
-      .eq('id', params.id);
+      .eq('id', id);
 
     if (deleteError) {
       console.error('Delete return error:', deleteError);

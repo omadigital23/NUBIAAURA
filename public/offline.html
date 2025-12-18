@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#D4AF37">
+  <title>Hors ligne - NUBIA AURA</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Playfair Display', Georgia, serif;
+      background: linear-gradient(135deg, #FFFBF5 0%, #F5E6D3 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .container {
+      max-width: 400px;
+    }
+    
+    .logo {
+      font-size: 3rem;
+      color: #D4AF37;
+      margin-bottom: 1rem;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      color: #1a1a1a;
+      margin-bottom: 1rem;
+    }
+    
+    p {
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+    
+    .icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+    
+    button {
+      background: #D4AF37;
+      color: #1a1a1a;
+      border: none;
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    
+    button:hover {
+      opacity: 0.9;
+    }
+    
+    .status {
+      margin-top: 2rem;
+      font-size: 0.875rem;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">📶</div>
+    <div class="logo">NUBIA AURA</div>
+    <h1>Vous êtes hors ligne</h1>
+    <p>
+      Impossible de se connecter à internet. Vérifiez votre connexion et réessayez.
+    </p>
+    <button onclick="window.location.reload()">
+      Réessayer
+    </button>
+    <p class="status" id="status">En attente de connexion...</p>
+  </div>
+  
+  <script>
+    // Check for online status
+    window.addEventListener('online', () => {
+      document.getElementById('status').textContent = '✓ Connexion rétablie! Rechargement...';
+      setTimeout(() => window.location.reload(), 1000);
+    });
+    
+    window.addEventListener('offline', () => {
+      document.getElementById('status').textContent = 'En attente de connexion...';
+    });
+  </script>
+</body>
+</html>

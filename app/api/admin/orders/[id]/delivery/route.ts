@@ -25,8 +25,9 @@ const UpdateDeliverySchema = z.object({
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     // Check admin authentication
     // Try to get token from Authorization header first, then from cookies
@@ -34,7 +35,7 @@ export async function PUT(
     if (!token) {
       token = request.cookies.get('sb-auth-token')?.value;
     }
-    
+
     if (!token) {
       console.error('[delivery] No token found');
       return NextResponse.json(
@@ -44,11 +45,11 @@ export async function PUT(
     }
 
     console.log('[delivery] Token found, verifying...');
-    
+
     // Try to verify as admin token first
     let isAdmin = verifyAdminToken(token);
     console.log('[delivery] Admin token verification result:', isAdmin);
-    
+
     // If not admin token, try to verify as Supabase token
     if (!isAdmin) {
       console.log('[delivery] Trying Supabase token verification...');
@@ -76,16 +77,16 @@ export async function PUT(
     console.log('[delivery] Authentication successful, parsing body...');
     const body = await request.json();
     console.log('[delivery] Body:', body);
-    
+
     const validated = UpdateDeliverySchema.parse(body);
     console.log('[delivery] Validated:', validated);
 
     // Get current order
-    console.log('[delivery] Fetching order:', params.id);
+    console.log('[delivery] Fetching order:', id);
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (orderError || !order) {
@@ -95,7 +96,7 @@ export async function PUT(
         { status: 404 }
       );
     }
-    
+
     console.log('[delivery] Order found:', order.id);
 
     // Calculate estimated delivery date if shipping (only if not manually set)
@@ -125,13 +126,13 @@ export async function PUT(
     if (validated.tracking_number !== undefined) updateData.tracking_number = validated.tracking_number;
     if (validated.carrier !== undefined) updateData.carrier = validated.carrier;
     if (validated.status !== undefined) updateData.status = validated.status;
-    
+
     console.log('[delivery] Updating order with:', updateData);
-    
+
     const { data: updatedOrder, error: updateError } = await supabase
       .from('orders')
       .update(updateData)
-      .eq('id', params.id)
+      .eq('id', id)
       .select('*')
       .single();
 
@@ -142,7 +143,7 @@ export async function PUT(
         { status: 500 }
       );
     }
-    
+
     console.log('[delivery] Order updated successfully');
 
     // Add tracking history (optional - table may not exist yet)
@@ -151,7 +152,7 @@ export async function PUT(
       const { error: trackingError } = await supabase
         .from('delivery_tracking')
         .insert({
-          order_id: params.id,
+          order_id: id,
           status: validated.status || order.status,
           notes: `Updated by admin: ${JSON.stringify(validated)}`,
         });
@@ -199,8 +200,9 @@ export async function PUT(
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     // Check admin authentication
     // Try to get token from Authorization header first, then from cookies
@@ -208,7 +210,7 @@ export async function GET(
     if (!token) {
       token = request.cookies.get('sb-auth-token')?.value;
     }
-    
+
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -218,7 +220,7 @@ export async function GET(
 
     // Try to verify as admin token first
     let isAdmin = verifyAdminToken(token);
-    
+
     // If not admin token, try to verify as Supabase token
     if (!isAdmin) {
       const { data: { user }, error: userError } = await supabase.auth.getUser(token);
@@ -254,7 +256,7 @@ export async function GET(
         carrier,
         created_at
       `)
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (orderError || !order) {
@@ -268,7 +270,7 @@ export async function GET(
     const { data: tracking, error: trackingError } = await supabase
       .from('delivery_tracking')
       .select('*')
-      .eq('order_id', params.id)
+      .eq('order_id', id)
       .order('status_date', { ascending: false });
 
     if (trackingError) {
