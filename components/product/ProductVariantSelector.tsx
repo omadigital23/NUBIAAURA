@@ -19,8 +19,7 @@ export function ProductVariantSelector({
     selectedColor,
     onSizeChange,
     onColorChange,
-    locale,
-}: ProductVariantSelectorProps) {
+}: Omit<ProductVariantSelectorProps, 'locale'>) {
     const { t } = useTranslation();
 
     const colorLabel = (raw: string) => {
@@ -49,8 +48,8 @@ export function ProductVariantSelector({
                             <button
                                 key={s}
                                 className={`px-3 py-2 border rounded-lg transition-colors ${selectedSize === s
-                                        ? 'border-nubia-gold bg-nubia-gold/10'
-                                        : 'border-nubia-gold/30 hover:border-nubia-gold/50'
+                                    ? 'border-nubia-gold bg-nubia-gold/10'
+                                    : 'border-nubia-gold/30 hover:border-nubia-gold/50'
                                     }`}
                                 onClick={() => onSizeChange(s)}
                             >
@@ -72,8 +71,8 @@ export function ProductVariantSelector({
                             <button
                                 key={c}
                                 className={`px-3 py-2 border rounded-lg transition-colors ${selectedColor === c
-                                        ? 'border-nubia-gold bg-nubia-gold/10'
-                                        : 'border-nubia-gold/30 hover:border-nubia-gold/50'
+                                    ? 'border-nubia-gold bg-nubia-gold/10'
+                                    : 'border-nubia-gold/30 hover:border-nubia-gold/50'
                                     }`}
                                 onClick={() => onColorChange(c)}
                             >
