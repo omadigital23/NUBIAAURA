@@ -89,8 +89,11 @@ export async function GET(
         // Generate PDF
         const pdfBuffer = await renderToBuffer(<InvoiceDocument data={invoiceData} />);
 
+        // Convert Buffer to Uint8Array for NextResponse compatibility
+        const uint8Array = new Uint8Array(pdfBuffer);
+
         // Return PDF
-        return new NextResponse(pdfBuffer, {
+        return new NextResponse(uint8Array, {
             status: 200,
             headers: {
                 'Content-Type': 'application/pdf',
