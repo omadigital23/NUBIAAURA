@@ -1,6 +1,13 @@
 /**
  * Utilitaire pour calculer les délais de livraison et de retour
  * basés sur la localisation (Sénégal vs International)
+ * 
+ * DÉLAIS OFFICIELS NUBIA AURA:
+ * - Standard Sénégal: 3-5 jours
+ * - Standard International: 7-14 jours
+ * - Sur-mesure (tous pays): 2-3 semaines
+ * - Retours Sénégal: 3 jours
+ * - Retours International: 14 jours
  */
 
 /**
@@ -22,26 +29,45 @@ export function isSenegal(country: string): boolean {
  * @returns Nombre de jours pour la livraison
  * 
  * Règles:
- * - Achats normaux Sénégal: 1-3 jours
- * - Achats normaux International: 3-7 jours
- * - Commandes sur-mesure (tous pays): 10-20 jours
+ * - Standard Sénégal: 3-5 jours
+ * - Standard International: 7-14 jours
+ * - Sur-mesure (tous pays): 14-21 jours (2-3 semaines)
  */
 export function calculateDeliveryDuration(
     country: string,
     isCustomOrder: boolean = false
 ): number {
     if (isCustomOrder) {
-        // Commandes sur-mesure: 10-20 jours (Sénégal et International)
-        return Math.floor(Math.random() * 11) + 10;
+        // Commandes sur-mesure: 14-21 jours (2-3 semaines)
+        return Math.floor(Math.random() * 8) + 14;
     }
 
     if (isSenegal(country)) {
-        // Sénégal: 1-3 jours
-        return Math.floor(Math.random() * 3) + 1;
+        // Sénégal: 3-5 jours
+        return Math.floor(Math.random() * 3) + 3;
     }
 
-    // International: 3-7 jours
-    return Math.floor(Math.random() * 5) + 3;
+    // International: 7-14 jours
+    return Math.floor(Math.random() * 8) + 7;
+}
+
+/**
+ * Obtient la plage de livraison en texte
+ */
+export function getDeliveryRangeText(
+    country: string,
+    isCustomOrder: boolean = false,
+    locale: string = 'fr'
+): string {
+    if (isCustomOrder) {
+        return locale === 'fr' ? '2-3 semaines' : '2-3 weeks';
+    }
+
+    if (isSenegal(country)) {
+        return locale === 'fr' ? '3-5 jours' : '3-5 days';
+    }
+
+    return locale === 'fr' ? '7-14 jours' : '7-14 days';
 }
 
 /**

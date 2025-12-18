@@ -1,4 +1,8 @@
+import { config } from "dotenv";
 import { Client } from "@upstash/qstash";
+
+// Load environment variables from .env.local
+config({ path: ".env.local" });
 
 /**
  * Script pour configurer le schedule QStash
@@ -14,10 +18,12 @@ async function setupQStashSchedule() {
         process.exit(1);
     }
 
-    if (!process.env.NEXT_PUBLIC_APP_URL) {
-        console.error("❌ NEXT_PUBLIC_APP_URL n'est pas défini dans .env.local");
+    if (!process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_SITE_URL) {
+        console.error("❌ NEXT_PUBLIC_APP_URL ou NEXT_PUBLIC_SITE_URL n'est pas défini dans .env.local");
         process.exit(1);
     }
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL;
 
     const client = new Client({
         token: process.env.QSTASH_TOKEN,
@@ -25,23 +31,19 @@ async function setupQStashSchedule() {
 
     try {
         console.log("🚀 Configuration du schedule QStash...");
-        console.log(`📍 URL de destination: ${process.env.NEXT_PUBLIC_APP_URL}/api/cron/update-order-status`);
+        console.log(`📍 URL de destination: ${appUrl}/api/cron/update-order-status`);
 
         // Créer un schedule pour mettre à jour les statuts toutes les 6 heures
         const schedule = await client.schedules.create({
-            destination: `${process.env.NEXT_PUBLIC_APP_URL}/api/cron/update-order-status`,
+            destination: `${appUrl}/api/cron/update-order-status`,
             cron: "0 */6 * * *", // Toutes les 6 heures
-            // Optionnel: ajouter des headers personnalisés
-            // headers: {
-            //   "Content-Type": "application/json",
-            // },
         });
 
         console.log("✅ Schedule créé avec succès!");
         console.log("📋 Détails du schedule:");
         console.log(`   - ID: ${schedule.scheduleId}`);
         console.log(`   - Cron: 0 */6 * * * (toutes les 6 heures)`);
-        console.log(`   - Destination: ${process.env.NEXT_PUBLIC_APP_URL}/api/cron/update-order-status`);
+        console.log(`   - Destination: ${appUrl}/api/cron/update-order-status`);
         console.log("\n💡 Le schedule est maintenant actif et s'exécutera automatiquement.");
         console.log("🔍 Vous pouvez le voir sur: https://console.upstash.com/qstash");
 
