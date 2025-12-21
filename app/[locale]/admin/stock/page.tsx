@@ -6,7 +6,6 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { ArrowLeft, AlertCircle, TrendingDown } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
-import { useAuth } from '@/hooks/useAuth';
 
 interface StockItem {
   id: string;
@@ -32,42 +31,61 @@ interface Reservation {
 export default function StockManagementPage() {
   const router = useRouter();
   const { t, locale } = useTranslation();
-  const { user, isAuthenticated, isLoading } = useAuth();
 
   const [stocks, setStocks] = useState<StockItem[]>([]);
   const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<'stocks' | 'reservations'>('stocks');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push(`/${locale}/connexion`);
+    // Check admin authentication
+    const token = localStorage.getItem('admin_token');
+    if (!token) {
+      router.push(`/${locale}/admin/login`);
+    } else {
+      setIsAuthenticated(true);
+      setLoading(false);
     }
-  }, [isAuthenticated, isLoading, router, locale]);
+  }, [router, locale]);
 
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (isAuthenticated) {
       loadData();
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated]);
 
   const loadData = async () => {
     setLoading(true);
     setError(null);
     try {
+      // Get admin token from localStorage
+      const adminToken = localStorage.getItem('admin_token');
+      if (!adminToken) {
+        router.push(`/${locale}/admin/login`);
+        return;
+      }
+
       // Charger les stocks
       const stockRes = await fetch('/api/admin/products', {
         headers: {
-          'Authorization': `Bearer ${(user as any)?.token || ''}`,
+          'Authorization': `Bearer ${adminToken}`,
         },
       });
 
-      if (!stockRes.ok) throw new Error('Failed to load stocks');
+      if (!stockRes.ok) {
+        if (stockRes.status === 401) {
+          router.push(`/${locale}/admin/login`);
+          return;
+        }
+        throw new Error('Failed to load stocks');
+      }
       const stockData = await stockRes.json();
 
-      // Transformer les données
-      const items: StockItem[] = (stockData.data || []).map((p: any) => ({
+      // Transformer les données - handle both 'data' and 'products' response formats
+      const productsArray = stockData.data || stockData.products || [];
+      const items: StockItem[] = productsArray.map((p: any) => ({
         id: p.id,
         slug: p.slug,
         name_fr: p.name_fr || p.name || 'Produit',
@@ -82,7 +100,11 @@ export default function StockManagementPage() {
       setStocks(items);
 
       // Charger les réservations
-      const resRes = await fetch('/api/admin/reservations');
+      const resRes = await fetch('/api/admin/reservations', {
+        headers: {
+          'Authorization': `Bearer ${adminToken}`,
+        },
+      });
       if (resRes.ok) {
         const resData = await resRes.json();
         setReservations(resData.reservations || []);
@@ -109,7 +131,7 @@ export default function StockManagementPage() {
     }
   };
 
-  if (isLoading) {
+  if (loading && !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -127,7 +149,7 @@ export default function StockManagementPage() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Header />
-      
+
       <main className="flex-1 container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
@@ -146,21 +168,19 @@ export default function StockManagementPage() {
         <div className="flex gap-4 mb-6 border-b">
           <button
             onClick={() => setTab('stocks')}
-            className={`px-4 py-2 font-medium transition ${
-              tab === 'stocks'
-                ? 'border-b-2 border-nubia-gold text-nubia-gold'
-                : 'text-gray-600 hover:text-nubia-black'
-            }`}
+            className={`px-4 py-2 font-medium transition ${tab === 'stocks'
+              ? 'border-b-2 border-nubia-gold text-nubia-gold'
+              : 'text-gray-600 hover:text-nubia-black'
+              }`}
           >
             {t('admin.stocks', 'Stocks')} ({stocks.length})
           </button>
           <button
             onClick={() => setTab('reservations')}
-            className={`px-4 py-2 font-medium transition ${
-              tab === 'reservations'
-                ? 'border-b-2 border-nubia-gold text-nubia-gold'
-                : 'text-gray-600 hover:text-nubia-black'
-            }`}
+            className={`px-4 py-2 font-medium transition ${tab === 'reservations'
+              ? 'border-b-2 border-nubia-gold text-nubia-gold'
+              : 'text-gray-600 hover:text-nubia-black'
+              }`}
           >
             {t('admin.reservations', 'Réservations')} ({reservations.length})
           </button>
@@ -218,9 +238,8 @@ export default function StockManagementPage() {
                         <td className="p-3 text-gray-600">{item.category}</td>
                         <td className="p-3 text-right font-semibold">{item.stock}</td>
                         <td className="p-3 text-right text-orange-600 font-semibold">{item.reserved}</td>
-                        <td className={`p-3 text-right font-semibold ${
-                          item.available <= 0 ? 'text-red-600' : 'text-green-600'
-                        }`}>
+                        <td className={`p-3 text-right font-semibold ${item.available <= 0 ? 'text-red-600' : 'text-green-600'
+                          }`}>
                           {item.available}
                         </td>
                         <td className="p-3 text-center">
@@ -271,7 +290,7 @@ export default function StockManagementPage() {
                     {reservations.map((res) => {
                       const product = stocks.find(s => s.id === res.product_id);
                       const isExpired = new Date(res.expires_at) < new Date();
-                      
+
                       return (
                         <tr key={res.id} className="border-t hover:bg-gray-50">
                           <td className="p-3 font-medium">
@@ -279,15 +298,14 @@ export default function StockManagementPage() {
                           </td>
                           <td className="p-3 text-right font-semibold">{res.qty}</td>
                           <td className="p-3">
-                            <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${
-                              res.status === 'finalized' ? 'bg-green-100 text-green-700' :
+                            <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${res.status === 'finalized' ? 'bg-green-100 text-green-700' :
                               res.status === 'released' ? 'bg-gray-100 text-gray-700' :
-                              isExpired ? 'bg-red-100 text-red-700' :
-                              'bg-blue-100 text-blue-700'
-                            }`}>
+                                isExpired ? 'bg-red-100 text-red-700' :
+                                  'bg-blue-100 text-blue-700'
+                              }`}>
                               {res.status === 'finalized' ? 'Finalisée' :
-                               res.status === 'released' ? 'Libérée' :
-                               isExpired ? 'Expirée' : 'Active'}
+                                res.status === 'released' ? 'Libérée' :
+                                  isExpired ? 'Expirée' : 'Active'}
                             </span>
                           </td>
                           <td className="p-3 text-gray-600 text-xs">
