@@ -120,13 +120,19 @@ export default function LoginFormClient() {
             )}
           </button>
 
-          <div className="text-center mt-4">
+          <div className="flex flex-col items-center gap-3 mt-4">
             <a
               href="/auth/forgot-password"
               className="text-sm text-nubia-gold hover:text-nubia-gold/70 hover:underline font-medium"
             >
               {t('auth.forgot_password')}
             </a>
+            <Link
+              href="/auth/magic-link"
+              className="text-sm text-nubia-black/70 hover:text-nubia-gold transition-colors"
+            >
+              🔗 {t('auth.use_magic_link', 'Connexion par lien magique')}
+            </Link>
           </div>
         </form>
 

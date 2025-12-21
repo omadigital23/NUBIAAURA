@@ -165,7 +165,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <p className="text-xs text-nubia-black/50 mt-1">
-                  {t('settings.email_cannot_change', "L'email ne peut pas être modifié")}
+                  {t('settings.email_change_hint', "Pour changer votre email, utilisez le bouton dans la section Sécurité")}
                 </p>
               </div>
 
@@ -194,10 +194,20 @@ export default function SettingsPage() {
             </h2>
 
             <div className="space-y-4">
-              <button className="w-full p-4 border-2 border-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-gold/10 transition-colors flex items-center gap-3">
+              <Link
+                href={`/${locale}/auth/forgot-password`}
+                className="w-full p-4 border-2 border-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-gold/10 transition-colors flex items-center gap-3"
+              >
                 <Lock size={20} />
-                Changer le mot de passe
-              </button>
+                {t('settings.change_password', 'Changer le mot de passe')}
+              </Link>
+              <Link
+                href={`/${locale}/client/settings/change-email`}
+                className="w-full p-4 border-2 border-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-gold/10 transition-colors flex items-center gap-3"
+              >
+                <Mail size={20} />
+                {t('auth.change_email_title', "Changer l'adresse email")}
+              </Link>
             </div>
           </div>
         </div>

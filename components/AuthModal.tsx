@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { X, Mail, Lock, User, AlertCircle, Loader } from 'lucide-react';
 import { useAuthToken } from '@/hooks/useAuthToken';
 import { useTranslation } from '@/hooks/useTranslation';
-import { signInWithGoogle, signInWithFacebook } from '@/lib/supabase';
+import { signInWithGoogle } from '@/lib/supabase';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -23,17 +23,12 @@ const GoogleIcon = () => (
   </svg>
 );
 
-// Facebook icon component
-const FacebookIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#1877F2">
-    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-  </svg>
-);
+
 
 export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModalProps) {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [loading, setLoading] = useState(false);
-  const [oauthLoading, setOauthLoading] = useState<'google' | 'facebook' | null>(null);
+  const [oauthLoading, setOauthLoading] = useState<'google' | null>(null);
   const [error, setError] = useState('');
   const { saveToken } = useAuthToken();
   const { t, locale } = useTranslation();
@@ -64,16 +59,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
     }
   };
 
-  const handleFacebookSignIn = async () => {
-    try {
-      setOauthLoading('facebook');
-      setError('');
-      await signInWithFacebook(`${window.location.origin}/api/auth/callback?next=/${locale}`);
-    } catch (err: any) {
-      setError(err.message || 'Erreur de connexion avec Facebook');
-      setOauthLoading(null);
-    }
-  };
+
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -205,19 +191,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
               {t('auth.continue_with_google', 'Continuer avec Google')}
             </button>
 
-            <button
-              type="button"
-              onClick={handleFacebookSignIn}
-              disabled={oauthLoading !== null || loading}
-              className="w-full py-3 px-4 bg-[#1877F2] text-white border-2 border-[#1877F2] rounded-lg font-semibold flex items-center justify-center gap-3 hover:bg-[#166FE5] transition-all disabled:opacity-50"
-            >
-              {oauthLoading === 'facebook' ? (
-                <Loader size={20} className="animate-spin" />
-              ) : (
-                <FacebookIcon />
-              )}
-              {t('auth.continue_with_facebook', 'Continuer avec Facebook')}
-            </button>
+
           </div>
 
           {/* Divider */}
