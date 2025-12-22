@@ -9,6 +9,15 @@ const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfa
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.nubiaaura.com'),
+  icons: {
+    icon: [
+      { url: 'https://exjtjbciznzyyqrfctsc.supabase.co/storage/v1/object/public/products/images/logo.png', type: 'image/png' },
+    ],
+    apple: [
+      { url: 'https://exjtjbciznzyyqrfctsc.supabase.co/storage/v1/object/public/products/images/logo.png' },
+    ],
+    shortcut: 'https://exjtjbciznzyyqrfctsc.supabase.co/storage/v1/object/public/products/images/logo.png',
+  },
   title: {
     default: 'Nubia Aura - Mode Africaine Éthique & Sur-Mesure | Sénégal & Maroc',
     template: '%s | Nubia Aura',
@@ -91,8 +100,6 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="NUBIA AURA" />
         <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" href="/favicon.ico" />
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <GoogleAnalytics />
         {/* Service Worker Registration */}
         <script
