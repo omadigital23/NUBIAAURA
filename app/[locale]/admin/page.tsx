@@ -350,8 +350,8 @@ function OrdersPanel({ token }: { token: string }) {
                     <td className="p-3">
                       {o.return_deadline ? (
                         <span className={`text-xs ${new Date(o.return_deadline) > new Date()
-                            ? 'text-green-700'
-                            : 'text-red-700'
+                          ? 'text-green-700'
+                          : 'text-red-700'
                           }`}>
                           {new Date(o.return_deadline).toLocaleDateString('fr-FR', {
                             day: '2-digit',
@@ -402,9 +402,7 @@ function ProductsPanel({ token }: { token: string }) {
     material_en?: string;
     care_fr?: string;
     care_en?: string;
-  }>>({});
-  const [newProduct, setNewProduct] = useState<{ slug: string; price: number; category: string; name_fr?: string; name_en?: string }>({ slug: '', price: 0, category: '' });
-  const [categories, setCategories] = useState<string[]>([]);
+  }>>({})
 
   const authHeader = useMemo(() => {
     if (!token) return {} as Record<string, string>;
@@ -424,15 +422,7 @@ function ProductsPanel({ token }: { token: string }) {
       });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
-      setProducts(data.products || []);
-      // Load categories (best-effort)
-      try {
-        const catRes = await fetch('/api/categories');
-        if (catRes.ok) {
-          const cats = await catRes.json();
-          if (Array.isArray(cats.categories)) setCategories(cats.categories);
-        }
-      } catch { }
+      setProducts(data.data || []);
     } catch (e: any) {
       setError(e.message || "Failed to load");
     } finally {
@@ -522,28 +512,14 @@ function ProductsPanel({ token }: { token: string }) {
       {error && <div className="py-4 text-red-600">{error}</div>}
       {!loading && (
         <div className="overflow-x-auto border rounded">
-          <div className="p-4 border-b flex flex-col gap-2 bg-nubia-cream/40">
-            <div className="font-semibold">{t('admin.products.create_title', 'Créer un Produit')}</div>
-            <div className="flex flex-wrap gap-2 items-center">
-              <input className="border px-2 py-1 rounded" placeholder={t('admin.products.form.slug', 'slug')} value={newProduct.slug} onChange={(e) => setNewProduct(p => ({ ...p, slug: e.target.value }))} />
-              <input type="number" className="border px-2 py-1 rounded w-28" placeholder={t('admin.products.form.price', 'prix')} value={newProduct.price} onChange={(e) => setNewProduct(p => ({ ...p, price: Number(e.target.value) }))} />
-              <input className="border px-2 py-1 rounded" placeholder={t('admin.products.form.category', 'catégorie')} value={newProduct.category} onChange={(e) => setNewProduct(p => ({ ...p, category: e.target.value }))} list="categories-list" />
-              <datalist id="categories-list">
-                {categories.map((c) => (<option key={c} value={c} />))}
-              </datalist>
-              <input className="border px-2 py-1 rounded" placeholder={t('admin.products.form.name_fr', 'nom_fr')} value={newProduct.name_fr || ''} onChange={(e) => setNewProduct(p => ({ ...p, name_fr: e.target.value }))} />
-              <input className="border px-2 py-1 rounded" placeholder={t('admin.products.form.name_en', 'nom_en')} value={newProduct.name_en || ''} onChange={(e) => setNewProduct(p => ({ ...p, name_en: e.target.value }))} />
-              <button className="px-3 py-1 border rounded bg-nubia-gold text-nubia-black" onClick={async () => {
-                if (!newProduct.slug || !newProduct.price || !newProduct.category) return;
-                await fetch('/api/admin/products', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json', ...authHeader },
-                  body: JSON.stringify({ action: 'create', ...newProduct }),
-                });
-                setNewProduct({ slug: '', price: 0, category: '' });
-                load();
-              }}>{t('admin.products.create_button', 'Créer')}</button>
-            </div>
+          <div className="p-4 border-b flex justify-between items-center bg-nubia-cream/40">
+            <div className="font-semibold">{t('admin.products.title', 'Gestion des Produits')}</div>
+            <a
+              href={`/fr/admin/products/new`}
+              className="px-4 py-2 bg-nubia-gold text-nubia-black rounded-lg hover:bg-nubia-gold/90 transition-colors flex items-center gap-2"
+            >
+              ➕ {t('admin.products.new.button', 'Nouveau Produit')}
+            </a>
           </div>
           <table className="min-w-full text-sm">
             <thead className="bg-nubia-cream">

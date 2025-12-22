@@ -135,15 +135,43 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === 'create') {
-    const { name, name_fr, name_en, slug, price, inStock } = body as { name?: string; name_fr?: string; name_en?: string; slug: string; price: number; inStock?: boolean };
+    const {
+      name, name_fr, name_en, slug, price, inStock,
+      category, description, description_fr, description_en,
+      material, material_fr, material_en, care, care_fr, care_en,
+      sizes, colors, originalPrice, stock
+    } = body as any;
+
     if (!slug || typeof price !== 'number') {
       return NextResponse.json({ error: 'Missing required fields: slug, price' }, { status: 400 });
     }
-    const payload: any = { slug, price, inStock: typeof inStock === 'boolean' ? inStock : true };
+
+    const payload: any = {
+      slug,
+      price,
+      inStock: typeof inStock === 'boolean' ? inStock : true,
+      category: category || 'uncategorized',
+    };
+
+    // Optional fields
     if (name) payload.name = name;
     if (name_fr) payload.name_fr = name_fr;
     if (name_en) payload.name_en = name_en;
-    const { data, error } = await supabase.from('products').insert(payload).select('id, slug, name, name_fr, name_en, price, "inStock", image').single();
+    if (description) payload.description = description;
+    if (description_fr) payload.description_fr = description_fr;
+    if (description_en) payload.description_en = description_en;
+    if (material) payload.material = material;
+    if (material_fr) payload.material_fr = material_fr;
+    if (material_en) payload.material_en = material_en;
+    if (care) payload.care = care;
+    if (care_fr) payload.care_fr = care_fr;
+    if (care_en) payload.care_en = care_en;
+    if (Array.isArray(sizes)) payload.sizes = sizes;
+    if (Array.isArray(colors)) payload.colors = colors;
+    if (typeof originalPrice === 'number') payload.originalPrice = originalPrice;
+    if (typeof stock === 'number') payload.stock = stock;
+
+    const { data, error } = await supabase.from('products').insert(payload).select('id, slug, name, name_fr, name_en, price, "inStock", image, category').single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ product: data });
   }
