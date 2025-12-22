@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   }
 
   const token = authHeader.slice(7); // Remove 'Bearer ' prefix
-  
+
   // Vérifier le token admin
   if (!verifyAdminToken(token)) {
     return NextResponse.json(
@@ -25,16 +25,26 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await supabase
     .from('products')
-    .select('id, slug, name, name_fr, name_en, description, description_fr, description_en, material, material_fr, material_en, care, care_fr, care_en, price, "originalPrice", category, sizes, colors, "inStock", image, image_url, product_variants(stock, sku), product_images(url)')
+    .select('id, slug, name, name_fr, name_en, description, description_fr, description_en, material, material_fr, material_en, care, care_fr, care_en, price, "originalPrice", category, sizes, colors, "inStock", image, image_url, stock, product_variants(stock, sku), product_images(url)')
     .order('updated_at', { ascending: false })
     .limit(200);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const products = (data || []).map((p: any) => ({
-    ...p,
-    stock: Array.isArray(p.product_variants) ? p.product_variants.reduce((sum: number, v: any) => sum + (v?.stock || 0), 0) : 0,
-  }));
+  const products = (data || []).map((p: any) => {
+    // Si le produit a des variantes, calculer le stock total des variantes
+    // Sinon, utiliser la colonne stock du produit directement
+    const hasVariants = Array.isArray(p.product_variants) && p.product_variants.length > 0;
+    const variantStock = hasVariants
+      ? p.product_variants.reduce((sum: number, v: any) => sum + (v?.stock || 0), 0)
+      : 0;
+    const productStock = p.stock || 0;
+
+    return {
+      ...p,
+      stock: hasVariants ? variantStock : productStock,
+    };
+  });
 
   return NextResponse.json({ data: products });
 }
@@ -50,7 +60,7 @@ export async function POST(req: NextRequest) {
   }
 
   const token = authHeader.slice(7); // Remove 'Bearer ' prefix
-  
+
   // Vérifier le token admin
   if (!verifyAdminToken(token)) {
     return NextResponse.json(
