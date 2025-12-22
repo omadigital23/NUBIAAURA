@@ -44,10 +44,10 @@ export async function GET(request: NextRequest) {
       throw ordersError;
     }
 
-    // Récupérer tous les produits avec stock
+    // Récupérer tous les produits avec stock ET leurs variantes
     const { data: products, error: productsError } = await supabase
       .from('products')
-      .select('id, name_fr, name_en, stock, price');
+      .select('id, name_fr, name_en, stock, price, product_variants(stock)');
 
     if (productsError) {
       throw productsError;
@@ -67,9 +67,26 @@ export async function GET(request: NextRequest) {
     const productsList = products || [];
     const usersList = users || [];
 
-    // Stock total
-    const totalStock = productsList.reduce((sum, p) => sum + (p.stock || 0), 0);
-    const stockValue = productsList.reduce((sum, p) => sum + ((p.stock || 0) * (p.price || 0)), 0);
+    // Stock total - utiliser product_variants si disponible, sinon products.stock
+    const totalStock = productsList.reduce((sum, p: any) => {
+      const hasVariants = Array.isArray(p.product_variants) && p.product_variants.length > 0;
+      const variantStock = hasVariants
+        ? p.product_variants.reduce((vs: number, v: any) => vs + (v?.stock || 0), 0)
+        : 0;
+      const productStock = p.stock || 0;
+      return sum + (hasVariants ? variantStock : productStock);
+    }, 0);
+
+    // Valeur du stock
+    const stockValue = productsList.reduce((sum, p: any) => {
+      const hasVariants = Array.isArray(p.product_variants) && p.product_variants.length > 0;
+      const variantStock = hasVariants
+        ? p.product_variants.reduce((vs: number, v: any) => vs + (v?.stock || 0), 0)
+        : 0;
+      const productStock = p.stock || 0;
+      const stock = hasVariants ? variantStock : productStock;
+      return sum + (stock * (p.price || 0));
+    }, 0);
 
     // Commandes par statut
     const ordersByStatus = {
@@ -93,13 +110,24 @@ export async function GET(request: NextRequest) {
         .reduce((sum, o) => sum + (o.total || 0), 0),
     };
 
-    // Produits en rupture (stock = 0)
-    const outOfStockProducts = productsList.filter(p => (p.stock || 0) === 0).length;
-    const lowStockProducts = productsList.filter(p => (p.stock || 0) > 0 && (p.stock || 0) <= 5).length;
+    // Produits en rupture et faible stock (en tenant compte des variantes)
+    const getProductStock = (p: any) => {
+      const hasVariants = Array.isArray(p.product_variants) && p.product_variants.length > 0;
+      if (hasVariants) {
+        return p.product_variants.reduce((vs: number, v: any) => vs + (v?.stock || 0), 0);
+      }
+      return p.stock || 0;
+    };
+
+    const outOfStockProducts = productsList.filter((p: any) => getProductStock(p) === 0).length;
+    const lowStockProducts = productsList.filter((p: any) => {
+      const stock = getProductStock(p);
+      return stock > 0 && stock <= 5;
+    }).length;
 
     // Taux de conversion (utilisateurs qui ont commandé / total utilisateurs)
     const usersWithOrders = new Set(ordersList.map(o => o.user_id)).size;
-    const conversionRate = usersList.length > 0 
+    const conversionRate = usersList.length > 0
       ? ((usersWithOrders / usersList.length) * 100).toFixed(2)
       : '0.00';
 
@@ -107,10 +135,16 @@ export async function GET(request: NextRequest) {
     const deliveredOrders = ordersList.filter(o => o.status === 'delivered').length;
     const onTimeDeliveries = deliveredOrders; // Simplifié pour cette version
 
-    // Revenu moyen par commande
-    const totalRevenue = ordersList.reduce((sum, o) => sum + (o.total || 0), 0);
-    const averageOrderValue = ordersList.length > 0 
-      ? (totalRevenue / ordersList.length).toFixed(2)
+    // Revenu total = uniquement les commandes payées ou livrées
+    // (ne pas compter les commandes pending, cancelled, ou failed)
+    const paidOrDeliveredOrders = ordersList.filter(
+      o => o.payment_status === 'paid' || o.status === 'delivered'
+    );
+    const totalRevenue = paidOrDeliveredOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+
+    // Revenu moyen par commande (basé sur les commandes payées/livrées)
+    const averageOrderValue = paidOrDeliveredOrders.length > 0
+      ? (totalRevenue / paidOrDeliveredOrders.length).toFixed(2)
       : '0.00';
 
     // Clients actifs (avec commandes dans les 30 derniers jours)
