@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase';
-import { sendEmail } from '@/lib/sendgrid';
+import { sendEmailSMTP } from '@/lib/smtp-email';
 import { getNewsletterWelcomeEmail } from '@/lib/email-templates';
 import { checkRateLimit, formRatelimit } from '@/lib/rate-limit';
 
@@ -48,8 +48,8 @@ export async function POST(req: NextRequest) {
 
     // Envoyer email de bienvenue
     try {
-      const emailTemplate = getNewsletterWelcomeEmail({ email, name });
-      await sendEmail({
+      const emailTemplate = getNewsletterWelcomeEmail({ email, name: name || undefined });
+      await sendEmailSMTP({
         to: email,
         subject: emailTemplate.subject,
         html: emailTemplate.html,
