@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { sendWhatsAppMessage } from '@/lib/whatsapp-notifications';
-import { sendCustomOrderConfirmationEmail, notifyManagerEmail } from '@/lib/sendgrid';
+import { sendCustomOrderConfirmationEmail, notifyManagerEmail } from '@/lib/smtp-email';
 
 // Validation schema
 const CustomOrderNotificationSchema = z.object({

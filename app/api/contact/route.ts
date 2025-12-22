@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { sendEmail } from '@/lib/sendgrid';
+import { sendEmail } from '@/lib/smtp-email';
 import { getContactConfirmationEmail, getContactManagerNotification } from '@/lib/email-templates';
 import { notifyManagerNewContact } from '@/lib/whatsapp-notifications';
 import { checkRateLimit, formRatelimit } from '@/lib/rate-limit';

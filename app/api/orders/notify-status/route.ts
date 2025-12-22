@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { sendWhatsAppMessage } from '@/lib/whatsapp-notifications';
-import { sendOrderShippedEmail, sendOrderDeliveredEmail } from '@/lib/sendgrid';
+import { sendOrderShippedEmail, sendOrderDeliveredEmail } from '@/lib/smtp-email';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

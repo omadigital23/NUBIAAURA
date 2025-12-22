@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { CustomOrderSchema } from '@/lib/validation';
-import { sendEmail } from '@/lib/sendgrid';
+import { sendEmail } from '@/lib/smtp-email';
 import { getCustomOrderConfirmationEmail, getCustomOrderManagerNotification } from '@/lib/email-templates';
 import { notifyManagerNewCustomOrder } from '@/lib/whatsapp-notifications';
 import { generateValidationToken, storeValidationToken } from '@/lib/order-validation-tokens';

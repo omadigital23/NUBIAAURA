@@ -1,5 +1,5 @@
 /**
- * Email Service - Centralized email sending via SendGrid/Edge Function
+ * Email Service - Centralized email sending via SMTP (Namecheap)
  */
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;

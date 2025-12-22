@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 import { sendWhatsAppMessage } from '@/lib/whatsapp-notifications';
 import { notifyManagerNewOrder } from '@/lib/whatsapp-notifications';
-import { sendOrderConfirmationEmail, notifyManagerEmail } from '@/lib/sendgrid';
+import { sendOrderConfirmationEmail, notifyManagerEmail } from '@/lib/smtp-email';
 import { Redis } from '@upstash/redis';
 import { getTranslations, getTranslationKey } from '@/lib/i18n';
 

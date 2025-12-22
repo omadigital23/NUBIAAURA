@@ -1,6 +1,6 @@
 /**
  * Templates d'emails pour les formulaires
- * Utilisables avec SendGrid ou SMTP Supabase
+ * Utilisables avec SMTP Namecheap
  */
 
 export interface NewsletterEmailData {
