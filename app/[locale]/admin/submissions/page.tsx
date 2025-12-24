@@ -20,11 +20,13 @@ interface CustomOrder {
     email: string;
     phone: string;
     type: string;
-    measurements: string;
-    preferences: string;
-    budget: number;
+    measurements: Record<string, any> | null;
+    preferences: Record<string, any> | null;
+    budget: number | null;
     status: string;
     created_at: string;
+    reference_image_url?: string;
+    country?: string;
 }
 
 interface NewsletterSubscription {
@@ -55,11 +57,17 @@ export default function SubmissionsPage() {
                 const data = await res.json();
                 setContacts(data.submissions || []);
             } else if (activeTab === 'custom') {
-                const token = localStorage.getItem('admin_token');
+                // Use Basic auth with admin credentials
+                const credentials = btoa('nubiaaura:Paty2025!');
                 const res = await fetch('/api/admin/custom-orders', {
-                    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+                    headers: {
+                        'Authorization': `Basic ${credentials}`,
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
                 });
                 const data = await res.json();
+                console.log('Custom orders response:', data);
                 setCustomOrders(data.customOrders || []);
             } else if (activeTab === 'newsletter') {
                 const res = await fetch('/api/newsletter');
@@ -233,10 +241,10 @@ export default function SubmissionsPage() {
                                                             </span>
                                                         </div>
                                                         <p className="text-sm text-gray-600 mb-2">
-                                                            <strong>Budget:</strong> {order.budget.toLocaleString('fr-FR')} FCFA
+                                                            <strong>Budget:</strong> {order.budget ? `${order.budget.toLocaleString('fr-FR')} FCFA` : 'Non spécifié'}
                                                         </p>
                                                         <p className="text-sm text-gray-500 line-clamp-2">
-                                                            <strong>Préférences:</strong> {order.preferences}
+                                                            <strong>Préférences:</strong> {order.preferences ? JSON.stringify(order.preferences) : 'Non spécifié'}
                                                         </p>
                                                         <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
                                                             <span className="flex items-center gap-1">
