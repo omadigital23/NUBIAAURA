@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { paytechProvider, PaytechWebhookPayload } from '@/lib/payments';
+import { sendOrderConfirmationEmail } from '@/lib/smtp-email';
 import * as Sentry from '@sentry/nextjs';
 
 const supabase = createClient(
@@ -129,7 +130,77 @@ export async function POST(request: NextRequest) {
 
             console.log('[PayTech Webhook] Order updated successfully:', orderId);
 
-            // TODO: Send confirmation email/WhatsApp
+            // Send confirmation email to customer
+            try {
+                // Get full order details with items
+                const { data: orderDetails } = await supabase
+                    .from('orders')
+                    .select(`
+                        id,
+                        order_number,
+                        total,
+                        shipping_address,
+                        order_items (
+                            id,
+                            quantity,
+                            price,
+                            product:products (name, name_fr)
+                        )
+                    `)
+                    .eq('id', orderId)
+                    .single();
+
+                if (orderDetails) {
+                    const shippingAddress = orderDetails.shipping_address as any;
+                    const customerEmail = shippingAddress?.email || payload.client_email;
+                    const customerName = shippingAddress?.firstName
+                        ? `${shippingAddress.firstName} ${shippingAddress.lastName || ''}`.trim()
+                        : shippingAddress?.name || 'Client';
+
+                    // Build shipping address string
+                    const addressParts = [
+                        shippingAddress?.address,
+                        shippingAddress?.city,
+                        shippingAddress?.zipCode,
+                        shippingAddress?.country
+                    ].filter(Boolean);
+                    const addressString = addressParts.join(', ') || 'Non spécifiée';
+
+                    // Calculate estimated delivery (3-7 days from now)
+                    const estimatedDate = new Date();
+                    estimatedDate.setDate(estimatedDate.getDate() + 5);
+                    const estimatedDelivery = estimatedDate.toLocaleDateString('fr-FR', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+
+                    if (customerEmail) {
+                        try {
+                            const emailResult = await sendOrderConfirmationEmail(customerEmail, {
+                                orderId: orderDetails.order_number, // Use order_number as orderId for display
+                                customerName: customerName,
+                                total: orderDetails.total,
+                                items: (orderDetails.order_items || []).map((item: any) => ({
+                                    name: item.product?.name_fr || item.product?.name || 'Produit',
+                                    quantity: item.quantity,
+                                    price: item.price,
+                                })),
+                                shippingAddress: addressString,
+                                estimatedDelivery: estimatedDelivery,
+                            });
+
+                            console.log('[PayTech Webhook] Confirmation email sent to:', customerEmail, 'Result:', emailResult);
+                        } catch (emailErr) {
+                            console.warn('[PayTech Webhook] Email failed:', emailErr);
+                        }
+                    }
+                }
+            } catch (emailError) {
+                console.error('[PayTech Webhook] Email sending error:', emailError);
+                // Don't fail the webhook if email fails
+            }
 
         } else {
             // Payment canceled or failed

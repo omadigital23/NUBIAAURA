@@ -7,7 +7,7 @@ import { checkRateLimit, formRatelimit } from '@/lib/rate-limit';
 import { getLocaleFromPath, getTranslations, getTranslationKey } from '@/lib/i18n';
 import { notifyManagerNewOrder } from '@/lib/whatsapp-notifications';
 import { calculateDeliveryDuration } from '@/lib/delivery-calculator';
-import { sendOrderConfirmationEmail } from '@/lib/email-service';
+import { sendOrderConfirmationEmail } from '@/lib/smtp-email';
 
 
 export async function POST(request: NextRequest) {
@@ -267,9 +267,28 @@ export async function POST(request: NextRequest) {
     // Envoyer email de confirmation au client (non bloquant)
     try {
       console.log('[COD API] Envoi email de confirmation au client...');
+
+      // Build shipping address string
+      const addressParts = [
+        parsed.data.address,
+        parsed.data.city,
+        parsed.data.zipCode,
+        parsed.data.country
+      ].filter(Boolean);
+      const addressString = addressParts.join(', ') || 'Non spécifiée';
+
+      // Calculate estimated delivery
+      const estimatedDate = new Date();
+      estimatedDate.setDate(estimatedDate.getDate() + deliveryDurationDays);
+      const estimatedDelivery = estimatedDate.toLocaleDateString('fr-FR', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
       await sendOrderConfirmationEmail(parsed.data.email, {
-        orderNumber: order.order_number,
-        orderId: order.id,
+        orderId: order.order_number,
         customerName: `${parsed.data.firstName} ${parsed.data.lastName}`,
         total: quote.total,
         items: normalized.map(item => {
@@ -280,6 +299,8 @@ export async function POST(request: NextRequest) {
             price: item.price
           };
         }),
+        shippingAddress: addressString,
+        estimatedDelivery: estimatedDelivery,
       });
       console.log('[COD API] Email de confirmation envoyé avec succès!');
     } catch (emailError) {
