@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
 
     // Envoyer notification au manager (Email)
     try {
-      const managerEmail = process.env.MANAGER_EMAIL || 'contact@nubiaaura.com';
+      const managerEmail = process.env.MANAGER_EMAIL || 'supports@nubiaaura.com';
       const managerNotification = getContactManagerNotification(validated);
       await sendEmail({
         to: managerEmail,
