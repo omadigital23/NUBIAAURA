@@ -104,13 +104,13 @@ export default function AdminDashboardPage() {
 
   const menuItems = [
     { icon: ShoppingCart, label: t('admin.orders'), href: `/${locale}/admin/orders` },
-    { icon: Palette, label: t('admin.custom_orders', 'Commandes Sur-mesure'), href: `/admin/submissions` },
+    { icon: Palette, label: t('admin.custom_orders', 'Commandes Sur-mesure'), href: `/admin/submissions?tab=custom` },
     { icon: Package, label: t('admin.products'), href: `/${locale}/admin/products` },
     { icon: Boxes, label: t('admin.stock_management', 'Gestion du Stock'), href: `/${locale}/admin/stock` },
     { icon: Users, label: t('admin.users'), href: `/${locale}/admin/users` },
     { icon: BarChart3, label: t('admin.delivery_tracking', 'Suivi Livraison'), href: `/${locale}/admin/delivery-stats` },
     { icon: RotateCcw, label: t('admin.returns_management', 'Gestion Retours'), href: `/${locale}/admin/returns` },
-    { icon: MessageSquare, label: t('admin.contacts', 'Messages & Newsletter'), href: `/admin/submissions` },
+    { icon: MessageSquare, label: t('admin.contacts', 'Messages & Newsletter'), href: `/admin/submissions?tab=contact` },
   ];
 
   const statCards = [
