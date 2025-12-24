@@ -47,19 +47,31 @@ export async function POST(req: NextRequest) {
     }
 
     // Envoyer email de bienvenue
+    let emailStatus = 'pending';
+    let emailErrorMessage: string | null = null;
     try {
       const emailTemplate = getNewsletterWelcomeEmail({ email, name: name || undefined });
-      await sendEmailSMTP({
+      console.log('[Newsletter] Attempting to send welcome email to:', email);
+      const result = await sendEmailSMTP({
         to: email,
         subject: emailTemplate.subject,
         html: emailTemplate.html,
       });
-    } catch (emailError) {
-      console.error('Erreur envoi email newsletter:', emailError);
+      console.log('[Newsletter] Email sent successfully:', result);
+      emailStatus = 'sent';
+    } catch (emailError: any) {
+      console.error('[Newsletter] Erreur envoi email:', emailError?.message || emailError);
+      emailStatus = 'failed';
+      emailErrorMessage = emailError?.message || 'Unknown email error';
       // Ne pas bloquer l'inscription si l'email échoue
     }
 
-    return NextResponse.json({ ok: true, subscription: data });
+    return NextResponse.json({
+      ok: true,
+      subscription: data,
+      emailStatus,
+      emailError: emailErrorMessage
+    });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Unexpected error' }, { status: 500 });
   }
