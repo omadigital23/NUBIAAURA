@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase';
-import { sendEmailSMTP } from '@/lib/smtp-email';
-import { getNewsletterWelcomeEmail } from '@/lib/email-templates';
 import { checkRateLimit, formRatelimit } from '@/lib/rate-limit';
+import { Resend } from 'resend';
+
+// Initialize Resend
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: NextRequest) {
   try {
@@ -46,23 +48,98 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Envoyer email de bienvenue via SMTP
+    // Envoyer email de bienvenue via Resend
     let emailStatus = 'pending';
     let emailErrorMessage: string | null = null;
 
     try {
-      const emailTemplate = getNewsletterWelcomeEmail({ email, name: name || undefined });
-      const result = await sendEmailSMTP({
+      const welcomeName = name || 'cher(e) abonné(e)';
+
+      const { data: emailData, error: emailError } = await resend.emails.send({
+        from: 'Nubia Aura <supports@nubiaaura.com>',
         to: email,
-        subject: emailTemplate.subject,
-        html: emailTemplate.html,
+        subject: '✨ Bienvenue chez Nubia Aura !',
+        html: `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="UTF-8">
+              <style>
+                body { font-family: Arial, sans-serif; color: #333; margin: 0; padding: 0; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { 
+                  background: linear-gradient(135deg, #000000 0%, #D4AF37 100%); 
+                  color: white; 
+                  padding: 30px 20px; 
+                  text-align: center; 
+                  border-radius: 10px 10px 0 0;
+                }
+                .content { padding: 30px; background: #f9f9f9; }
+                .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+                .button { 
+                  background: #D4AF37; 
+                  color: #000; 
+                  padding: 15px 40px; 
+                  text-decoration: none; 
+                  border-radius: 5px; 
+                  display: inline-block; 
+                  margin: 20px 0;
+                  font-weight: bold;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1 style="margin: 0;">✨ Nubia Aura</h1>
+                  <p style="margin: 10px 0 0 0;">L'élégance africaine à portée de main</p>
+                </div>
+
+                <div class="content">
+                  <h2 style="color: #D4AF37;">Bienvenue ${welcomeName} !</h2>
+                  
+                  <p>Merci de vous être inscrit(e) à notre newsletter ! 🎉</p>
+
+                  <p>Vous recevrez désormais en exclusivité :</p>
+                  <ul>
+                    <li>🎁 Nos nouvelles collections</li>
+                    <li>💎 Des offres spéciales réservées</li>
+                    <li>✨ Des conseils mode et style</li>
+                    <li>🌍 L'actualité de la mode africaine</li>
+                  </ul>
+
+                  <center>
+                    <a href="https://nubiaaura.com/fr/catalogue" class="button">
+                      Découvrir la Collection
+                    </a>
+                  </center>
+
+                  <p>À très bientôt !</p>
+                  <p style="color: #D4AF37; font-weight: bold;">L'équipe Nubia Aura</p>
+                </div>
+
+                <div class="footer">
+                  <p>© 2025 Nubia Aura. Tous droits réservés.</p>
+                  <p>Thiès, Sénégal | Casablanca, Maroc</p>
+                </div>
+              </div>
+            </body>
+          </html>
+        `,
       });
-      emailStatus = result === 'skipped' ? 'skipped' : 'sent';
-      console.log('[Newsletter] Email status:', emailStatus);
-    } catch (emailError: any) {
-      console.error('[Newsletter] Email error:', emailError?.message);
+
+      if (emailError) {
+        console.error('[Newsletter/Resend] Error:', emailError);
+        emailStatus = 'failed';
+        emailErrorMessage = emailError.message;
+      } else {
+        console.log('[Newsletter/Resend] Email sent:', emailData?.id);
+        emailStatus = 'sent';
+      }
+    } catch (emailErr: any) {
+      console.error('[Newsletter/Resend] Exception:', emailErr?.message);
       emailStatus = 'failed';
-      emailErrorMessage = emailError?.message || 'Unknown error';
+      emailErrorMessage = emailErr?.message || 'Unknown error';
       // Ne pas bloquer l'inscription si l'email échoue
     }
 
