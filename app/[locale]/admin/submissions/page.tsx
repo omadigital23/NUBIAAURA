@@ -111,11 +111,42 @@ export default function SubmissionsPage() {
                 return 'bg-blue-100 text-blue-800';
             case 'replied':
             case 'completed':
+            case 'shipped':
                 return 'bg-green-100 text-green-800';
+            case 'delivered':
+                return 'bg-emerald-100 text-emerald-800';
             case 'archived':
+            case 'cancelled':
                 return 'bg-gray-100 text-gray-800';
             default:
                 return 'bg-gray-100 text-gray-800';
+        }
+    };
+
+    const customOrderStatuses = ['pending', 'processing', 'shipped', 'delivered', 'completed', 'cancelled'];
+
+    const updateOrderStatus = async (orderId: string, newStatus: string) => {
+        try {
+            const credentials = btoa('nubiaaura:Paty2025!');
+            const res = await fetch('/api/admin/custom-orders', {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Basic ${credentials}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ id: orderId, status: newStatus })
+            });
+
+            if (res.ok) {
+                // Update local state
+                setCustomOrders(customOrders.map(order =>
+                    order.id === orderId ? { ...order, status: newStatus } : order
+                ));
+            } else {
+                console.error('Failed to update status');
+            }
+        } catch (error) {
+            console.error('Error updating status:', error);
         }
     };
 
@@ -236,16 +267,12 @@ export default function SubmissionsPage() {
                                         customOrders.map((order) => (
                                             <div
                                                 key={order.id}
-                                                className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer"
-                                                onClick={() => setSelectedItem(order)}
+                                                className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
                                             >
                                                 <div className="flex items-start justify-between">
-                                                    <div className="flex-1">
+                                                    <div className="flex-1 cursor-pointer" onClick={() => setSelectedItem(order)}>
                                                         <div className="flex items-center gap-3 mb-2">
                                                             <h3 className="text-lg font-semibold text-gray-900">{order.name}</h3>
-                                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                                                                {order.status}
-                                                            </span>
                                                             <span className="px-2 py-1 bg-nubia-gold/20 text-nubia-black rounded-full text-xs font-medium">
                                                                 {order.type}
                                                             </span>
@@ -271,9 +298,32 @@ export default function SubmissionsPage() {
                                                             </span>
                                                         </div>
                                                     </div>
-                                                    <button className="ml-4 p-2 hover:bg-gray-100 rounded-full">
-                                                        <Eye size={20} className="text-gray-400" />
-                                                    </button>
+                                                    <div className="ml-4 flex flex-col items-end gap-2">
+                                                        {/* Status Selector */}
+                                                        <select
+                                                            value={order.status}
+                                                            onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 cursor-pointer ${getStatusColor(order.status)} border-transparent hover:border-gray-300 transition-all`}
+                                                        >
+                                                            {customOrderStatuses.map((status) => (
+                                                                <option key={status} value={status}>
+                                                                    {status === 'pending' && '⏳ En attente'}
+                                                                    {status === 'processing' && '🔧 En cours'}
+                                                                    {status === 'shipped' && '📦 Expédié'}
+                                                                    {status === 'delivered' && '✅ Livré'}
+                                                                    {status === 'completed' && '🎉 Terminé'}
+                                                                    {status === 'cancelled' && '❌ Annulé'}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                        <button
+                                                            className="p-2 hover:bg-gray-100 rounded-full"
+                                                            onClick={() => setSelectedItem(order)}
+                                                        >
+                                                            <Eye size={20} className="text-gray-400" />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))
