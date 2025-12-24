@@ -11,6 +11,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/hooks/useAuth';
 import CheckoutDebugPanel from '@/components/CheckoutDebugPanel';
 import { trackBeginCheckout, trackAddShippingInfo, trackAddPaymentInfo } from '@/lib/analytics-config';
+import { CountrySelect, PhoneInput, type CountryData } from '@/components/checkout/CountryPhoneInput';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -461,14 +462,29 @@ export default function CheckoutPage() {
                       className="w-full px-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"
                     />
 
-                    <input
-                      type="tel"
-                      name="phone"
-                      placeholder={t('checkout.address.phone', 'Téléphone')}
+                    {/* Country Selection - Full list with search and flags */}
+                    <CountrySelect
+                      value={formData.country}
+                      onChange={(country: CountryData) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          country: country.code,
+                          // Auto-fill phone code if phone is empty or only has a previous code
+                          phone: prev.phone && !prev.phone.startsWith('+')
+                            ? `${country.phoneCode} ${prev.phone}`
+                            : country.phoneCode + ' ',
+                        }));
+                      }}
+                      placeholder={t('checkout.address.select_country', 'Sélectionnez votre pays')}
+                    />
+
+                    {/* Phone Input with auto country code */}
+                    <PhoneInput
                       value={formData.phone}
-                      onChange={handleChange}
+                      onChange={(value) => setFormData(prev => ({ ...prev, phone: value }))}
+                      countryCode={formData.country}
+                      label={t('checkout.address.phone', 'Téléphone')}
                       required
-                      className="w-full px-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"
                     />
 
                     <input
@@ -500,21 +516,6 @@ export default function CheckoutPage() {
                         className="px-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"
                       />
                     </div>
-
-                    <select
-                      name="country"
-                      value={formData.country}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"
-                    >
-                      <option value="">{t('checkout.address.select_country', 'Sélectionnez un pays')}</option>
-                      <option value="SN">Sénégal</option>
-                      <option value="MA">Maroc</option>
-                      <option value="CI">Côte d'Ivoire</option>
-                      <option value="ML">Mali</option>
-                      <option value="BF">Burkina Faso</option>
-                    </select>
                   </div>
                 )}
 

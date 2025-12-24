@@ -34,7 +34,6 @@ interface PaymentMethodsSelectorProps {
     selectedSubMethod?: PaymentSubMethod;
     onMethodChange: (method: PaymentMethod, subMethod?: PaymentSubMethod) => void;
     disabled?: boolean;
-    locale?: 'fr' | 'en';
 }
 
 // Payment options by country
@@ -160,7 +159,6 @@ export function PaymentMethodsSelector({
     selectedSubMethod,
     onMethodChange,
     disabled = false,
-    locale = 'fr',
 }: PaymentMethodsSelectorProps) {
     const [countryCode, setCountryCode] = useState<string>('OTHER');
     const [config, setConfig] = useState(PAYMENT_OPTIONS.OTHER);
