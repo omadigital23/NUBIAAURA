@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
       const welcomeName = name || 'cher(e) abonné(e)';
 
       const { data: emailData, error: emailError } = await resend.emails.send({
-        from: 'Nubia Aura <supports@nubiaaura.com>',
+        from: 'Nubia Aura <noreply@send.notifications.nubiaaura.com>',
         to: email,
         subject: '✨ Bienvenue chez Nubia Aura !',
         html: `
