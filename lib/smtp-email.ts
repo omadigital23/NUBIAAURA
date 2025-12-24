@@ -148,7 +148,7 @@ export async function sendOrderConfirmationEmail(
             <p>Vous recevrez un email de suivi dès que votre commande sera expédiée.</p>
 
             <center>
-              <a href="${process.env.NEXT_PUBLIC_APP_URL}/client/orders/${orderData.orderId}" class="button">
+              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://nubiaaura.com'}/fr/client/orders/${orderData.orderId}" class="button">
                 Suivre ma Commande
               </a>
             </center>
@@ -223,7 +223,7 @@ export async function sendOrderShippedEmail(
             </div>
 
             <center>
-              <a href="${process.env.NEXT_PUBLIC_APP_URL}/client/orders/${orderData.orderId}" class="button">
+              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://nubiaaura.com'}/fr/client/orders/${orderData.orderId}" class="button">
                 Suivre mon Colis
               </a>
             </center>
@@ -294,7 +294,7 @@ export async function sendOrderDeliveredEmail(
             <p>Nous espérons que vous êtes satisfait de votre achat. Si vous avez des questions ou des préoccupations, n'hésitez pas à nous contacter.</p>
 
             <center>
-              <a href="${process.env.NEXT_PUBLIC_APP_URL}/client/orders/${orderData.orderId}" class="button">
+              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://nubiaaura.com'}/fr/client/orders/${orderData.orderId}" class="button">
                 Voir les Détails
               </a>
             </center>
@@ -369,7 +369,7 @@ export async function sendCustomOrderConfirmationEmail(
             <p>Notre équipe vous contactera bientôt pour discuter des détails, des matériaux et des finitions. Nous nous engageons à créer une pièce qui dépasse vos attentes.</p>
 
             <center>
-              <a href="${process.env.NEXT_PUBLIC_APP_URL}/client/custom-orders/${orderData.reference}" class="button">
+              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://nubiaaura.com'}/fr/client/custom-orders/${orderData.reference}" class="button">
                 Suivre ma Demande
               </a>
             </center>
