@@ -55,7 +55,10 @@ export default function SubmissionsPage() {
         const data = await res.json();
         setContacts(data.submissions || []);
       } else if (activeTab === 'custom') {
-        const res = await fetch('/api/custom-orders');
+        const token = localStorage.getItem('admin_token');
+        const res = await fetch('/api/admin/custom-orders', {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        });
         const data = await res.json();
         setCustomOrders(data.customOrders || []);
       } else if (activeTab === 'newsletter') {
@@ -114,31 +117,28 @@ export default function SubmissionsPage() {
           <nav className="-mb-px flex space-x-8">
             <button
               onClick={() => setActiveTab('contact')}
-              className={`${
-                activeTab === 'contact'
+              className={`${activeTab === 'contact'
                   ? 'border-nubia-gold text-nubia-gold'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
             >
               📧 Messages de Contact ({contacts.length})
             </button>
             <button
               onClick={() => setActiveTab('custom')}
-              className={`${
-                activeTab === 'custom'
+              className={`${activeTab === 'custom'
                   ? 'border-nubia-gold text-nubia-gold'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
             >
               🎨 Commandes Sur-mesure ({customOrders.length})
             </button>
             <button
               onClick={() => setActiveTab('newsletter')}
-              className={`${
-                activeTab === 'newsletter'
+              className={`${activeTab === 'newsletter'
                   ? 'border-nubia-gold text-nubia-gold'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
             >
               📬 Newsletter ({newsletters.length})
             </button>
