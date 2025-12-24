@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * GET /api/test-callmebot
  * Test la configuration CallMeBot et envoie un message de test
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
     const apiKey = process.env.CALLMEBOT_API_KEY;
     const managerPhone = process.env.MANAGER_WHATSAPP;
 
