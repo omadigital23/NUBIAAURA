@@ -146,7 +146,7 @@ async function handleCartRequest(request: NextRequest) {
         .from('cart_items')
         .select(`
           *,
-          products(id, name, name_fr, name_en, price, image, inStock)
+          products(id, name, name_fr, name_en, price, image_url, inStock)
         `)
         .eq('cart_id', cartId);
 
@@ -161,7 +161,7 @@ async function handleCartRequest(request: NextRequest) {
         name: item.products?.name_fr || item.products?.name || 'Produit',
         price: Number(item.products?.price || item.price),
         quantity: item.quantity,
-        image: item.products?.image || item.image || '',
+        image: item.products?.image_url || item.image || '',
       })) || [];
 
       return NextResponse.json({ items: transformedItems });
@@ -171,7 +171,7 @@ async function handleCartRequest(request: NextRequest) {
       // Vérifier que le produit existe et est en stock
       const { data: product, error: productError } = await supabase
         .from('products')
-        .select('id, inStock, name, name_fr, name_en, price, image, stock')
+        .select('id, inStock, name, name_fr, name_en, price, image_url, stock')
         .eq('id', parsed.item.id)
         .single();
 
@@ -266,7 +266,7 @@ async function handleCartRequest(request: NextRequest) {
         name: product.name_fr || product.name || 'Produit',
         price: Number(product.price),
         quantity: existingItem ? existingItem.quantity + parsed.item.quantity : parsed.item.quantity,
-        image: product.image || parsed.item.image,
+        image: product.image_url || parsed.item.image,
       };
 
       return NextResponse.json({ success: true, item: transformedItem });
