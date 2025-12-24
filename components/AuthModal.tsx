@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { X, Mail, Lock, User, AlertCircle, Loader } from 'lucide-react';
+import { X, Mail, Lock, User, Phone, AlertCircle, Loader } from 'lucide-react';
 import { useAuthToken } from '@/hooks/useAuthToken';
 import { useTranslation } from '@/hooks/useTranslation';
 import { signInWithGoogle } from '@/lib/supabase';
@@ -42,6 +42,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
     firstName: '',
     lastName: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: '',
   });
@@ -113,6 +114,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
           firstName: signupData.firstName,
           lastName: signupData.lastName,
           email: signupData.email,
+          phone: signupData.phone,
           password: signupData.password,
         }),
       });
@@ -139,7 +141,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
         if (loginData.token) {
           saveToken(loginData.token);
         }
-        setSignupData({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '' });
+        setSignupData({ firstName: '', lastName: '', email: '', phone: '', password: '', confirmPassword: '' });
         onLoginSuccess?.();
         onClose();
       }
@@ -330,6 +332,22 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
                     required
                     className="w-full pl-12 pr-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20"
                     placeholder={t('auth.email_placeholder', 'votre@email.com')}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-nubia-black mb-2">
+                  {t('auth.phone_label', 'Téléphone')}
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-4 top-3.5 text-nubia-gold/60" size={20} />
+                  <input
+                    type="tel"
+                    value={signupData.phone}
+                    onChange={(e) => setSignupData({ ...signupData, phone: e.target.value })}
+                    className="w-full pl-12 pr-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20"
+                    placeholder={t('auth.phone_placeholder', '+221 77 123 45 67')}
                   />
                 </div>
               </div>

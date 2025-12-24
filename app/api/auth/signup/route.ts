@@ -68,6 +68,7 @@ async function handleSignup(request: NextRequest) {
     email: sanitizeEmail(body.email),
     firstName: sanitizeText(body.firstName || ''),
     lastName: sanitizeText(body.lastName || ''),
+    phone: sanitizeText(body.phone || ''),
   };
 
   // Validate input
@@ -100,6 +101,7 @@ async function handleSignup(request: NextRequest) {
       first_name: sanitizedBody.firstName,
       last_name: sanitizedBody.lastName,
       full_name: `${sanitizedBody.firstName} ${sanitizedBody.lastName}`.trim(),
+      phone: sanitizedBody.phone || null,
       role: 'customer',
     });
 

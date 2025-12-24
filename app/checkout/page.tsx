@@ -53,23 +53,50 @@ export default function CheckoutPage() {
     const fetchUserDataAndAddress = async () => {
       if (!user || !isAuthenticated || authLoading) return;
 
-      // D'abord, pré-remplir avec les données utilisateur de la session
-      // Supabase stocke les données dans user_metadata
-      const metadata = (user as any).user_metadata || {};
-      const fullName = metadata.full_name || metadata.name || '';
-      const nameParts = fullName.split(' ');
-      const firstName = metadata.first_name || nameParts[0] || '';
-      const lastName = metadata.last_name || nameParts.slice(1).join(' ') || '';
+      // 1. D'abord, chercher le profil utilisateur dans la table 'users'
+      try {
+        const { data: userProfile, error: profileError } = await supabase
+          .from('users')
+          .select('first_name, last_name, full_name, phone, email')
+          .eq('id', user.id)
+          .single();
 
-      setFormData((prev) => ({
-        ...prev,
-        email: user.email || prev.email,
-        firstName: firstName || prev.firstName,
-        lastName: lastName || prev.lastName,
-        phone: metadata.phone || prev.phone,
-      }));
+        if (!profileError && userProfile) {
+          console.log('[Checkout] Profil utilisateur trouvé dans la table users:', userProfile);
+          setFormData((prev) => ({
+            ...prev,
+            email: userProfile.email || user.email || prev.email,
+            firstName: userProfile.first_name || prev.firstName,
+            lastName: userProfile.last_name || prev.lastName,
+            phone: userProfile.phone || prev.phone,
+          }));
+        } else {
+          // 2. Fallback: chercher dans user_metadata (connexion Google, etc.)
+          console.log('[Checkout] Pas de profil dans users, tentative user_metadata');
+          const metadata = (user as any).user_metadata || {};
+          const fullName = metadata.full_name || metadata.name || '';
+          const nameParts = fullName.split(' ');
+          const firstName = metadata.first_name || nameParts[0] || '';
+          const lastName = metadata.last_name || nameParts.slice(1).join(' ') || '';
 
-      // Ensuite, chercher l'adresse par défaut de l'utilisateur dans Supabase
+          setFormData((prev) => ({
+            ...prev,
+            email: user.email || prev.email,
+            firstName: firstName || prev.firstName,
+            lastName: lastName || prev.lastName,
+            phone: metadata.phone || prev.phone,
+          }));
+        }
+      } catch (err) {
+        console.error('[Checkout] Erreur lors de la récupération du profil:', err);
+        // Fallback sur email seulement
+        setFormData((prev) => ({
+          ...prev,
+          email: user.email || prev.email,
+        }));
+      }
+
+      // 3. Ensuite, chercher l'adresse par défaut de l'utilisateur dans Supabase
       try {
         const { data: defaultAddress, error } = await supabase
           .from('addresses')
@@ -81,12 +108,13 @@ export default function CheckoutPage() {
         if (!error && defaultAddress) {
           console.log('[Checkout] Adresse par défaut trouvée:', defaultAddress);
 
-          // Mettre à jour le formulaire avec l'adresse par défaut
+          // Mettre à jour le formulaire avec l'adresse par défaut (écrase les données du profil pour l'adresse)
           setFormData((prev) => ({
             ...prev,
-            firstName: defaultAddress.full_name?.split(' ')[0] || prev.firstName,
-            lastName: defaultAddress.full_name?.split(' ').slice(1).join(' ') || prev.lastName,
-            phone: defaultAddress.phone || prev.phone,
+            // Ne pas écraser prénom/nom si déjà remplis du profil
+            firstName: prev.firstName || defaultAddress.full_name?.split(' ')[0] || prev.firstName,
+            lastName: prev.lastName || defaultAddress.full_name?.split(' ').slice(1).join(' ') || prev.lastName,
+            phone: prev.phone || defaultAddress.phone || prev.phone,
             address: defaultAddress.address_line1 || prev.address,
             city: defaultAddress.city || prev.city,
             zipCode: defaultAddress.postal_code || prev.zipCode,
@@ -106,9 +134,9 @@ export default function CheckoutPage() {
             console.log('[Checkout] Dernière adresse trouvée:', latestAddress);
             setFormData((prev) => ({
               ...prev,
-              firstName: latestAddress.full_name?.split(' ')[0] || prev.firstName,
-              lastName: latestAddress.full_name?.split(' ').slice(1).join(' ') || prev.lastName,
-              phone: latestAddress.phone || prev.phone,
+              firstName: prev.firstName || latestAddress.full_name?.split(' ')[0] || prev.firstName,
+              lastName: prev.lastName || latestAddress.full_name?.split(' ').slice(1).join(' ') || prev.lastName,
+              phone: prev.phone || latestAddress.phone || prev.phone,
               address: latestAddress.address_line1 || prev.address,
               city: latestAddress.city || prev.city,
               zipCode: latestAddress.postal_code || prev.zipCode,
