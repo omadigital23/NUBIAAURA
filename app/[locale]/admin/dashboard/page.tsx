@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { LogOut, ShoppingCart, Users, Package, BarChart3, RotateCcw, Boxes, Palette, MessageSquare } from 'lucide-react';
+import { LogOut, ShoppingCart, Users, Package, BarChart3, RotateCcw, Boxes, Palette, MessageSquare, Percent, Star } from 'lucide-react';
 
 interface DashboardStats {
   totalOrders: number;
@@ -104,13 +104,15 @@ export default function AdminDashboardPage() {
 
   const menuItems = [
     { icon: ShoppingCart, label: t('admin.orders'), href: `/${locale}/admin/orders` },
-    { icon: Palette, label: t('admin.custom_orders', 'Commandes Sur-mesure'), href: `/admin/submissions?tab=custom` },
+    { icon: Palette, label: t('admin.custom_orders', 'Commandes Sur-mesure'), href: `/${locale}/admin/submissions` },
     { icon: Package, label: t('admin.products'), href: `/${locale}/admin/products` },
     { icon: Boxes, label: t('admin.stock_management', 'Gestion du Stock'), href: `/${locale}/admin/stock` },
     { icon: Users, label: t('admin.users'), href: `/${locale}/admin/users` },
     { icon: BarChart3, label: t('admin.delivery_tracking', 'Suivi Livraison'), href: `/${locale}/admin/delivery-stats` },
     { icon: RotateCcw, label: t('admin.returns_management', 'Gestion Retours'), href: `/${locale}/admin/returns` },
-    { icon: MessageSquare, label: t('admin.contacts', 'Messages & Newsletter'), href: `/admin/submissions?tab=contact` },
+    { icon: MessageSquare, label: t('admin.contacts', 'Messages & Newsletter'), href: `/${locale}/admin/submissions` },
+    { icon: Percent, label: 'Codes Promo', href: `/${locale}/admin/promos` },
+    { icon: Star, label: 'Modération Avis', href: `/${locale}/admin/reviews` },
   ];
 
   const statCards = [

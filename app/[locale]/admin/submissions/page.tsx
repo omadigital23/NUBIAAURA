@@ -16,6 +16,7 @@ interface ContactSubmission {
 
 interface CustomOrder {
     id: string;
+    user_id?: string;
     name: string;
     email: string;
     phone: string;
@@ -25,8 +26,17 @@ interface CustomOrder {
     budget: number | null;
     status: string;
     created_at: string;
+    updated_at?: string;
     reference_image_url?: string;
     country?: string;
+    // Champs de livraison
+    delivery_duration_days?: number;
+    shipped_at?: string;
+    estimated_delivery_date?: string;
+    delivered_at?: string;
+    tracking_number?: string;
+    carrier?: string;
+    return_deadline?: string;
 }
 
 interface NewsletterSubscription {
@@ -355,14 +365,143 @@ export default function SubmissionsPage() {
                             </button>
                         </div>
                         <div className="space-y-4">
-                            {Object.entries(selectedItem).map(([key, value]) => (
-                                <div key={key} className="border-b pb-2">
-                                    <p className="text-sm font-medium text-gray-500 capitalize">
-                                        {key.replace('_', ' ')}
-                                    </p>
-                                    <p className="text-gray-900 mt-1">{String(value)}</p>
+                            {/* Informations principales */}
+                            <div className="grid grid-cols-2 gap-4">
+                                {selectedItem.name && (
+                                    <div className="border-b pb-2">
+                                        <p className="text-sm font-medium text-gray-500">Nom</p>
+                                        <p className="text-gray-900 mt-1">{selectedItem.name}</p>
+                                    </div>
+                                )}
+                                {selectedItem.email && (
+                                    <div className="border-b pb-2">
+                                        <p className="text-sm font-medium text-gray-500">Email</p>
+                                        <p className="text-gray-900 mt-1">{selectedItem.email}</p>
+                                    </div>
+                                )}
+                                {selectedItem.phone && (
+                                    <div className="border-b pb-2">
+                                        <p className="text-sm font-medium text-gray-500">Téléphone</p>
+                                        <p className="text-gray-900 mt-1">{selectedItem.phone}</p>
+                                    </div>
+                                )}
+                                {selectedItem.type && (
+                                    <div className="border-b pb-2">
+                                        <p className="text-sm font-medium text-gray-500">Type</p>
+                                        <p className="text-gray-900 mt-1">{selectedItem.type}</p>
+                                    </div>
+                                )}
+                                {selectedItem.status && (
+                                    <div className="border-b pb-2">
+                                        <p className="text-sm font-medium text-gray-500">Statut</p>
+                                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedItem.status)}`}>
+                                            {selectedItem.status}
+                                        </span>
+                                    </div>
+                                )}
+                                {selectedItem.country && (
+                                    <div className="border-b pb-2">
+                                        <p className="text-sm font-medium text-gray-500">Pays</p>
+                                        <p className="text-gray-900 mt-1">{selectedItem.country}</p>
+                                    </div>
+                                )}
+                                {selectedItem.budget && (
+                                    <div className="border-b pb-2">
+                                        <p className="text-sm font-medium text-gray-500">Budget</p>
+                                        <p className="text-gray-900 mt-1 font-semibold">{selectedItem.budget.toLocaleString('fr-FR')} FCFA</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Préférences et Mesures */}
+                            {selectedItem.preferences && (
+                                <div className="border-b pb-2">
+                                    <p className="text-sm font-medium text-gray-500 mb-2">Préférences</p>
+                                    <pre className="bg-gray-50 p-3 rounded-lg text-sm overflow-x-auto">
+                                        {JSON.stringify(selectedItem.preferences, null, 2)}
+                                    </pre>
                                 </div>
-                            ))}
+                            )}
+                            {selectedItem.measurements && (
+                                <div className="border-b pb-2">
+                                    <p className="text-sm font-medium text-gray-500 mb-2">Mesures</p>
+                                    <pre className="bg-gray-50 p-3 rounded-lg text-sm overflow-x-auto">
+                                        {JSON.stringify(selectedItem.measurements, null, 2)}
+                                    </pre>
+                                </div>
+                            )}
+
+                            {/* Image de référence */}
+                            {selectedItem.reference_image_url && (
+                                <div className="border-b pb-2">
+                                    <p className="text-sm font-medium text-gray-500 mb-2">Image de référence</p>
+                                    <img
+                                        src={selectedItem.reference_image_url}
+                                        alt="Référence"
+                                        className="max-w-full h-auto rounded-lg max-h-64 object-contain"
+                                    />
+                                </div>
+                            )}
+
+                            {/* Informations de livraison (pour commandes sur-mesure) */}
+                            {(selectedItem.tracking_number || selectedItem.carrier || selectedItem.shipped_at) && (
+                                <div className="bg-blue-50 p-4 rounded-lg">
+                                    <p className="text-sm font-bold text-blue-800 mb-3">📦 Informations de Livraison</p>
+                                    <div className="grid grid-cols-2 gap-3 text-sm">
+                                        {selectedItem.tracking_number && (
+                                            <div>
+                                                <span className="text-gray-500">N° Suivi:</span>
+                                                <span className="ml-2 font-mono font-medium">{selectedItem.tracking_number}</span>
+                                            </div>
+                                        )}
+                                        {selectedItem.carrier && (
+                                            <div>
+                                                <span className="text-gray-500">Transporteur:</span>
+                                                <span className="ml-2">{selectedItem.carrier}</span>
+                                            </div>
+                                        )}
+                                        {selectedItem.shipped_at && (
+                                            <div>
+                                                <span className="text-gray-500">Expédié le:</span>
+                                                <span className="ml-2">{formatDate(selectedItem.shipped_at)}</span>
+                                            </div>
+                                        )}
+                                        {selectedItem.estimated_delivery_date && (
+                                            <div>
+                                                <span className="text-gray-500">Livraison estimée:</span>
+                                                <span className="ml-2">{formatDate(selectedItem.estimated_delivery_date)}</span>
+                                            </div>
+                                        )}
+                                        {selectedItem.delivered_at && (
+                                            <div>
+                                                <span className="text-gray-500">Livré le:</span>
+                                                <span className="ml-2 text-green-600 font-medium">{formatDate(selectedItem.delivered_at)}</span>
+                                            </div>
+                                        )}
+                                        {selectedItem.delivery_duration_days && (
+                                            <div>
+                                                <span className="text-gray-500">Durée prévue:</span>
+                                                <span className="ml-2">{selectedItem.delivery_duration_days} jours</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Dates */}
+                            <div className="grid grid-cols-2 gap-4 text-sm text-gray-500">
+                                {selectedItem.created_at && (
+                                    <div>
+                                        <Calendar size={14} className="inline mr-1" />
+                                        Créé le: {formatDate(selectedItem.created_at)}
+                                    </div>
+                                )}
+                                {selectedItem.updated_at && selectedItem.updated_at !== selectedItem.created_at && (
+                                    <div>
+                                        Modifié le: {formatDate(selectedItem.updated_at)}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
