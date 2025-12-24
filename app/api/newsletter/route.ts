@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase';
-import { sendEmailSMTP } from '@/lib/smtp-email';
-import { getNewsletterWelcomeEmail } from '@/lib/email-templates';
 import { checkRateLimit, formRatelimit } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
@@ -46,46 +44,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Envoyer email de bienvenue
-    let emailStatus = 'pending';
-    let emailErrorMessage: string | null = null;
+    // Note: Email de bienvenue désactivé temporairement
+    // L'inscription à la newsletter fonctionne toujours
 
-    console.log('[Newsletter] === STARTING EMAIL SEND ===');
-    console.log('[Newsletter] To:', email);
-    console.log('[Newsletter] Name:', name);
-    console.log('[Newsletter] SMTP_HOST:', process.env.SMTP_HOST || 'using default');
-    console.log('[Newsletter] SMTP_USER:', process.env.SMTP_USER || 'using default');
-    console.log('[Newsletter] SMTP_PASSWORD set:', !!process.env.SMTP_PASSWORD);
-
-    try {
-      const emailTemplate = getNewsletterWelcomeEmail({ email, name: name || undefined });
-      console.log('[Newsletter] Template generated, subject:', emailTemplate.subject);
-      console.log('[Newsletter] Calling sendEmailSMTP...');
-
-      const result = await sendEmailSMTP({
-        to: email,
-        subject: emailTemplate.subject,
-        html: emailTemplate.html,
-      });
-
-      console.log('[Newsletter] sendEmailSMTP result:', result);
-      emailStatus = result === 'skipped' ? 'skipped' : 'sent';
-    } catch (emailError: any) {
-      console.error('[Newsletter] Erreur envoi email:', emailError?.message || emailError);
-      emailStatus = 'failed';
-      emailErrorMessage = emailError?.message || 'Unknown email error';
-      // Ne pas bloquer l'inscription si l'email échoue
-    }
-
-    console.log('[Newsletter] === EMAIL STATUS:', emailStatus, '===');
-
-
-    return NextResponse.json({
-      ok: true,
-      subscription: data,
-      emailStatus,
-      emailError: emailErrorMessage
-    });
+    return NextResponse.json({ ok: true, subscription: data });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Unexpected error' }, { status: 500 });
   }
