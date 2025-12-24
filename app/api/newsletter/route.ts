@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase';
+import { sendEmailSMTP } from '@/lib/smtp-email';
+import { getNewsletterWelcomeEmail } from '@/lib/email-templates';
 import { checkRateLimit, formRatelimit } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
@@ -44,10 +46,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Note: Email de bienvenue désactivé temporairement
-    // L'inscription à la newsletter fonctionne toujours
+    // Envoyer email de bienvenue via SMTP
+    let emailStatus = 'pending';
+    let emailErrorMessage: string | null = null;
 
-    return NextResponse.json({ ok: true, subscription: data });
+    try {
+      const emailTemplate = getNewsletterWelcomeEmail({ email, name: name || undefined });
+      const result = await sendEmailSMTP({
+        to: email,
+        subject: emailTemplate.subject,
+        html: emailTemplate.html,
+      });
+      emailStatus = result === 'skipped' ? 'skipped' : 'sent';
+      console.log('[Newsletter] Email status:', emailStatus);
+    } catch (emailError: any) {
+      console.error('[Newsletter] Email error:', emailError?.message);
+      emailStatus = 'failed';
+      emailErrorMessage = emailError?.message || 'Unknown error';
+      // Ne pas bloquer l'inscription si l'email échoue
+    }
+
+    return NextResponse.json({
+      ok: true,
+      subscription: data,
+      emailStatus,
+      emailError: emailErrorMessage
+    });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Unexpected error' }, { status: 500 });
   }
