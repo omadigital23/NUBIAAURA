@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { paytechProvider, PaytechWebhookPayload } from '@/lib/payments';
 import { sendOrderConfirmationEmail } from '@/lib/smtp-email';
+import { notifyManagerNewOrder } from '@/lib/whatsapp-notifications';
 import * as Sentry from '@sentry/nextjs';
 
 const supabase = createClient(
@@ -195,6 +196,31 @@ export async function POST(request: NextRequest) {
                         } catch (emailErr) {
                             console.warn('[PayTech Webhook] Email failed:', emailErr);
                         }
+                    }
+
+                    // Send WhatsApp notification to manager with validation links
+                    try {
+                        await notifyManagerNewOrder({
+                            orderId: orderDetails.order_number,
+                            customerName: customerName,
+                            customerEmail: customerEmail,
+                            customerPhone: shippingAddress?.phone || payload.client_phone,
+                            total: orderDetails.total,
+                            itemCount: (orderDetails.order_items || []).length,
+                            items: (orderDetails.order_items || []).map((item: any) => ({
+                                name: item.product?.name_fr || item.product?.name || 'Produit',
+                                quantity: item.quantity,
+                                price: item.price,
+                            })),
+                            address: shippingAddress?.address,
+                            city: shippingAddress?.city,
+                            zipCode: shippingAddress?.zipCode,
+                            country: shippingAddress?.country,
+                            paymentMethod: payload.payment_method,
+                        });
+                        console.log('[PayTech Webhook] WhatsApp notification sent to manager');
+                    } catch (whatsappErr) {
+                        console.warn('[PayTech Webhook] WhatsApp notification failed:', whatsappErr);
                     }
                 }
             } catch (emailError) {
