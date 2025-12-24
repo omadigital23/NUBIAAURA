@@ -1,30 +1,49 @@
+/**
+ * Payment Initialization API
+ * 
+ * Unified endpoint for all payment gateways:
+ * - Chaabi Payment (Morocco - MAD)
+ * - PayTech (Senegal - XOF, International - USD)
+ * - COD (Cash on Delivery - everywhere)
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 import { Redis } from '@upstash/redis';
 import { computeQuote, ShippingMethod } from '@/lib/pricing';
-import { getLocaleFromPath, getTranslations, getTranslationKey } from '@/lib/i18n';
+import { getLocaleFromPath } from '@/lib/i18n';
 import { paymentRatelimit, checkRateLimit } from '@/lib/rate-limit';
 import * as Sentry from '@sentry/nextjs';
-import { initializePaytechPayment, isPaytechConfigured } from '@/lib/paytech';
-import { generateCMIFormData, getCMIGatewayURL, isCMIConfigured } from '@/lib/cmi';
+import {
+  PaymentProviderFactory,
+  getCountryCode,
+  getCurrencyForCountry,
+  OrderPayload,
+  PaymentGateway,
+} from '@/lib/payments';
 
-// Validation schema - flexible to accept both checkout form and test data
+// Validation schema
 const PaymentInitializationSchema = z.object({
-  // From checkout form
+  // Customer info
   firstName: z.string().min(1, 'Prénom requis').optional(),
   lastName: z.string().min(1, 'Nom requis').optional(),
   email: z.string().email('Email invalide'),
   phone: z.string().min(8, 'Numéro de téléphone invalide'),
+
+  // Shipping info
   address: z.string().min(1, 'Adresse requise').optional(),
   city: z.string().min(1, 'Ville requise').optional(),
   zipCode: z.string().optional(),
   country: z.string().optional(),
   shippingMethod: z.enum(['standard', 'express']).optional().default('standard'),
-  locale: z.enum(['fr', 'en']).optional(),
-  paymentMethod: z.enum(['paytech', 'cmi', 'cod']).optional(),
 
-  // From cart/items
+  // Payment options
+  locale: z.enum(['fr', 'en']).optional(),
+  paymentMethod: z.enum(['paytech', 'chaabi', 'cod']).optional(),
+  paymentSubMethod: z.string().optional(), // 'wave', 'orange_money', etc.
+
+  // Cart items
   items: z.array(z.object({
     product_id: z.string(),
     quantity: z.number().positive('Quantité doit être positive'),
@@ -43,94 +62,118 @@ const PaymentInitializationSchema = z.object({
   })).optional(),
 }).refine(
   (data) => {
-    // Must have either items or cartItems
     return (Array.isArray(data.items) && data.items.length > 0) ||
       (Array.isArray(data.cartItems) && data.cartItems.length > 0);
   },
   { message: 'Au moins un article est requis' }
 );
 
+/**
+ * Determine the payment gateway based on country and method
+ */
+function determineGateway(country: string, method?: string): PaymentGateway {
+  // If method explicitly specified
+  if (method === 'cod') return 'cod';
+  if (method === 'chaabi') return 'chaabi';
+  if (method === 'paytech') return 'paytech';
+
+  // Auto-detect based on country
+  const countryCode = getCountryCode(country);
+
+  if (countryCode === 'MA') {
+    return 'chaabi'; // Morocco -> Chaabi Payment
+  }
+
+  return 'paytech'; // Senegal & International -> PayTech
+}
+
 export async function POST(request: NextRequest) {
   try {
+    // Get locale from request
     const referer = request.headers.get('referer') || '';
     const path = (() => { try { return new URL(referer).pathname; } catch { return referer; } })();
     let locale: 'fr' | 'en' = 'fr';
-    try { const peek = await request.clone().json(); if (peek?.locale === 'en' || peek?.locale === 'fr') locale = peek.locale; else locale = getLocaleFromPath(path); } catch { locale = getLocaleFromPath(path); }
-    const commonNs = await getTranslations(locale, 'common');
-    const productNs = await getTranslations(locale, 'product');
+    try {
+      const peek = await request.clone().json();
+      if (peek?.locale === 'en' || peek?.locale === 'fr') locale = peek.locale;
+      else locale = getLocaleFromPath(path);
+    } catch {
+      locale = getLocaleFromPath(path);
+    }
+    // Note: Translations are loaded when needed for error messages
 
+    // CORS check
     const origin = request.headers.get('origin') || '';
     const appBase = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
     if (origin && appBase && origin !== appBase) {
-      const msg = getTranslationKey(commonNs, 'common.error') || 'Forbidden';
-      return NextResponse.json({ error: msg }, { status: 403 });
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    // Rate limiting
     const rl = await checkRateLimit((() => {
       const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'global';
       return `payinit:${String(ip).split(',')[0].trim()}`;
     })(), paymentRatelimit);
     if (!rl.success) {
-      const msg = getTranslationKey(commonNs, 'common.error') || 'Too many requests';
-      return NextResponse.json({ error: msg }, { status: 429 });
+      return NextResponse.json({ error: 'Trop de requêtes' }, { status: 429 });
     }
 
+    // Parse and validate request body
     const body = await request.json();
-    console.log('[Payment Init] Request body:', JSON.stringify(body, null, 2));
+    console.log('[Payment Init] Request received:', {
+      country: body.country,
+      paymentMethod: body.paymentMethod,
+      itemCount: body.items?.length || body.cartItems?.length || 0,
+    });
 
     const validatedData = PaymentInitializationSchema.parse(body);
-    const paymentMethod = body.paymentMethod || 'paytech';
 
+    // Initialize Supabase client
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Get user from auth token
+    // Get user from auth token (optional)
     let userId: string | null = null;
-    let token: string | null = null;
     const authHeader = request.headers.get('Authorization');
-    if (authHeader?.startsWith('Bearer ')) {
-      token = authHeader.slice(7);
-    } else {
-      token = request.cookies.get('sb-auth-token')?.value || null;
-    }
+    const token = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : request.cookies.get('sb-auth-token')?.value || null;
 
     if (token) {
-      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-      if (!userError && user) {
-        userId = user.id;
-      }
+      const { data: { user } } = await supabase.auth.getUser(token);
+      if (user) userId = user.id;
     }
 
-    // Use items or cartItems (for backward compatibility)
-    const cartItems = Array.isArray(body.items) ? body.items : (Array.isArray(body.cartItems) ? body.cartItems : []);
-
-    if (!Array.isArray(cartItems) || cartItems.length === 0) {
-      const msg = getTranslationKey(commonNs, 'common.error') || 'Au moins un article est requis';
-      return NextResponse.json({ error: msg }, { status: 400 });
+    // Get cart items
+    const cartItems = Array.isArray(body.items) ? body.items : (body.cartItems || []);
+    if (cartItems.length === 0) {
+      return NextResponse.json({ error: 'Au moins un article est requis' }, { status: 400 });
     }
 
+    // Fetch and validate products
     const productIds = cartItems.map((i: { product_id: string }) => i.product_id);
     const { data: products, error: prodErr } = await supabase
       .from('products')
       .select('id, price, "inStock", product_variants(stock)')
       .in('id', productIds);
+
     if (prodErr) {
       console.error('[Payment Init] Product fetch error:', prodErr);
-      const msg = getTranslationKey(commonNs, 'common.error') || 'Server error';
-      return NextResponse.json({ error: msg }, { status: 500 });
+      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
-    // Fetch existing reservations to account for availability
+    // Check stock availability
     const { data: reservations } = await supabase
       .from('stock_reservations')
       .select('product_id, qty, expires_at, finalized_at, released_at')
       .in('product_id', productIds);
+
     const now = Date.now();
     const reservedByProduct = new Map<string, number>();
     if (Array.isArray(reservations)) {
-      for (const r of reservations as { product_id: string; qty: number; expires_at: string; finalized_at: string | null; released_at: string | null }[]) {
+      for (const r of reservations) {
         const isFinalized = !!r.finalized_at;
         const isActive = !r.released_at && new Date(r.expires_at).getTime() > now;
         if (isFinalized || isActive) {
@@ -139,9 +182,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    interface ProductVariant {
-      stock: number;
-    }
+    // Normalize and validate cart items
+    interface ProductVariant { stock: number; }
     interface Product {
       id: string;
       price: number | string;
@@ -149,27 +191,35 @@ export async function POST(request: NextRequest) {
       product_variants?: ProductVariant[];
     }
 
-    const normalized = [] as { product_id: string; price: number; quantity: number }[];
-    for (const it of cartItems as { product_id: string; quantity: number }[]) {
+    const normalized: { product_id: string; price: number; quantity: number; name?: string }[] = [];
+    for (const it of cartItems) {
       const p = products?.find((pr: Product) => pr.id === it.product_id) as Product | undefined;
       if (!p || !p.inStock) {
-        const msg = getTranslationKey(productNs, 'product.out_of_stock') || 'Out of stock';
-        return NextResponse.json({ error: msg }, { status: 400 });
+        return NextResponse.json({ error: 'Produit épuisé' }, { status: 400 });
       }
+
       const hasVariants = Array.isArray(p.product_variants) && p.product_variants.length > 0;
-      const totalStock = hasVariants ? p.product_variants!.reduce((s: number, v: ProductVariant) => s + (v?.stock || 0), 0) : null;
+      const totalStock = hasVariants ? p.product_variants!.reduce((s, v) => s + (v?.stock || 0), 0) : null;
       const alreadyReserved = reservedByProduct.get(it.product_id) || 0;
+
       if (totalStock !== null && (totalStock - alreadyReserved) < Number(it.quantity || 0)) {
-        const msg = getTranslationKey(productNs, 'product.out_of_stock') || 'Out of stock';
-        return NextResponse.json({ error: msg }, { status: 400 });
+        return NextResponse.json({ error: 'Stock insuffisant' }, { status: 400 });
       }
+
       const price = typeof p.price === 'string' ? parseFloat(p.price) : p.price;
-      normalized.push({ product_id: it.product_id, price, quantity: Number(it.quantity) || 0 });
+      normalized.push({ product_id: it.product_id, price, quantity: Number(it.quantity), name: it.name });
     }
 
-    const quote = computeQuote({ items: normalized, shippingMethod: (body.shippingMethod || 'standard') as ShippingMethod, country: body.country });
-    console.log('[Payment Init] Computed quote:', JSON.stringify(quote, null, 2));
+    // Compute quote
+    const country = body.country || 'SN';
+    const quote = computeQuote({
+      items: normalized,
+      shippingMethod: (body.shippingMethod || 'standard') as ShippingMethod,
+      country
+    });
+    console.log('[Payment Init] Quote:', quote);
 
+    // Idempotency check
     const redis = Redis.fromEnv();
     const idemKey = request.headers.get('idempotency-key') || request.headers.get('Idempotency-Key') || body.orderId || null;
     const idemRedisKey = idemKey ? `idem:payments:init:${idemKey}` : null;
@@ -177,10 +227,22 @@ export async function POST(request: NextRequest) {
       const existing = await redis.get(idemRedisKey);
       if (existing) {
         const parsed = typeof existing === 'string' ? JSON.parse(existing) : existing;
-        return NextResponse.json({ success: true, paymentLink: parsed.paymentLink || parsed.redirect_url, reference: parsed.reference, orderId: parsed.orderId }, { status: 200 });
+        return NextResponse.json({
+          success: true,
+          paymentLink: parsed.paymentLink || parsed.redirect_url,
+          reference: parsed.reference,
+          orderId: parsed.orderId
+        }, { status: 200 });
       }
     }
 
+    // Determine gateway and currency
+    const gateway = determineGateway(country, body.paymentMethod);
+    const currency = getCurrencyForCountry(country);
+
+    console.log('[Payment Init] Gateway selection:', { country, gateway, currency });
+
+    // Create order
     const orderInsert = {
       user_id: userId,
       order_number: `ORD-${Date.now()}`,
@@ -193,12 +255,12 @@ export async function POST(request: NextRequest) {
         address: body.address,
         city: body.city,
         zipCode: body.zipCode,
-        country: body.country,
+        country: country,
       },
       shipping_method: body.shippingMethod || 'standard',
       status: 'pending',
-      payment_status: 'pending',
-      payment_method: paymentMethod,
+      payment_status: gateway === 'cod' ? 'awaiting_payment' : 'pending',
+      payment_method: gateway,
     };
 
     const { data: order, error: orderErr } = await supabase
@@ -206,11 +268,13 @@ export async function POST(request: NextRequest) {
       .insert(orderInsert)
       .select('*')
       .single();
+
     if (orderErr) {
       console.error('[Payment Init] Order creation error:', orderErr);
       throw orderErr;
     }
 
+    // Insert order items
     if (normalized.length > 0) {
       const itemsPayload = normalized.map((it) => ({
         order_id: order.id,
@@ -220,12 +284,12 @@ export async function POST(request: NextRequest) {
       }));
       const { error: itemsErr } = await supabase.from('order_items').insert(itemsPayload);
       if (itemsErr) {
-        console.error('[Payment Init] Order items creation error:', itemsErr);
+        console.error('[Payment Init] Order items error:', itemsErr);
         throw itemsErr;
       }
     }
 
-    // Create stock reservations for this pending order
+    // Create stock reservations
     const ttlMinutes = Number(process.env.PAYMENT_RESERVATION_TTL_MINUTES || 30);
     const expiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000).toISOString();
     const reservationsPayload = normalized.map((it) => ({
@@ -239,117 +303,111 @@ export async function POST(request: NextRequest) {
       const { error: resErr } = await supabase.from('stock_reservations').insert(reservationsPayload);
       if (resErr) {
         console.error('[Payment Init] Stock reservation error:', resErr);
-        const msg = getTranslationKey(commonNs, 'common.error') || 'Reservation failed';
-        return NextResponse.json({ error: msg }, { status: 409 });
+        return NextResponse.json({ error: 'Réservation échouée' }, { status: 409 });
       }
     }
 
-    const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+    // Build order payload for provider
+    const orderPayload: OrderPayload = {
+      orderId: order.id,
+      orderNumber: order.order_number,
+      amount: quote.total,
+      currency: currency,
+      customer: {
+        email: validatedData.email,
+        phone: validatedData.phone,
+        firstName: body.firstName || '',
+        lastName: body.lastName || '',
+      },
+      shipping: {
+        address: body.address || '',
+        city: body.city || '',
+        zipCode: body.zipCode,
+        country: country,
+      },
+      items: normalized.map(it => ({
+        productId: it.product_id,
+        name: it.name || '',
+        quantity: it.quantity,
+        price: it.price,
+      })),
+      locale: locale,
+    };
 
-    // Route to appropriate payment gateway
-    if (paymentMethod === 'paytech') {
-      // PayTech for Senegal (Orange Money, Wave)
-      if (!isPaytechConfigured()) {
-        console.warn('[Payment Init] PayTech not configured');
-        return NextResponse.json({
-          error: 'PayTech n\'est pas encore configuré. Veuillez utiliser le paiement à la livraison.',
-          paymentNotConfigured: true
-        }, { status: 503 });
-      }
+    // Get the provider and create payment session
+    const provider = PaymentProviderFactory.create(gateway);
 
-      const paytechPayload = {
-        ref_command: String(order.id),
-        amount: quote.total,
-        currency: 'XOF' as const,
-        command_name: `Commande Nubia Aura - ${order.order_number}`,
-        customer_email: validatedData.email,
-        customer_phone: validatedData.phone,
-        customer_name: validatedData.customerName || `${body.firstName || ''} ${body.lastName || ''}`.trim() || 'Client',
-        success_url: `${appBaseUrl}/payments/callback?orderId=${order.id}&status=success`,
-        cancel_url: `${appBaseUrl}/payments/callback?orderId=${order.id}&status=cancelled`,
-        ipn_url: `${appBaseUrl}/api/webhooks/paytech`,
-      };
+    if (!provider.isConfigured() && gateway !== 'cod') {
+      console.warn(`[Payment Init] ${gateway} not configured`);
+      return NextResponse.json({
+        error: `Le paiement ${gateway} n'est pas configuré. Veuillez utiliser le paiement à la livraison.`,
+        paymentNotConfigured: true
+      }, { status: 503 });
+    }
 
-      console.log('[Payment Init] PayTech payload:', JSON.stringify(paytechPayload, null, 2));
-      const paytechResponse = await initializePaytechPayment(paytechPayload);
-      console.log('[Payment Init] PayTech response:', JSON.stringify(paytechResponse, null, 2));
+    const session = await provider.createSession(orderPayload, body.paymentSubMethod);
 
-      if (!paytechResponse.success || !paytechResponse.redirect_url) {
-        return NextResponse.json({
-          error: paytechResponse.error || 'Erreur lors de l\'initialisation du paiement PayTech'
-        }, { status: 500 });
-      }
+    if (!session.success) {
+      return NextResponse.json({
+        error: session.error || 'Erreur lors de l\'initialisation du paiement'
+      }, { status: 500 });
+    }
 
-      if (idemRedisKey) {
-        await redis.set(idemRedisKey, JSON.stringify({ orderId: order.id, redirect_url: paytechResponse.redirect_url, reference: paytechResponse.token }), { ex: 900 });
-      }
+    // Cache for idempotency
+    if (idemRedisKey) {
+      await redis.set(idemRedisKey, JSON.stringify({
+        orderId: order.id,
+        redirect_url: session.redirectUrl,
+        reference: session.transactionId,
+        gateway: gateway,
+      }), { ex: 900 });
+    }
 
-      return NextResponse.json(
-        { success: true, redirect_url: paytechResponse.redirect_url, paymentLink: paytechResponse.redirect_url, reference: paytechResponse.token, orderId: order.id },
-        { status: 200 }
-      );
+    // Return response based on gateway type
+    if (session.redirectUrl) {
+      // PayTech style - redirect URL
+      return NextResponse.json({
+        success: true,
+        redirect_url: session.redirectUrl,
+        paymentLink: session.redirectUrl,
+        reference: session.transactionId,
+        orderId: order.id,
+        gateway: gateway,
+      }, { status: 200 });
 
-    } else if (paymentMethod === 'cmi') {
-      // CMI for Morocco (cards)
-      if (!isCMIConfigured()) {
-        console.warn('[Payment Init] CMI not configured');
-        return NextResponse.json({
-          error: 'CMI n\'est pas encore configuré. Veuillez utiliser le paiement à la livraison.',
-          paymentNotConfigured: true
-        }, { status: 503 });
-      }
+    } else if (session.formData) {
+      // Chaabi style - form submission
+      return NextResponse.json({
+        success: true,
+        formData: session.formData,
+        gatewayUrl: session.gatewayUrl,
+        orderId: order.id,
+        gateway: gateway,
+      }, { status: 200 });
 
-      const cmiPayload = {
-        orderId: String(order.id),
-        amount: quote.total,
-        currency: 'MAD' as const,
-        customerEmail: validatedData.email,
-        customerName: validatedData.customerName || `${body.firstName || ''} ${body.lastName || ''}`.trim() || 'Client',
-        description: `Commande Nubia Aura - ${order.order_number}`,
-        okUrl: `${appBaseUrl}/payments/callback?orderId=${order.id}&status=success`,
-        failUrl: `${appBaseUrl}/payments/callback?orderId=${order.id}&status=failed`,
-        callbackUrl: `${appBaseUrl}/api/webhooks/cmi`,
-      };
-
-      console.log('[Payment Init] CMI payload:', JSON.stringify(cmiPayload, null, 2));
-      const cmiFormData = generateCMIFormData(cmiPayload);
-
-      if (!cmiFormData) {
-        return NextResponse.json({
-          error: 'Erreur lors de la génération du formulaire CMI'
-        }, { status: 500 });
-      }
-
-      if (idemRedisKey) {
-        await redis.set(idemRedisKey, JSON.stringify({ orderId: order.id, formData: cmiFormData }), { ex: 900 });
-      }
-
-      return NextResponse.json(
-        {
-          success: true,
-          formData: cmiFormData,
-          gatewayUrl: getCMIGatewayURL(),
-          orderId: order.id
-        },
-        { status: 200 }
-      );
+    } else if (session.orderConfirmed) {
+      // COD - order confirmed directly
+      return NextResponse.json({
+        success: true,
+        orderId: order.id,
+        orderNumber: order.order_number,
+        gateway: 'cod',
+        message: 'Commande confirmée. Paiement à la livraison.',
+      }, { status: 200 });
 
     } else {
-      // COD - should not reach here as COD is handled separately
       return NextResponse.json({
-        error: 'Méthode de paiement non supportée'
-      }, { status: 400 });
+        error: 'Réponse inattendue du système de paiement'
+      }, { status: 500 });
     }
 
   } catch (error: unknown) {
-    console.error('Payment initialization error:', error);
+    console.error('[Payment Init] Error:', error);
 
-    // Capture error in Sentry
     Sentry.captureException(error, {
       tags: { route: 'payments/initialize' },
     });
 
-    // Handle Zod validation errors
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: error.errors[0].message },
@@ -358,9 +416,6 @@ export async function POST(request: NextRequest) {
     }
 
     const errorMessage = error instanceof Error ? error.message : 'Erreur lors de l\'initialisation du paiement';
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

@@ -1,0 +1,111 @@
+﻿
+> nubia-aura@1.0.0 build
+> next build
+
+node.exe :  ÔÜá 
+Warning: Next.js 
+inferred your 
+workspace root, but 
+it may not be 
+correct.
+Au caractère C:\nvm4w
+\nodejs\npm.ps1:16 : 
+5
++     & 
+"$basedir/node$exe"  
+"$basedir/node_module
+s/npm/bin/npm-cli.js"
+ ...
++     ~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: ( ÔÜá Wa   
+ rning: N...not b    
+e correct.:Strin    
+g) [], RemoteExc    
+eption
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+ We detected 
+multiple lockfiles 
+and selected the 
+directory of C:\Users
+\fallp\package-lock.j
+son as the root 
+directory.
+ To silence this 
+warning, set `outputF
+ileTracingRoot` in 
+your Next.js config, 
+or consider removing 
+one of the lockfiles 
+if it's not needed.
+   See https://nextjs
+.org/docs/app/api-ref
+erence/config/next-co
+nfig-js/output#caveat
+s for more 
+information.
+ Detected additional 
+lockfiles: 
+   * C:\Users\fallp\M
+usic\si\NUBIA\package
+-lock.json
+
+   Ôû▓ Next.js 15.5.9
+   - Environments: .env.local
+   - Experiments (use with caution):
+     ┬À optimizePackageImports
+
+   Creating an optimized production build ...
+ Ô£ô Compiled successfully in 11.5s
+   Skipping linting
+   Checking validity of types ...
+Failed to compile.
+
+./lib/payments/provid
+ers/cod.provider.ts:7
+9:21
+Type error: 
+'transactionId' is 
+declared but its 
+value is never read.
+
+[0m [90m 77 |[39m 
+[90m     * Get COD 
+order status[39m
+ [90m 78 |[39m 
+[90m     */[39m
+[31m[1m>[22m[39m
+[90m 79 |[39m     
+[36masync[39m getSt
+atus(transactionId[3
+3m:[39m 
+string)[33m:[39m [
+33mPromise[39m[33m<
+[39m[33mPaymentStat
+us[39m[33m>[39m {
+ [90m    |[39m     
+                
+[31m[1m^[22m[39m
+ [90m 80 |[39m     
+    [90m// COD 
+orders start as 
+awaiting_payment[39m
+ [90m 81 |[39m     
+    [90m// Status 
+is managed through 
+admin panel[39m
+ [90m 82 |[39m     
+    [36mreturn[39m 
+[32m'awaiting_paymen
+t'[39m[33m;[39m[0
+m
+Next.js build worker 
+exited with code: 1 
+and signal: null

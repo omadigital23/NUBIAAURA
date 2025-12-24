@@ -1,0 +1,122 @@
+﻿
+> nubia-aura@1.0.0 build
+> next build
+
+node.exe :  ÔÜá 
+Warning: Next.js 
+inferred your 
+workspace root, but 
+it may not be 
+correct.
+Au caractère C:\nvm4w
+\nodejs\npm.ps1:16 : 
+5
++     & 
+"$basedir/node$exe"  
+"$basedir/node_module
+s/npm/bin/npm-cli.js"
+ ...
++     ~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: ( ÔÜá Wa   
+ rning: N...not b    
+e correct.:Strin    
+g) [], RemoteExc    
+eption
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+ We detected 
+multiple lockfiles 
+and selected the 
+directory of C:\Users
+\fallp\package-lock.j
+son as the root 
+directory.
+ To silence this 
+warning, set `outputF
+ileTracingRoot` in 
+your Next.js config, 
+or consider removing 
+one of the lockfiles 
+if it's not needed.
+   See https://nextjs
+.org/docs/app/api-ref
+erence/config/next-co
+nfig-js/output#caveat
+s for more 
+information.
+ Detected additional 
+lockfiles: 
+   * C:\Users\fallp\M
+usic\si\NUBIA\package
+-lock.json
+
+   Ôû▓ Next.js 15.5.9
+   - Environments: .env.local
+   - Experiments (use with caution):
+     ┬À optimizePackageImports
+
+   Creating an optimized production build ...
+ Ô£ô Compiled successfully in 10.9s
+   Skipping linting
+   Checking validity of types ...
+Failed to compile.
+
+./lib/payments/provid
+ers/chaabi.provider.t
+s:25:7
+Type error: 
+'IS_PRODUCTION' is 
+declared but its 
+value is never read.
+
+[0m [90m 23 |[39m 
+[36mconst[39m [33m
+CHAABI_SECRET_KEY[39
+m [33m=[39m process
+[33m.[39menv[33m.
+[39m[33mCHAABI_SECRE
+T_KEY[39m 
+[33m||[39m [32m''
+[39m[33m;[39m
+ [90m 24 |[39m 
+[36mconst[39m [33m
+CHAABI_GATEWAY_URL[3
+9m [33m=[39m proces
+s[33m.[39menv[33m.
+[39m[33mCHAABI_GATE
+WAY_URL[39m 
+[33m||[39m [32m'ht
+tps://payment.chaabi.
+ma/checkout'[39m[33
+m;[39m
+[31m[1m>[22m[39m
+[90m 25 |[39m 
+[36mconst[39m [33m
+IS_PRODUCTION[39m 
+[33m=[39m process[
+33m.[39menv[33m.[3
+9m[33mNODE_ENV[39m 
+[33m===[39m [32m'p
+roduction'[39m[33m;
+[39m
+ [90m    |[39m     
+  
+[31m[1m^[22m[39m
+ [90m 26 |[39m
+ [90m 27 |[39m 
+[90m/**[39m
+ [90m 28 |[39m 
+[90m * Generate 
+HMAC-SHA256 
+signature for Chaabi 
+Payment[39m[0m
+Next.js build worker 
+exited with code: 1 
+and signal: null

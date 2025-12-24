@@ -1,0 +1,331 @@
+/**
+ * Payment System Types
+ * Unified type definitions for the multi-gateway payment system
+ */
+
+// =========================================
+// Enums & Constants
+// =========================================
+
+export type CountryCode = 'MA' | 'SN' | 'OTHER';
+
+export type Currency = 'MAD' | 'XOF' | 'USD' | 'EUR';
+
+export type PaymentGateway = 'chaabi' | 'paytech' | 'cod';
+
+export type PaymentMethodType =
+    | 'chaabi_card'      // Chaabi Payment - Cards (Morocco)
+    | 'paytech_wave'     // PayTech - Wave (Senegal)
+    | 'paytech_om'       // PayTech - Orange Money (Senegal)
+    | 'paytech_fm'       // PayTech - Free Money (Senegal)
+    | 'paytech_card'     // PayTech - International cards (USD/EUR)
+    | 'cod';             // Cash on Delivery (everywhere)
+
+export type PaymentStatus =
+    | 'pending'          // Initial state
+    | 'processing'       // Payment in progress
+    | 'awaiting_payment' // COD - waiting for delivery
+    | 'paid'             // Successfully paid
+    | 'failed'           // Payment failed
+    | 'cancelled'        // Cancelled by user
+    | 'refunded';        // Refunded
+
+// Country to gateway mapping
+export const COUNTRY_GATEWAY_MAP: Record<CountryCode, PaymentGateway[]> = {
+    MA: ['chaabi', 'cod'],           // Morocco: Chaabi + COD
+    SN: ['paytech', 'cod'],          // Senegal: PayTech + COD
+    OTHER: ['paytech', 'cod'],       // International: PayTech (cards) + COD
+};
+
+// Country to currency mapping
+export const COUNTRY_CURRENCY_MAP: Record<CountryCode, Currency> = {
+    MA: 'MAD',
+    SN: 'XOF',
+    OTHER: 'USD',
+};
+
+// =========================================
+// Interfaces
+// =========================================
+
+/**
+ * Order payload for payment initialization
+ */
+export interface OrderPayload {
+    orderId: string;
+    orderNumber: string;
+    amount: number;
+    currency: Currency;
+    customer: {
+        email: string;
+        phone: string;
+        firstName: string;
+        lastName: string;
+    };
+    shipping: {
+        address: string;
+        city: string;
+        zipCode?: string;
+        country: string;
+    };
+    items: Array<{
+        productId: string;
+        name: string;
+        quantity: number;
+        price: number;
+    }>;
+    locale: 'fr' | 'en';
+}
+
+/**
+ * Payment session returned after initialization
+ */
+export interface PaymentSession {
+    success: boolean;
+    gateway: PaymentGateway;
+    transactionId?: string;
+
+    // For redirect-based payments (PayTech)
+    redirectUrl?: string;
+
+    // For form-based payments (Chaabi)
+    formData?: Record<string, string>;
+    gatewayUrl?: string;
+
+    // For COD
+    orderConfirmed?: boolean;
+
+    // Error handling
+    error?: string;
+    errorCode?: string;
+}
+
+/**
+ * Result of webhook/callback processing
+ */
+export interface CallbackResult {
+    success: boolean;
+    orderId: string;
+    transactionId?: string;
+    status: PaymentStatus;
+    paymentMethod?: string;
+    amount?: number;
+    currency?: Currency;
+    processedAt: string;
+    rawPayload?: unknown;
+    error?: string;
+}
+
+/**
+ * Payment provider interface
+ * All payment providers must implement this interface
+ */
+export interface IPaymentProvider {
+    /**
+     * Gateway identifier
+     */
+    readonly gateway: PaymentGateway;
+
+    /**
+     * Supported currencies
+     */
+    readonly supportedCurrencies: Currency[];
+
+    /**
+     * Check if the provider is properly configured
+     */
+    isConfigured(): boolean;
+
+    /**
+     * Create a payment session
+     * @param order Order details
+     * @param method Specific payment method (e.g., 'wave', 'orange_money')
+     * @returns Payment session with redirect URL or form data
+     */
+    createSession(order: OrderPayload, method?: string): Promise<PaymentSession>;
+
+    /**
+     * Verify webhook signature
+     * @param payload Raw webhook payload
+     * @param signature Signature header or hash
+     * @returns True if signature is valid
+     */
+    verifyWebhook(payload: unknown, signature?: string): boolean;
+
+    /**
+     * Handle webhook callback
+     * @param payload Webhook payload
+     * @returns Callback result with order status
+     */
+    handleCallback(payload: unknown): Promise<CallbackResult>;
+
+    /**
+     * Get payment status (optional - some gateways don't support this)
+     * @param transactionId Transaction ID
+     * @returns Current payment status
+     */
+    getStatus?(transactionId: string): Promise<PaymentStatus>;
+}
+
+// =========================================
+// Chaabi Payment Types (M2T/Payzone)
+// =========================================
+
+export interface ChaabiConfig {
+    apiKey: string;        // UUID 36 chars
+    secretKey: string;     // HMAC secret
+    gatewayUrl: string;    // Payzone gateway URL
+    isProduction: boolean;
+}
+
+export interface ChaabiPaymentRequest {
+    api_key: string;
+    order_id: string;
+    amount: string;        // Amount in centimes
+    currency: string;      // '504' for MAD
+    hash: string;          // HMAC-SHA256 signature
+    callback_url: string;
+    success_url: string;
+    fail_url: string;
+    customer_email?: string;
+    customer_name?: string;
+    description?: string;
+}
+
+export interface ChaabiWebhookPayload {
+    order_id: string;
+    transaction_id: string;
+    status: 'approved' | 'declined' | 'pending';
+    auth_code?: string;
+    amount: string;
+    currency: string;
+    hash: string;
+    timestamp: string;
+}
+
+// =========================================
+// PayTech Types (Intech Group)
+// =========================================
+
+export interface PaytechConfig {
+    apiKey: string;
+    secretKey: string;
+    env: 'test' | 'prod';
+}
+
+export interface PaytechPaymentRequest {
+    item_name: string;
+    item_price: number;
+    currency: 'XOF' | 'USD' | 'EUR' | 'MAD';
+    ref_command: string;
+    command_name: string;
+    env: 'test' | 'prod';
+    ipn_url: string;
+    success_url: string;
+    cancel_url: string;
+    custom_field?: string;
+    target_payment?: string;  // 'wave', 'Orange Money', 'Free Money', etc.
+}
+
+export interface PaytechWebhookPayload {
+    type_event: 'sale_complete' | 'sale_canceled';
+    ref_command: string;
+    item_name: string;
+    item_price: string;
+    payment_method: string;
+    client_phone: string;
+    client_email?: string;
+    env: 'test' | 'prod';
+    token: string;
+    api_key_sha256: string;
+    api_secret_sha256: string;
+    hmac_compute?: string;  // HMAC-SHA256 (recommended method)
+    custom_field?: string;
+}
+
+// =========================================
+// COD Types
+// =========================================
+
+export interface CODConfig {
+    requireOTP: boolean;
+    maxAmount?: number;    // Maximum COD amount
+}
+
+export interface CODOrderData {
+    orderId: string;
+    amount: number;
+    currency: Currency;
+    customer: {
+        phone: string;
+        email: string;
+        name: string;
+    };
+    shipping: {
+        address: string;
+        city: string;
+        country: string;
+    };
+}
+
+// =========================================
+// Utility Types
+// =========================================
+
+export interface CountryInfo {
+    code: CountryCode;
+    name: string;
+    currency: Currency;
+    availableGateways: PaymentGateway[];
+    availableMethods: PaymentMethodType[];
+}
+
+export const COUNTRY_INFO: Record<CountryCode, CountryInfo> = {
+    MA: {
+        code: 'MA',
+        name: 'Maroc',
+        currency: 'MAD',
+        availableGateways: ['chaabi', 'cod'],
+        availableMethods: ['chaabi_card', 'cod'],
+    },
+    SN: {
+        code: 'SN',
+        name: 'Sénégal',
+        currency: 'XOF',
+        availableGateways: ['paytech', 'cod'],
+        availableMethods: ['paytech_wave', 'paytech_om', 'paytech_fm', 'cod'],
+    },
+    OTHER: {
+        code: 'OTHER',
+        name: 'International',
+        currency: 'USD',
+        availableGateways: ['paytech', 'cod'],
+        availableMethods: ['paytech_card', 'cod'],
+    },
+};
+
+/**
+ * Get country code from country string/code
+ */
+export function getCountryCode(country: string): CountryCode {
+    const code = country.toUpperCase();
+    if (code === 'MA' || code === 'MAROC' || code === 'MOROCCO') return 'MA';
+    if (code === 'SN' || code === 'SENEGAL' || code === 'SÉNÉGAL') return 'SN';
+    return 'OTHER';
+}
+
+/**
+ * Get currency for a country
+ */
+export function getCurrencyForCountry(country: string): Currency {
+    const code = getCountryCode(country);
+    return COUNTRY_CURRENCY_MAP[code];
+}
+
+/**
+ * Get available payment methods for a country
+ */
+export function getPaymentMethodsForCountry(country: string): PaymentMethodType[] {
+    const code = getCountryCode(country);
+    return COUNTRY_INFO[code].availableMethods;
+}

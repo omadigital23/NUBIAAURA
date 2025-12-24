@@ -3,6 +3,13 @@ import { NextRequest, NextResponse } from 'next/server';
 const locales = ['fr', 'en'];
 const defaultLocale = 'fr';
 
+// Payment gateway configuration by country
+const COUNTRY_GATEWAY_CONFIG: Record<string, { gateway: string; currency: string }> = {
+  MA: { gateway: 'chaabi', currency: 'MAD' },    // Morocco
+  SN: { gateway: 'paytech', currency: 'XOF' },   // Senegal
+};
+const DEFAULT_GATEWAY_CONFIG = { gateway: 'paytech', currency: 'USD' }; // International
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -50,7 +57,38 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  // Payment gateway auto-detection based on Geo-IP
+  // Vercel provides request.geo automatically
+  const response = NextResponse.next();
+
+  // Only set cookies if not already set (don't override user preference)
+  if (!request.cookies.get('preferred_gateway')) {
+    // Get country from Vercel Geo headers (available on Vercel Edge)
+    // Fallback to x-vercel-ip-country or default to 'OTHER'
+    const geoHeader = request.headers.get('x-vercel-ip-country') ||
+      request.headers.get('cf-ipcountry') || // Cloudflare
+      'OTHER';
+    const countryCode = geoHeader.toUpperCase();
+    const config = COUNTRY_GATEWAY_CONFIG[countryCode] || DEFAULT_GATEWAY_CONFIG;
+
+    response.cookies.set('preferred_gateway', config.gateway, {
+      path: '/',
+      maxAge: 60 * 60 * 24, // 24 hours
+      sameSite: 'lax',
+    });
+    response.cookies.set('currency', config.currency, {
+      path: '/',
+      maxAge: 60 * 60 * 24,
+      sameSite: 'lax',
+    });
+    response.cookies.set('detected_country', countryCode, {
+      path: '/',
+      maxAge: 60 * 60 * 24,
+      sameSite: 'lax',
+    });
+  }
+
+  return response;
 }
 
 export const config = {
