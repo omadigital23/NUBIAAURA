@@ -5,9 +5,6 @@
 
 import { generateValidationToken, storeValidationToken } from './order-validation-tokens';
 
-const CALLMEBOT_API_KEY = process.env.CALLMEBOT_API_KEY;
-const MANAGER_WHATSAPP = process.env.MANAGER_WHATSAPP;
-
 interface WhatsAppNotification {
   phone: string;
   message: string;
@@ -23,7 +20,10 @@ interface WhatsAppNotification {
  */
 async function sendWhatsAppNotification(data: WhatsAppNotification): Promise<boolean> {
   try {
-    if (!CALLMEBOT_API_KEY) {
+    // Read env vars at runtime (important for serverless environments)
+    const apiKey = process.env.CALLMEBOT_API_KEY;
+
+    if (!apiKey) {
       console.warn('⚠️ CallMeBot API key not configured - WhatsApp notification skipped');
       return false;
     }
@@ -35,14 +35,21 @@ async function sendWhatsAppNotification(data: WhatsAppNotification): Promise<boo
     const encodedMessage = encodeURIComponent(data.message);
 
     // URL de l'API CallMeBot
-    const url = `https://api.callmebot.com/whatsapp.php?phone=${cleanPhone}&text=${encodedMessage}&apikey=${CALLMEBOT_API_KEY}`;
+    const url = `https://api.callmebot.com/whatsapp.php?phone=${cleanPhone}&text=${encodedMessage}&apikey=${apiKey}`;
+
+    console.log(`[CallMeBot] Sending notification to: ${cleanPhone}`);
+    console.log(`[CallMeBot] API Key: ${apiKey.substring(0, 3)}***`);
 
     const response = await fetch(url, {
       method: 'GET',
     });
 
+    const responseText = await response.text();
+    console.log(`[CallMeBot] Response status: ${response.status}`);
+    console.log(`[CallMeBot] Response body: ${responseText}`);
+
     if (!response.ok) {
-      throw new Error(`CallMeBot API error: ${response.status}`);
+      throw new Error(`CallMeBot API error: ${response.status} - ${responseText}`);
     }
 
     console.log('✅ WhatsApp notification sent to:', data.phone);
@@ -69,8 +76,10 @@ export async function notifyManagerNewContact(data: {
   email: string;
   subject: string;
 }) {
-  if (!MANAGER_WHATSAPP) {
-    console.warn('⚠️ Manager WhatsApp not configured');
+  const managerPhone = process.env.MANAGER_WHATSAPP;
+
+  if (!managerPhone) {
+    console.warn('⚠️ Manager WhatsApp not configured (MANAGER_WHATSAPP)');
     return false;
   }
 
@@ -81,7 +90,7 @@ export async function notifyManagerNewContact(data: {
     `Consultez le dashboard pour plus de détails.`;
 
   return sendWhatsAppNotification({
-    phone: MANAGER_WHATSAPP,
+    phone: managerPhone,
     message,
   });
 }
@@ -101,8 +110,14 @@ export async function notifyManagerNewCustomOrder(data: {
   customOrderId?: string;
   validationToken?: string;
 }) {
-  if (!MANAGER_WHATSAPP) {
-    console.warn('⚠️ Manager WhatsApp not configured');
+  const managerPhone = process.env.MANAGER_WHATSAPP;
+
+  console.log(`[CustomOrder WhatsApp] Attempting to notify manager...`);
+  console.log(`[CustomOrder WhatsApp] MANAGER_WHATSAPP: ${managerPhone ? managerPhone.substring(0, 5) + '***' : 'NOT SET'}`);
+  console.log(`[CustomOrder WhatsApp] CALLMEBOT_API_KEY: ${process.env.CALLMEBOT_API_KEY ? 'SET' : 'NOT SET'}`);
+
+  if (!managerPhone) {
+    console.warn('⚠️ Manager WhatsApp not configured (MANAGER_WHATSAPP)');
     return false;
   }
 
@@ -127,10 +142,15 @@ export async function notifyManagerNewCustomOrder(data: {
     message += `Contactez le client rapidement !`;
   }
 
-  return sendWhatsAppNotification({
-    phone: MANAGER_WHATSAPP,
+  console.log(`[CustomOrder WhatsApp] Message prepared, sending to: ${managerPhone}`);
+
+  const result = await sendWhatsAppNotification({
+    phone: managerPhone,
     message,
   });
+
+  console.log(`[CustomOrder WhatsApp] Send result: ${result ? 'SUCCESS' : 'FAILED'}`);
+  return result;
 }
 
 /**
@@ -140,8 +160,10 @@ export async function notifyManagerNewNewsletter(data: {
   email: string;
   name?: string;
 }) {
-  if (!MANAGER_WHATSAPP) {
-    console.warn('⚠️ Manager WhatsApp not configured');
+  const managerPhone = process.env.MANAGER_WHATSAPP;
+
+  if (!managerPhone) {
+    console.warn('⚠️ Manager WhatsApp not configured (MANAGER_WHATSAPP)');
     return false;
   }
 
@@ -150,7 +172,7 @@ export async function notifyManagerNewNewsletter(data: {
     `📧 *Email:* ${data.email}`;
 
   return sendWhatsAppNotification({
-    phone: MANAGER_WHATSAPP,
+    phone: managerPhone,
     message,
   });
 }
@@ -175,8 +197,14 @@ export async function notifyManagerNewOrder(data: {
   country?: string;
   paymentMethod?: string;
 }) {
-  if (!MANAGER_WHATSAPP) {
-    console.warn('⚠️ Manager WhatsApp not configured');
+  const managerPhone = process.env.MANAGER_WHATSAPP;
+
+  console.log(`[Order WhatsApp] Attempting to notify manager...`);
+  console.log(`[Order WhatsApp] MANAGER_WHATSAPP: ${managerPhone ? managerPhone.substring(0, 5) + '***' : 'NOT SET'}`);
+  console.log(`[Order WhatsApp] CALLMEBOT_API_KEY: ${process.env.CALLMEBOT_API_KEY ? 'SET' : 'NOT SET'}`);
+
+  if (!managerPhone) {
+    console.warn('⚠️ Manager WhatsApp not configured (MANAGER_WHATSAPP)');
     return false;
   }
 
@@ -252,8 +280,11 @@ export async function notifyManagerNewOrder(data: {
   console.log('[WhatsApp] Sending complete order notification with secure validation links');
   console.log('[WhatsApp] Message length:', message.length);
 
-  return sendWhatsAppNotification({
-    phone: MANAGER_WHATSAPP,
+  const result = await sendWhatsAppNotification({
+    phone: managerPhone,
     message,
   });
+
+  console.log(`[Order WhatsApp] Send result: ${result ? 'SUCCESS' : 'FAILED'}`);
+  return result;
 }
