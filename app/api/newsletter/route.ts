@@ -49,22 +49,36 @@ export async function POST(req: NextRequest) {
     // Envoyer email de bienvenue
     let emailStatus = 'pending';
     let emailErrorMessage: string | null = null;
+
+    console.log('[Newsletter] === STARTING EMAIL SEND ===');
+    console.log('[Newsletter] To:', email);
+    console.log('[Newsletter] Name:', name);
+    console.log('[Newsletter] SMTP_HOST:', process.env.SMTP_HOST || 'using default');
+    console.log('[Newsletter] SMTP_USER:', process.env.SMTP_USER || 'using default');
+    console.log('[Newsletter] SMTP_PASSWORD set:', !!process.env.SMTP_PASSWORD);
+
     try {
       const emailTemplate = getNewsletterWelcomeEmail({ email, name: name || undefined });
-      console.log('[Newsletter] Attempting to send welcome email to:', email);
+      console.log('[Newsletter] Template generated, subject:', emailTemplate.subject);
+      console.log('[Newsletter] Calling sendEmailSMTP...');
+
       const result = await sendEmailSMTP({
         to: email,
         subject: emailTemplate.subject,
         html: emailTemplate.html,
       });
-      console.log('[Newsletter] Email sent successfully:', result);
-      emailStatus = 'sent';
+
+      console.log('[Newsletter] sendEmailSMTP result:', result);
+      emailStatus = result === 'skipped' ? 'skipped' : 'sent';
     } catch (emailError: any) {
       console.error('[Newsletter] Erreur envoi email:', emailError?.message || emailError);
       emailStatus = 'failed';
       emailErrorMessage = emailError?.message || 'Unknown email error';
       // Ne pas bloquer l'inscription si l'email échoue
     }
+
+    console.log('[Newsletter] === EMAIL STATUS:', emailStatus, '===');
+
 
     return NextResponse.json({
       ok: true,
