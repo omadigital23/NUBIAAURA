@@ -2,59 +2,54 @@
 
 ## ✅ Ce qui a été implémenté
 
-### **1️⃣ Emails de Confirmation**
+### **1️⃣ Emails de Confirmation (Via Namecheap SMTP)**
 
-Tous les formulaires envoient maintenant des emails automatiques :
+Nous n'utilisons PLUS SendGrid. Tous les emails passent par le serveur SMTP de Namecheap.
 
 | Formulaire | Email Client | Email Manager |
 |------------|--------------|---------------|
 | **Newsletter** | ✅ Email de bienvenue | ❌ Non |
 | **Contact** | ✅ Confirmation de réception | ✅ Notification |
 | **Sur-mesure** | ✅ Confirmation avec détails | ✅ Notification |
+| **Commandes** | ✅ Confirmation / Expédition | ✅ Notification |
 
 ### **2️⃣ Notifications WhatsApp**
 
 Le manager reçoit des notifications WhatsApp instantanées pour :
 - 📧 Nouveaux messages de contact
 - 🎨 Nouvelles commandes sur-mesure
-- 🛍️ Nouvelles commandes (à implémenter dans checkout)
 
 ---
 
-## 📧 Configuration SendGrid (Emails)
+## 📧 Configuration SMTP (Namecheap)
 
-### **Étape 1 : Créer un compte SendGrid**
+### **Étape 1 : Obtenir les identifiants**
 
-1. Allez sur [SendGrid.com](https://sendgrid.com)
-2. Créez un compte gratuit (100 emails/jour)
-3. Vérifiez votre email
+Vous devez disposer des informations de votre compte email professionnel Namecheap (Private Email).
 
-### **Étape 2 : Créer une clé API**
+### **Étape 2 : Configurer les variables d'environnement**
 
-1. Dashboard SendGrid → **Settings** → **API Keys**
-2. Cliquez sur **Create API Key**
-3. Nom : "Nubia Aura Production"
-4. Permissions : **Full Access** ou **Mail Send**
-5. Copiez la clé (elle ne sera affichée qu'une fois !)
-
-### **Étape 3 : Configurer les variables d'environnement**
-
-Créez ou modifiez `.env.local` :
+Créez ou modifiez `.env.local` et les variables Vercel :
 
 ```env
-# SendGrid Configuration
-SENDGRID_API_KEY=SG.xxxxxxxxxxxxxxxxxxxxx
-SENDGRID_FROM_EMAIL=noreply@nubiaaura.com
-MANAGER_EMAIL=admin@nubiaaura.com
+# SMTP Configuration (Namecheap)
+SMTP_HOST=mail.privateemail.com
+SMTP_PORT=587
+SMTP_USER=supports@nubiaaura.com
+SMTP_PASSWORD=votre_mot_de_passe_ici
+SMTP_FROM_EMAIL=supports@nubiaaura.com
+SMTP_FROM_NAME="Nubia Aura"
+
+# Admin Email
+MANAGER_EMAIL=supports@nubiaaura.com
 ```
 
-### **Étape 4 : Vérifier votre domaine (Optionnel mais recommandé)**
+### **Étape 3 : Configurer Supabase**
 
-Pour éviter que les emails tombent dans les spams :
-
-1. Dashboard SendGrid → **Settings** → **Sender Authentication**
-2. Cliquez sur **Authenticate Your Domain**
-3. Suivez les instructions pour ajouter les enregistrements DNS
+Pour les emails système (inscription, mot de passe oublié) :
+1. Allez dans [Supabase Dashboard](https://app.supabase.com) > Authentication > Settings > SMTP Provider.
+2. Activez **Enable Custom SMTP**.
+3. Remplissez avec les mêmes informations (Host: `mail.privateemail.com`, Port: `587`, User: `supports@nubiaaura.com`, etc.).
 
 ---
 
@@ -79,10 +74,6 @@ NEXT_PUBLIC_WHATSAPP_PHONE=+212701193811
 
 ⚠️ **Important** : Le numéro doit être au format international (+221...)
 
-### **Étape 3 : Tester**
-
-Soumettez un formulaire de contact ou sur-mesure. Vous devriez recevoir une notification WhatsApp !
-
 ---
 
 ## 🧪 Test des Emails et Notifications
@@ -96,7 +87,7 @@ Soumettez un formulaire de contact ou sur-mesure. Vous devriez recevoir une noti
 ```
 
 **Résultat attendu :**
-- ✅ Email de bienvenue reçu
+- ✅ Email de bienvenue reçu (via Namecheap SMTP)
 - ✅ Enregistrement dans `newsletter_subscriptions`
 
 ### **Test Contact**
@@ -112,30 +103,6 @@ Soumettez un formulaire de contact ou sur-mesure. Vous devriez recevoir une noti
 - ✅ Notification WhatsApp au manager
 - ✅ Enregistrement dans `contact_submissions`
 
-### **Test Sur-mesure**
-
-```bash
-# Allez sur http://localhost:3000/fr/sur-mesure
-# Remplissez et soumettez le formulaire
-```
-
-**Résultat attendu :**
-- ✅ Email de confirmation au client avec référence
-- ✅ Email de notification au manager
-- ✅ Notification WhatsApp au manager
-- ✅ Enregistrement dans `custom_orders`
-
----
-
-## 🔍 Vérification dans Supabase
-
-1. Allez sur [Supabase Dashboard](https://app.supabase.com)
-2. **Table Editor**
-3. Vérifiez les données dans :
-   - `newsletter_subscriptions`
-   - `contact_submissions`
-   - `custom_orders`
-
 ---
 
 ## 🎨 Templates d'Emails
@@ -144,93 +111,32 @@ Les templates sont dans `lib/email-templates.ts` :
 
 - `getNewsletterWelcomeEmail()` - Bienvenue newsletter
 - `getContactConfirmationEmail()` - Confirmation contact
-- `getContactManagerNotification()` - Notification manager contact
 - `getCustomOrderConfirmationEmail()` - Confirmation sur-mesure
-- `getCustomOrderManagerNotification()` - Notification manager sur-mesure
+- `getShippingUpdateEmail()` - Notification expédition/livraison
 
 Vous pouvez les personnaliser selon vos besoins !
 
 ---
 
-## 🚨 Dépannage
-
-### **Les emails ne sont pas envoyés**
-
-1. Vérifiez que `SENDGRID_API_KEY` est configuré dans `.env.local`
-2. Vérifiez les logs du serveur : `npm run dev`
-3. Vérifiez votre quota SendGrid (100/jour gratuit)
-4. Vérifiez les spams de votre boîte email
-
-### **Les notifications WhatsApp ne fonctionnent pas**
-
-1. Vérifiez que `CALLMEBOT_API_KEY` est configuré
-2. Vérifiez que le numéro est au format international
-3. Vérifiez que vous avez bien activé CallMeBot (étape 1)
-4. Consultez les logs : `npm run dev`
-
-### **Les formulaires ne s'enregistrent pas**
-
-1. Vérifiez que les tables existent dans Supabase
-2. Exécutez `FIX_TABLES_RLS.sql` dans SQL Editor
-3. Vérifiez les politiques RLS
-4. Consultez les logs du serveur
-
----
-
-## 📊 Dashboard Admin (Prochaine étape)
-
-Le dashboard admin vous permettra de :
-- 📧 Voir tous les messages de contact
-- 🎨 Gérer les commandes sur-mesure
-- 📬 Gérer les abonnés newsletter
-- 📈 Statistiques et analytics
-
----
-
 ## 🔐 Sécurité
-
-### **Bonnes pratiques**
-
-1. ✅ Ne commitez JAMAIS `.env.local` sur Git
-2. ✅ Utilisez des clés API différentes pour dev/prod
-3. ✅ Limitez les permissions des clés API
-4. ✅ Régénérez les clés régulièrement
-5. ✅ Activez la validation en 2 étapes sur SendGrid
 
 ### **Variables sensibles**
 
 Ces variables ne doivent JAMAIS être exposées publiquement :
-- `SENDGRID_API_KEY`
+- `SMTP_PASSWORD`
 - `CALLMEBOT_API_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `FLUTTERWAVE_SECRET_KEY`
 
 ---
 
-## 📚 Ressources
-
-- [Documentation SendGrid](https://docs.sendgrid.com)
-- [CallMeBot WhatsApp API](https://www.callmebot.com/blog/free-api-whatsapp-messages/)
-- [Supabase Auth](https://supabase.com/docs/guides/auth)
-- [Next.js API Routes](https://nextjs.org/docs/api-routes/introduction)
-
----
-
 ## ✅ Checklist de Configuration
 
-- [ ] Compte SendGrid créé
-- [ ] Clé API SendGrid obtenue
-- [ ] Variables SendGrid dans `.env.local`
+- [ ] Identifiants SMTP Namecheap récupérés
+- [ ] Variables SMTP dans `.env.local` et Vercel
+- [ ] Configuration SMTP dans Supabase Dashboard effectuée
 - [ ] CallMeBot activé sur WhatsApp
 - [ ] Variables WhatsApp dans `.env.local`
 - [ ] Test newsletter réussi
 - [ ] Test contact réussi
 - [ ] Test sur-mesure réussi
-- [ ] Emails reçus correctement
-- [ ] Notifications WhatsApp reçues
-- [ ] Données dans Supabase vérifiées
-
----
-
-*Configuration effectuée le : Novembre 2024*
-*Projet : Nubia Aura E-commerce*

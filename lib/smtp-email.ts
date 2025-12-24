@@ -1,19 +1,19 @@
 /**
  * Service d'envoi d'emails via SMTP (Namecheap Private Email)
- * Remplace SendGrid - Configuration dans les variables d'environnement
+ * Configuration dans les variables d'environnement
  */
 
 import nodemailer from 'nodemailer';
 
 // Configuration SMTP depuis les variables d'environnement
 const smtpConfig = {
-    host: process.env.SMTP_HOST || 'mail.privateemail.com',
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: false, // true pour 465, false pour autres ports
-    auth: {
-        user: process.env.SMTP_USER || 'supports@nubiaaura.com',
-        pass: process.env.SMTP_PASSWORD || '',
-    },
+  host: process.env.SMTP_HOST || 'mail.privateemail.com',
+  port: parseInt(process.env.SMTP_PORT || '587'),
+  secure: false, // true pour 465, false pour autres ports
+  auth: {
+    user: process.env.SMTP_USER || 'supports@nubiaaura.com',
+    pass: process.env.SMTP_PASSWORD || '',
+  },
 };
 
 const fromEmail = process.env.SMTP_FROM_EMAIL || 'supports@nubiaaura.com';
@@ -23,38 +23,38 @@ const fromName = process.env.SMTP_FROM_NAME || 'Nubia Aura';
 const transporter = nodemailer.createTransport(smtpConfig);
 
 interface EmailOptions {
-    to: string;
-    subject: string;
-    html: string;
-    text?: string;
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
 }
 
 /**
  * Envoie un email via SMTP
  */
 export async function sendEmailSMTP(options: EmailOptions): Promise<string> {
-    try {
-        // Vérifier si le mot de passe SMTP est configuré
-        if (!smtpConfig.auth.pass) {
-            console.warn('⚠️ SMTP password not configured - Email not sent:', options.subject);
-            return 'skipped';
-        }
-
-        const mailOptions = {
-            from: `"${fromName}" <${fromEmail}>`,
-            to: options.to,
-            subject: options.subject,
-            html: options.html,
-            text: options.text || options.html.replace(/<[^>]*>/g, ''), // Fallback texte brut
-        };
-
-        const info = await transporter.sendMail(mailOptions);
-        console.log('✅ Email envoyé via SMTP:', info.messageId);
-        return info.messageId || 'sent';
-    } catch (error: any) {
-        console.error('❌ Erreur envoi email SMTP:', error);
-        throw new Error(`Erreur lors de l'envoi de l'email: ${error.message}`);
+  try {
+    // Vérifier si le mot de passe SMTP est configuré
+    if (!smtpConfig.auth.pass) {
+      console.warn('⚠️ SMTP password not configured - Email not sent:', options.subject);
+      return 'skipped';
     }
+
+    const mailOptions = {
+      from: `"${fromName}" <${fromEmail}>`,
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+      text: options.text || options.html.replace(/<[^>]*>/g, ''), // Fallback texte brut
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Email envoyé via SMTP:', info.messageId);
+    return info.messageId || 'sent';
+  } catch (error: any) {
+    console.error('❌ Erreur envoi email SMTP:', error);
+    throw new Error(`Erreur lors de l'envoi de l'email: ${error.message}`);
+  }
 }
 
 // Alias pour compatibilité avec l'ancien code
@@ -64,30 +64,30 @@ export const sendEmail = sendEmailSMTP;
  * Send order confirmation email
  */
 export async function sendOrderConfirmationEmail(
-    email: string,
-    orderData: {
-        orderId: string;
-        customerName: string;
-        total: number;
-        items: Array<{ name: string; quantity: number; price: number }>;
-        shippingAddress: string;
-        estimatedDelivery: string;
-    }
+  email: string,
+  orderData: {
+    orderId: string;
+    customerName: string;
+    total: number;
+    items: Array<{ name: string; quantity: number; price: number }>;
+    shippingAddress: string;
+    estimatedDelivery: string;
+  }
 ): Promise<string> {
-    const itemsHtml = orderData.items
-        .map(
-            (item) =>
-                `<tr>
+  const itemsHtml = orderData.items
+    .map(
+      (item) =>
+        `<tr>
           <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${item.price.toLocaleString(
-                    'fr-FR'
-                )} FCFA</td>
+          'fr-FR'
+        )} FCFA</td>
         </tr>`
-        )
-        .join('');
+    )
+    .join('');
 
-    const html = `
+  const html = `
     <!DOCTYPE html>
     <html>
       <head>
@@ -138,8 +138,8 @@ export async function sendOrderConfirmationEmail(
                   <tr style="font-weight: bold; background: #f9f9f9;">
                     <td colspan="2" style="padding: 10px; text-align: right;">Total:</td>
                     <td style="padding: 10px; text-align: right; color: #D4AF37;">${orderData.total.toLocaleString(
-        'fr-FR'
-    )} FCFA</td>
+    'fr-FR'
+  )} FCFA</td>
                   </tr>
                 </tbody>
               </table>
@@ -167,27 +167,27 @@ export async function sendOrderConfirmationEmail(
     </html>
   `;
 
-    return sendEmailSMTP({
-        to: email,
-        subject: `Confirmation de votre commande #${orderData.orderId}`,
-        html,
-    });
+  return sendEmailSMTP({
+    to: email,
+    subject: `Confirmation de votre commande #${orderData.orderId}`,
+    html,
+  });
 }
 
 /**
  * Send order shipped email
  */
 export async function sendOrderShippedEmail(
-    email: string,
-    orderData: {
-        orderId: string;
-        customerName: string;
-        trackingNumber?: string;
-        carrier?: string;
-        estimatedDelivery: string;
-    }
+  email: string,
+  orderData: {
+    orderId: string;
+    customerName: string;
+    trackingNumber?: string;
+    carrier?: string;
+    estimatedDelivery: string;
+  }
 ): Promise<string> {
-    const html = `
+  const html = `
     <!DOCTYPE html>
     <html>
       <head>
@@ -244,24 +244,24 @@ export async function sendOrderShippedEmail(
     </html>
   `;
 
-    return sendEmailSMTP({
-        to: email,
-        subject: `Votre commande #${orderData.orderId} a été expédiée`,
-        html,
-    });
+  return sendEmailSMTP({
+    to: email,
+    subject: `Votre commande #${orderData.orderId} a été expédiée`,
+    html,
+  });
 }
 
 /**
  * Send order delivered email
  */
 export async function sendOrderDeliveredEmail(
-    email: string,
-    orderData: {
-        orderId: string;
-        customerName: string;
-    }
+  email: string,
+  orderData: {
+    orderId: string;
+    customerName: string;
+  }
 ): Promise<string> {
-    const html = `
+  const html = `
     <!DOCTYPE html>
     <html>
       <head>
@@ -313,26 +313,26 @@ export async function sendOrderDeliveredEmail(
     </html>
   `;
 
-    return sendEmailSMTP({
-        to: email,
-        subject: `Votre commande #${orderData.orderId} a été livrée`,
-        html,
-    });
+  return sendEmailSMTP({
+    to: email,
+    subject: `Votre commande #${orderData.orderId} a été livrée`,
+    html,
+  });
 }
 
 /**
  * Send custom order confirmation email
  */
 export async function sendCustomOrderConfirmationEmail(
-    email: string,
-    orderData: {
-        customerName: string;
-        reference: string;
-        description: string;
-        estimatedDelivery: string;
-    }
+  email: string,
+  orderData: {
+    customerName: string;
+    reference: string;
+    description: string;
+    estimatedDelivery: string;
+  }
 ): Promise<string> {
-    const html = `
+  const html = `
     <!DOCTYPE html>
     <html>
       <head>
@@ -388,36 +388,36 @@ export async function sendCustomOrderConfirmationEmail(
     </html>
   `;
 
-    return sendEmailSMTP({
-        to: email,
-        subject: `Confirmation de votre commande personnalisée #${orderData.reference}`,
-        html,
-    });
+  return sendEmailSMTP({
+    to: email,
+    subject: `Confirmation de votre commande personnalisée #${orderData.reference}`,
+    html,
+  });
 }
 
 /**
  * Send manager notification email
  */
 export async function notifyManagerEmail(
-    subject: string,
-    message: string,
-    data?: Record<string, any>
+  subject: string,
+  message: string,
+  data?: Record<string, any>
 ): Promise<string> {
-    const managerEmail = process.env.MANAGER_EMAIL;
-    if (!managerEmail) {
-        console.warn('⚠️ Manager email not configured - skipping notification');
-        return 'skipped';
-    }
+  const managerEmail = process.env.MANAGER_EMAIL;
+  if (!managerEmail) {
+    console.warn('⚠️ Manager email not configured - skipping notification');
+    return 'skipped';
+  }
 
-    const dataHtml = data
-        ? `<div style="background: #f0f0f0; padding: 10px; border-radius: 5px; margin: 10px 0;">
+  const dataHtml = data
+    ? `<div style="background: #f0f0f0; padding: 10px; border-radius: 5px; margin: 10px 0;">
         ${Object.entries(data)
-            .map(([key, value]) => `<p><strong>${key}:</strong> ${value}</p>`)
-            .join('')}
+      .map(([key, value]) => `<p><strong>${key}:</strong> ${value}</p>`)
+      .join('')}
       </div>`
-        : '';
+    : '';
 
-    const html = `
+  const html = `
     <!DOCTYPE html>
     <html>
       <head>
@@ -448,23 +448,23 @@ export async function notifyManagerEmail(
     </html>
   `;
 
-    return sendEmailSMTP({
-        to: managerEmail,
-        subject: `[Nubia Aura] ${subject}`,
-        html,
-    });
+  return sendEmailSMTP({
+    to: managerEmail,
+    subject: `[Nubia Aura] ${subject}`,
+    html,
+  });
 }
 
 /**
  * Vérifie la connexion SMTP
  */
 export async function verifySMTPConnection(): Promise<boolean> {
-    try {
-        await transporter.verify();
-        console.log('✅ Connexion SMTP vérifiée');
-        return true;
-    } catch (error) {
-        console.error('❌ Erreur connexion SMTP:', error);
-        return false;
-    }
+  try {
+    await transporter.verify();
+    console.log('✅ Connexion SMTP vérifiée');
+    return true;
+  } catch (error) {
+    console.error('❌ Erreur connexion SMTP:', error);
+    return false;
+  }
 }

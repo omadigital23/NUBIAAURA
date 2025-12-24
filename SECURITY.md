@@ -73,7 +73,8 @@ secrets.txt       # ❌ Fichier de secrets
 # Variables d'environnement dans Vercel
 vercel env add SUPABASE_SERVICE_ROLE_KEY
 vercel env add FLUTTERWAVE_SECRET_KEY
-vercel env add SENDGRID_API_KEY
+vercel env add SMTP_PASSWORD
+vercel env add SMTP_USER
 ```
 
 ### Production Checklist
