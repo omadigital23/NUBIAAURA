@@ -54,12 +54,19 @@ export default function CheckoutPage() {
       if (!user || !isAuthenticated || authLoading) return;
 
       // D'abord, pré-remplir avec les données utilisateur de la session
+      // Supabase stocke les données dans user_metadata
+      const metadata = (user as any).user_metadata || {};
+      const fullName = metadata.full_name || metadata.name || '';
+      const nameParts = fullName.split(' ');
+      const firstName = metadata.first_name || nameParts[0] || '';
+      const lastName = metadata.last_name || nameParts.slice(1).join(' ') || '';
+
       setFormData((prev) => ({
         ...prev,
         email: user.email || prev.email,
-        firstName: (user as any).first_name || (user as any).name || prev.firstName,
-        lastName: (user as any).last_name || prev.lastName,
-        phone: (user as any).phone || prev.phone,
+        firstName: firstName || prev.firstName,
+        lastName: lastName || prev.lastName,
+        phone: metadata.phone || prev.phone,
       }));
 
       // Ensuite, chercher l'adresse par défaut de l'utilisateur dans Supabase
