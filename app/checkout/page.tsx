@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 import CheckoutDebugPanel from '@/components/CheckoutDebugPanel';
 import { trackBeginCheckout, trackAddShippingInfo, trackAddPaymentInfo } from '@/lib/analytics-config';
 import { CountrySelect, PhoneInput, type CountryData } from '@/components/checkout/CountryPhoneInput';
+import { supabase } from '@/lib/supabase';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -47,9 +48,12 @@ export default function CheckoutPage() {
     country: '',
   });
 
-  // Pré-remplir le formulaire avec les données de l'utilisateur connecté
+  // Pré-remplir le formulaire avec les données de l'utilisateur connecté et son adresse par défaut
   useEffect(() => {
-    if (user && isAuthenticated && !authLoading) {
+    const fetchUserDataAndAddress = async () => {
+      if (!user || !isAuthenticated || authLoading) return;
+
+      // D'abord, pré-remplir avec les données utilisateur de la session
       setFormData((prev) => ({
         ...prev,
         email: user.email || prev.email,
@@ -57,7 +61,60 @@ export default function CheckoutPage() {
         lastName: (user as any).last_name || prev.lastName,
         phone: (user as any).phone || prev.phone,
       }));
-    }
+
+      // Ensuite, chercher l'adresse par défaut de l'utilisateur dans Supabase
+      try {
+        const { data: defaultAddress, error } = await supabase
+          .from('addresses')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_default', true)
+          .single();
+
+        if (!error && defaultAddress) {
+          console.log('[Checkout] Adresse par défaut trouvée:', defaultAddress);
+
+          // Mettre à jour le formulaire avec l'adresse par défaut
+          setFormData((prev) => ({
+            ...prev,
+            firstName: defaultAddress.full_name?.split(' ')[0] || prev.firstName,
+            lastName: defaultAddress.full_name?.split(' ').slice(1).join(' ') || prev.lastName,
+            phone: defaultAddress.phone || prev.phone,
+            address: defaultAddress.address_line1 || prev.address,
+            city: defaultAddress.city || prev.city,
+            zipCode: defaultAddress.postal_code || prev.zipCode,
+            country: defaultAddress.country || prev.country,
+          }));
+        } else {
+          // Si pas d'adresse par défaut, chercher la dernière adresse utilisée
+          const { data: latestAddress } = await supabase
+            .from('addresses')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (latestAddress) {
+            console.log('[Checkout] Dernière adresse trouvée:', latestAddress);
+            setFormData((prev) => ({
+              ...prev,
+              firstName: latestAddress.full_name?.split(' ')[0] || prev.firstName,
+              lastName: latestAddress.full_name?.split(' ').slice(1).join(' ') || prev.lastName,
+              phone: latestAddress.phone || prev.phone,
+              address: latestAddress.address_line1 || prev.address,
+              city: latestAddress.city || prev.city,
+              zipCode: latestAddress.postal_code || prev.zipCode,
+              country: latestAddress.country || prev.country,
+            }));
+          }
+        }
+      } catch (err) {
+        console.error('[Checkout] Erreur lors de la récupération de l\'adresse:', err);
+      }
+    };
+
+    fetchUserDataAndAddress();
   }, [user, isAuthenticated, authLoading]);
 
   const isAddressValid = useMemo(() => {

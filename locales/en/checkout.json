@@ -26,12 +26,17 @@
     },
     "payment": {
       "title": "Payment Information",
-      "secured_by": "Secure payments via Flutterwave",
-      "flutterwave": "Pay online (Flutterwave)",
-      "flutterwave_desc": "Card, Mobile Money",
+      "secured_by": "100% Secure and Encrypted Payment",
+      "paytech": "Mobile Money (PayTech)",
+      "paytech_desc": "Wave, Orange Money, Free Money",
+      "chaabi": "Credit Card (Chaabi)",
+      "chaabi_desc": "Visa, Mastercard via Banque Populaire",
+      "card": "International Credit Card",
+      "card_desc": "Visa, Mastercard, American Express",
       "cod": "Cash on Delivery",
       "cod_desc": "Pay upon delivery",
-      "note": "You will be redirected to the secure Flutterwave payment platform to complete your payment."
+      "note": "You will be redirected to the secure payment platform to complete your payment.",
+      "select_method": "Select a payment method"
     },
     "actions": {
       "prev": "Previous",
