@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Mail, Lock, User, Phone, AlertCircle, CheckCircle, Loader } from 'lucide-react';
+import { Mail, Lock, User, Phone, Eye, EyeOff, AlertCircle, CheckCircle, Loader } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 
 export default function SignUpFormClient() {
@@ -18,6 +18,8 @@ export default function SignUpFormClient() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
   const { t, locale } = useTranslation();
 
@@ -191,14 +193,21 @@ export default function SignUpFormClient() {
             <div className="relative">
               <Lock className="absolute left-4 top-3.5 text-nubia-gold/60" size={20} />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="w-full pl-12 pr-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20 transition-all"
+                className="w-full pl-12 pr-12 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20 transition-all"
                 placeholder={t('auth.password_placeholder', '••••••••')}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-3.5 text-nubia-gold/60 hover:text-nubia-gold transition-colors"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
             <p className="text-xs text-nubia-black/50 mt-1">
               {t('auth.password_min_length', 'Minimum 8 caractères')}
@@ -212,14 +221,21 @@ export default function SignUpFormClient() {
             <div className="relative">
               <Lock className="absolute left-4 top-3.5 text-nubia-gold/60" size={20} />
               <input
-                type="password"
+                type={showConfirmPassword ? 'text' : 'password'}
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
-                className="w-full pl-12 pr-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20 transition-all"
+                className="w-full pl-12 pr-12 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20 transition-all"
                 placeholder={t('auth.confirm_password_placeholder', '••••••••')}
               />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-4 top-3.5 text-nubia-gold/60 hover:text-nubia-gold transition-colors"
+              >
+                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
           </div>
 
