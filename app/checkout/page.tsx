@@ -53,59 +53,33 @@ export default function CheckoutPage() {
     const fetchUserDataAndAddress = async () => {
       if (!user || !isAuthenticated || authLoading) return;
 
-      // 1. D'abord, chercher le profil utilisateur via l'API (bypass RLS)
-      try {
-        const profileResponse = await fetch('/api/users/profile', {
-          credentials: 'include',
-          cache: 'no-store',
-        });
+      console.log('[Checkout] User data from useAuth:', user);
 
-        if (profileResponse.ok) {
-          const { profile } = await profileResponse.json();
-          console.log('[Checkout] Profil utilisateur trouvé via API:', profile);
+      // Utiliser directement les données de user (qui viennent de /api/auth/me)
+      // Parser full_name si first_name/last_name sont vides
+      let firstName = (user as any).first_name || '';
+      let lastName = (user as any).last_name || '';
 
-          // Si firstName/lastName sont vides, parser fullName
-          let firstName = profile.firstName || '';
-          let lastName = profile.lastName || '';
-
-          if (!firstName && !lastName && profile.fullName) {
-            const nameParts = profile.fullName.trim().split(' ');
-            firstName = nameParts[0] || '';
-            lastName = nameParts.slice(1).join(' ') || '';
-          }
-
-          setFormData((prev) => ({
-            ...prev,
-            email: profile.email || user.email || prev.email,
-            firstName: firstName || prev.firstName,
-            lastName: lastName || prev.lastName,
-            phone: profile.phone || prev.phone,
-          }));
-        } else {
-          // 2. Fallback: chercher dans user_metadata (connexion Google, etc.)
-          console.log('[Checkout] API failed, tentative user_metadata');
-          const metadata = (user as any).user_metadata || {};
-          const fullName = metadata.full_name || metadata.name || '';
-          const nameParts = fullName.split(' ');
-          const firstName = metadata.first_name || nameParts[0] || '';
-          const lastName = metadata.last_name || nameParts.slice(1).join(' ') || '';
-
-          setFormData((prev) => ({
-            ...prev,
-            email: user.email || prev.email,
-            firstName: firstName || prev.firstName,
-            lastName: lastName || prev.lastName,
-            phone: metadata.phone || prev.phone,
-          }));
-        }
-      } catch (err) {
-        console.error('[Checkout] Erreur lors de la récupération du profil:', err);
-        // Fallback sur email seulement
-        setFormData((prev) => ({
-          ...prev,
-          email: user.email || prev.email,
-        }));
+      if (!firstName && !lastName && user.name) {
+        const nameParts = user.name.trim().split(' ');
+        firstName = nameParts[0] || '';
+        lastName = nameParts.slice(1).join(' ') || '';
       }
+
+      setFormData((prev) => ({
+        ...prev,
+        email: user.email || prev.email,
+        firstName: firstName || prev.firstName,
+        lastName: lastName || prev.lastName,
+        phone: (user as any).phone || prev.phone,
+      }));
+
+      console.log('[Checkout] Form pre-filled with:', {
+        email: user.email,
+        firstName,
+        lastName,
+        phone: (user as any).phone
+      });
 
       // 3. Ensuite, chercher l'adresse par défaut de l'utilisateur dans Supabase
       try {

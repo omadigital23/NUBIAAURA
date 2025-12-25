@@ -14,8 +14,8 @@ export async function GET(request: NextRequest) {
 
     if (!token) {
       return NextResponse.json(
-        { error: 'Unauthorized' }, 
-        { 
+        { error: 'Unauthorized' },
+        {
           status: 401,
           headers: {
             'Cache-Control': 'private, max-age=60',
@@ -50,10 +50,11 @@ export async function GET(request: NextRequest) {
         user: {
           id: user.id,
           email: user.email,
-          name: profile?.name,
-          first_name: profile?.first_name,
-          last_name: profile?.last_name,
-          phone: profile?.phone,
+          name: profile?.full_name || profile?.name || '',
+          first_name: profile?.first_name || '',
+          last_name: profile?.last_name || '',
+          full_name: profile?.full_name || '',
+          phone: profile?.phone || '',
           avatar_url: profile?.avatar_url,
           role: profile?.role || 'customer',
         },
