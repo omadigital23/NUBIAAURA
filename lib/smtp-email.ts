@@ -160,7 +160,7 @@ export async function sendOrderConfirmationEmail(
 
           <div class="footer">
             <p>© 2025 Nubia Aura. Tous droits réservés.</p>
-            <p>Thiès, Sénégal | Casablanca, Maroc</p>
+            <p>Dakar, Sénégal</p>
           </div>
         </div>
       </body>
@@ -237,7 +237,7 @@ export async function sendOrderShippedEmail(
 
           <div class="footer">
             <p>© 2025 Nubia Aura. Tous droits réservés.</p>
-            <p>Thiès, Sénégal | Casablanca, Maroc</p>
+            <p>Dakar, Sénégal</p>
           </div>
         </div>
       </body>
@@ -306,7 +306,7 @@ export async function sendOrderDeliveredEmail(
 
           <div class="footer">
             <p>© 2025 Nubia Aura. Tous droits réservés.</p>
-            <p>Thiès, Sénégal | Casablanca, Maroc</p>
+            <p>Dakar, Sénégal</p>
           </div>
         </div>
       </body>
@@ -381,7 +381,7 @@ export async function sendCustomOrderConfirmationEmail(
 
           <div class="footer">
             <p>© 2025 Nubia Aura. Tous droits réservés.</p>
-            <p>Thiès, Sénégal | Casablanca, Maroc</p>
+            <p>Dakar, Sénégal</p>
           </div>
         </div>
       </body>

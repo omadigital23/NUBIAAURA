@@ -94,7 +94,7 @@ export function getNewsletterWelcomeEmail(data: NewsletterEmailData) {
 
             <div class="footer">
               <p>© 2025 Nubia Aura. Tous droits réservés.</p>
-              <p>Thiès, Sénégal | Casablanca, Maroc</p>
+              <p>Dakar, Sénégal</p>
             </div>
           </div>
         </body>
@@ -161,7 +161,7 @@ export function getContactConfirmationEmail(data: ContactEmailData) {
 
             <div class="footer">
               <p>© 2025 Nubia Aura. Tous droits réservés.</p>
-              <p>Thiès, Sénégal | Casablanca, Maroc</p>
+              <p>Dakar, Sénégal</p>
             </div>
           </div>
         </body>
@@ -295,7 +295,7 @@ export function getCustomOrderConfirmationEmail(data: CustomOrderEmailData) {
 
             <div class="footer">
               <p>© 2025 Nubia Aura. Tous droits réservés.</p>
-              <p>Thiès, Sénégal | Casablanca, Maroc</p>
+              <p>Dakar, Sénégal</p>
             </div>
           </div>
         </body>
@@ -516,7 +516,7 @@ export function getShippingUpdateEmail(data: ShippingUpdateEmailData) {
 
             <div class="footer">
               <p>© 2025 Nubia Aura. Tous droits réservés.</p>
-              <p>Thiès, Sénégal | Casablanca, Maroc</p>
+              <p>Dakar, Sénégal</p>
             </div>
           </div>
         </body>
