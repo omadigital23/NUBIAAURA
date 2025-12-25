@@ -53,37 +53,37 @@ export default function CheckoutPage() {
     const fetchUserDataAndAddress = async () => {
       if (!user || !isAuthenticated || authLoading) return;
 
-      // 1. D'abord, chercher le profil utilisateur dans la table 'users'
+      // 1. D'abord, chercher le profil utilisateur via l'API (bypass RLS)
       try {
-        const { data: userProfile, error: profileError } = await supabase
-          .from('users')
-          .select('first_name, last_name, full_name, phone, email')
-          .eq('id', user.id)
-          .single();
+        const profileResponse = await fetch('/api/users/profile', {
+          credentials: 'include',
+          cache: 'no-store',
+        });
 
-        if (!profileError && userProfile) {
-          console.log('[Checkout] Profil utilisateur trouvé dans la table users:', userProfile);
+        if (profileResponse.ok) {
+          const { profile } = await profileResponse.json();
+          console.log('[Checkout] Profil utilisateur trouvé via API:', profile);
 
-          // Si first_name/last_name sont vides, parser full_name
-          let firstName = userProfile.first_name || '';
-          let lastName = userProfile.last_name || '';
+          // Si firstName/lastName sont vides, parser fullName
+          let firstName = profile.firstName || '';
+          let lastName = profile.lastName || '';
 
-          if (!firstName && !lastName && userProfile.full_name) {
-            const nameParts = userProfile.full_name.trim().split(' ');
+          if (!firstName && !lastName && profile.fullName) {
+            const nameParts = profile.fullName.trim().split(' ');
             firstName = nameParts[0] || '';
             lastName = nameParts.slice(1).join(' ') || '';
           }
 
           setFormData((prev) => ({
             ...prev,
-            email: userProfile.email || user.email || prev.email,
+            email: profile.email || user.email || prev.email,
             firstName: firstName || prev.firstName,
             lastName: lastName || prev.lastName,
-            phone: userProfile.phone || prev.phone,
+            phone: profile.phone || prev.phone,
           }));
         } else {
           // 2. Fallback: chercher dans user_metadata (connexion Google, etc.)
-          console.log('[Checkout] Pas de profil dans users, tentative user_metadata');
+          console.log('[Checkout] API failed, tentative user_metadata');
           const metadata = (user as any).user_metadata || {};
           const fullName = metadata.full_name || metadata.name || '';
           const nameParts = fullName.split(' ');
