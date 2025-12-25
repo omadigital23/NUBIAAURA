@@ -6,7 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
-import { User, ShoppingBag, LogOut, AlertCircle, MapPin, TrendingUp, Package } from 'lucide-react';
+import { User, ShoppingBag, LogOut, AlertCircle, MapPin, TrendingUp, Package, Store, Scissors } from 'lucide-react';
 
 interface UserStats {
   totalSpent: number;
@@ -101,6 +101,24 @@ export default function ClientDashboard() {
             <p className="text-nubia-black/70">
               {t('dashboard.welcome', 'Bienvenue,')} {user.name || user.email}
             </p>
+          </div>
+
+          {/* Quick Action Buttons - Boutique & Sur mesure */}
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <a
+              href={`/${locale}/catalogue`}
+              className="flex items-center justify-center gap-3 py-4 px-6 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white border-2 border-nubia-gold transition-all duration-300"
+            >
+              <Store size={24} />
+              {t('nav.shop', 'Boutique')}
+            </a>
+            <a
+              href={`/${locale}/sur-mesure`}
+              className="flex items-center justify-center gap-3 py-4 px-6 bg-nubia-black text-nubia-white font-semibold rounded-lg hover:bg-nubia-black/90 border-2 border-nubia-black transition-all duration-300"
+            >
+              <Scissors size={24} />
+              {t('nav.custom', 'Sur mesure')}
+            </a>
           </div>
 
           {error && (
