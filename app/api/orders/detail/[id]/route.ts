@@ -39,7 +39,10 @@ export async function GET(
     }
 
     // Get order and verify it belongs to user
-    const { data: order, error: orderError } = await supabase
+    // Support both UUID (id) and order_number (e.g., ORD-1735095143)
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+    let query = supabase
       .from('orders')
       .select(
         `
@@ -55,10 +58,19 @@ export async function GET(
           )
         )
       `
-      )
-      .eq('id', id)
-      .eq('user_id', user.id)
-      .single();
+      );
+
+    // Search by UUID or order_number
+    if (isUUID) {
+      query = query.eq('id', id);
+    } else {
+      query = query.eq('order_number', id);
+    }
+
+    // Only filter by user_id if user is authenticated
+    query = query.eq('user_id', user.id);
+
+    const { data: order, error: orderError } = await query.single();
 
     if (orderError || !order) {
       return NextResponse.json(
