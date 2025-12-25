@@ -63,11 +63,22 @@ export default function CheckoutPage() {
 
         if (!profileError && userProfile) {
           console.log('[Checkout] Profil utilisateur trouvé dans la table users:', userProfile);
+
+          // Si first_name/last_name sont vides, parser full_name
+          let firstName = userProfile.first_name || '';
+          let lastName = userProfile.last_name || '';
+
+          if (!firstName && !lastName && userProfile.full_name) {
+            const nameParts = userProfile.full_name.trim().split(' ');
+            firstName = nameParts[0] || '';
+            lastName = nameParts.slice(1).join(' ') || '';
+          }
+
           setFormData((prev) => ({
             ...prev,
             email: userProfile.email || user.email || prev.email,
-            firstName: userProfile.first_name || prev.firstName,
-            lastName: userProfile.last_name || prev.lastName,
+            firstName: firstName || prev.firstName,
+            lastName: lastName || prev.lastName,
             phone: userProfile.phone || prev.phone,
           }));
         } else {
