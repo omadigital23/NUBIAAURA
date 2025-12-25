@@ -24,11 +24,29 @@ export const metadata: Metadata = {
   },
   description: 'Boutique de mode africaine haut de gamme : prêt-à-porter, robes de mariage, costumes africains sur-mesure. Livraison Sénégal, Maroc et international. Qualité premium, créations uniques.',
   keywords: [
-    'mode africaine', 'prêt-à-porter africain', 'sur-mesure',
-    'robe de mariage africaine', 'costume africain', 'wax',
-    'Sénégal', 'Dakar', 'Thiès', 'Maroc', 'Casablanca',
-    'Nubia Aura', 'fashion africaine', 'tenue traditionnelle',
-    'robe de cérémonie', 'chemise wax', 'boubou',
+    // Marque & Localisation
+    'Nubia Aura', 'mode africaine', 'fashion africaine', 'Dakar', 'Sénégal', 'Maroc',
+
+    // Robes
+    'robe de mariage africaine', 'robe de mariée sur-mesure', 'robes de mariage Dakar',
+    'robe de cérémonie', 'tenue événement formel', 'robe de soirée africaine',
+    'robe de gala', 'robe de ville', 'robe wax', 'robe en tissu wax africain',
+
+    // Costumes & Chemises
+    'costume africain', 'costume traditionnel africain', 'costume classique',
+    'chemise africaine', 'chemise wax', 'chemise en tissu wax',
+
+    // Collections & Services
+    'prêt-à-porter africain', 'sur-mesure', 'couture sur-mesure Dakar',
+    'tenue traditionnelle africaine', 'boubou', 'Super 100',
+    'accessoires mode africaine', 'édition limitée mode',
+
+    // Services spéciaux
+    'création personnalisée', 'couture personnalisée', 'mesures sur-mesure',
+    'styliste Dakar', 'haute couture africaine', 'mode éthique africaine',
+
+    // Livraison
+    'livraison Sénégal', 'livraison Maroc', 'livraison internationale mode africaine',
   ],
   authors: [{ name: 'Nubia Aura', url: 'https://www.nubiaaura.com' }],
   creator: 'Nubia Aura',
