@@ -70,21 +70,23 @@ const PaymentInitializationSchema = z.object({
 
 /**
  * Determine the payment gateway based on country and method
+ * Note: Morocco temporarily uses PayTech until Chaabi API keys are obtained
  */
-function determineGateway(country: string, method?: string): PaymentGateway {
+function determineGateway(_country: string, method?: string): PaymentGateway {
   // If method explicitly specified
   if (method === 'cod') return 'cod';
   if (method === 'chaabi') return 'chaabi';
   if (method === 'paytech') return 'paytech';
 
   // Auto-detect based on country
-  const countryCode = getCountryCode(country);
+  // Currently: All countries use PayTech (Chaabi not yet configured)
+  // TODO: When Chaabi API keys are obtained, uncomment the following:
+  // const countryCode = getCountryCode(country);
+  // if (countryCode === 'MA') {
+  //   return 'chaabi'; // Morocco -> Chaabi Payment
+  // }
 
-  if (countryCode === 'MA') {
-    return 'chaabi'; // Morocco -> Chaabi Payment
-  }
-
-  return 'paytech'; // Senegal & International -> PayTech
+  return 'paytech'; // All countries -> PayTech for now
 }
 
 export async function POST(request: NextRequest) {

@@ -14,7 +14,7 @@ import { useEffect, useState } from 'react';
 import { Lock, CreditCard, Smartphone, Truck, Globe, Building2, Wallet } from 'lucide-react';
 
 // Payment method type
-export type PaymentMethod = 'chaabi' | 'paytech' | 'cod';
+export type PaymentMethod = 'paytech' | 'cod';
 export type PaymentSubMethod = 'wave' | 'orange_money' | 'free_money' | 'card' | null;
 
 interface PaymentOption {
@@ -40,13 +40,14 @@ interface PaymentMethodsSelectorProps {
 const PAYMENT_OPTIONS: Record<string, { title: string; subtitle: string; options: PaymentOption[] }> = {
     MA: {
         title: 'Paiement pour le Maroc',
-        subtitle: 'Payez en Dirhams (MAD) via Banque Populaire',
+        subtitle: 'Payez en Dirhams (MAD) avec votre carte bancaire',
         options: [
             {
-                id: 'chaabi',
-                method: 'chaabi',
+                id: 'paytech_card_ma',
+                method: 'paytech',
+                subMethod: 'card',
                 label: 'Carte bancaire',
-                description: 'Visa, Mastercard, CMI via Chaabi Payment (Banque Populaire)',
+                description: 'Visa, Mastercard, American Express via PayTech',
                 icon: <CreditCard className="w-5 h-5" />,
                 badge: '🇲🇦 Maroc',
                 badgeColor: 'bg-red-100 text-red-700',
@@ -282,7 +283,7 @@ export function PaymentMethodsSelector({
             {/* Payment providers info */}
             <div className="mt-6 pt-4 border-t border-gray-200">
                 <p className="text-xs text-gray-400 text-center">
-                    {countryCode === 'MA' && 'Paiements sécurisés par Chaabi Payment (Banque Populaire du Maroc)'}
+                    {countryCode === 'MA' && 'Paiements sécurisés par PayTech - Cartes internationales acceptées'}
                     {countryCode === 'SN' && 'Paiements sécurisés par PayTech - Agréé BCEAO'}
                     {countryCode === 'OTHER' && 'Paiements internationaux sécurisés par PayTech'}
                 </p>
