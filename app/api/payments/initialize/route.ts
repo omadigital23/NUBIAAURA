@@ -17,7 +17,7 @@ import { paymentRatelimit, checkRateLimit } from '@/lib/rate-limit';
 import * as Sentry from '@sentry/nextjs';
 import {
   PaymentProviderFactory,
-  getCountryCode,
+  // getCountryCode, // Temporarily unused - will be needed when Chaabi is configured
   getCurrencyForCountry,
   OrderPayload,
   PaymentGateway,
