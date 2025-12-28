@@ -58,14 +58,94 @@ export default async function ProductDetailsPage({ params }: Params) {
   const { locale, slug } = await params;
   const product = await fetchProduct(slug);
 
-  // 🔍 DEBUG: Log pour vérifier la locale reçue
-  console.log('🔍 [ServerSide] Page params:', {
-    locale,
-    slug
-  });
+  // Build structured data for SEO
+  const productName = product?.name_fr || product?.name_en || product?.name || 'Produit';
+  const productDescription = product?.description_fr || product?.description || 'Découvrez cette création Nubia Aura.';
+  const productImage = product?.image || product?.image_url || '';
+  const productUrl = `https://www.nubiaaura.com/${locale}/produit/${slug}`;
+
+  // Product Schema for rich results
+  const productSchema = product ? {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: productName,
+    description: productDescription,
+    image: productImage ? [withImageParams('og', productImage)] : undefined,
+    sku: product.id,
+    brand: {
+      '@type': 'Brand',
+      name: 'Nubia Aura',
+    },
+    offers: {
+      '@type': 'Offer',
+      url: productUrl,
+      priceCurrency: 'XOF',
+      price: product.price,
+      availability: product.inStock
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/OutOfStock',
+      seller: {
+        '@type': 'Organization',
+        name: 'Nubia Aura',
+      },
+    },
+    ...(product.rating && {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: product.rating,
+        reviewCount: product.reviews || 1,
+        bestRating: 5,
+        worstRating: 1,
+      },
+    }),
+  } : null;
+
+  // Breadcrumb Schema for navigation
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Accueil',
+        item: `https://www.nubiaaura.com/${locale}`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Catalogue',
+        item: `https://www.nubiaaura.com/${locale}/catalogue`,
+      },
+      ...(product?.category ? [{
+        '@type': 'ListItem',
+        position: 3,
+        name: product.category.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
+        item: `https://www.nubiaaura.com/${locale}/catalogue/${product.category}`,
+      }] : []),
+      {
+        '@type': 'ListItem',
+        position: product?.category ? 4 : 3,
+        name: productName,
+        item: productUrl,
+      },
+    ],
+  };
 
   return (
     <div className="min-h-screen bg-nubia-white flex flex-col">
+      {/* SEO Structured Data */}
+      {productSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+        />
+      )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+
       <Header />
       <main className="flex-1 py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -74,8 +154,8 @@ export default async function ProductDetailsPage({ params }: Params) {
             <>
               <ProductShipping />
               <ProductActions
-                productName={(product as any).name_fr || (product as any).name || 'Produit'}
-                productUrl={`${process.env.NEXT_PUBLIC_BASE_URL || 'https://nubiaaura.com'}/${locale}/produit/${slug}`}
+                productName={productName}
+                productUrl={productUrl}
               />
               <RelatedProducts category={(product as any).category} excludeId={(product as any).id} locale={locale} />
             </>
@@ -86,3 +166,4 @@ export default async function ProductDetailsPage({ params }: Params) {
     </div>
   );
 }
+
