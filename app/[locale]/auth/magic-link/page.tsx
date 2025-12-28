@@ -25,8 +25,8 @@ export default function MagicLinkPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     email,
-                    // Supabase will redirect to this URL after email verification
-                    redirectTo: `${window.location.origin}/api/auth/callback?next=/${locale}/client/dashboard`,
+                    // Use client-side callback page that can handle hash fragments
+                    redirectTo: `${window.location.origin}/${locale}/auth/callback`,
                 }),
             });
 
