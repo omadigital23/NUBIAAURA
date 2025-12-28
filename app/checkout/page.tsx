@@ -25,7 +25,8 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [isProcessingOrder, setIsProcessingOrder] = useState(false);
   const [shippingMethod, setShippingMethod] = useState('standard');
-  const [paymentMethod, setPaymentMethod] = useState<'paytech' | 'cmi' | 'cod' | ''>('');
+  const [paymentMethod, setPaymentMethod] = useState<'paytech' | 'cod' | ''>('');
+  const [paymentSubMethod, setPaymentSubMethod] = useState<string>('');
   const [quote, setQuote] = useState<{ subtotal: number; shipping: number; tax: number; total: number } | null>(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [quoteError, setQuoteError] = useState<string | null>(null);
@@ -301,7 +302,7 @@ export default function CheckoutPage() {
       setIsProcessingOrder(true);
 
       // Require explicit payment method selection
-      if (step === 3 && (!paymentMethod || (paymentMethod !== 'cod' && paymentMethod !== 'paytech' && paymentMethod !== 'cmi'))) {
+      if (step === 3 && (!paymentMethod || (paymentMethod !== 'cod' && paymentMethod !== 'paytech'))) {
         setError(t('checkout.errors.select_payment', 'Veuillez choisir un mode de paiement'));
         setLoading(false);
         return;
@@ -386,7 +387,8 @@ export default function CheckoutPage() {
           city: formData.city,
           zipCode: formData.zipCode,
           country: formData.country,
-          paymentMethod, // 'paytech' or 'cmi'
+          paymentMethod, // 'paytech' only
+          paymentSubMethod, // 'wave', 'orange_money', 'card', etc.
           cartItems: cartItems.map((item) => ({
             product_id: item.id,
             quantity: item.quantity,
@@ -651,146 +653,85 @@ export default function CheckoutPage() {
                       <p className="text-sm text-nubia-black/70">{t('checkout.payment.secured', 'Paiement 100% sécurisé')}</p>
                     </div>
 
+                    {/* Payment Method Select */}
                     <div className="space-y-4">
-                      {/* PayTech - Only for Senegal */}
-                      {formData.country === 'SN' && (
-                        <label
-                          onClick={() => setPaymentMethod('paytech')}
-                          className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${paymentMethod === 'paytech' ? 'border-nubia-gold bg-nubia-gold/10' : 'border-nubia-gold/30 hover:bg-nubia-gold/10'
-                            }`}
-                        >
-                          <input
-                            type="radio"
-                            name="paymentMethod"
-                            value="paytech"
-                            checked={paymentMethod === 'paytech'}
-                            onChange={() => {
-                              console.log('[Checkout] PayTech radio clicked');
-                              setPaymentMethod('paytech');
-
-                              try {
-                                const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-                                trackAddPaymentInfo({
-                                  value: subtotal,
-                                  payment_type: 'paytech',
-                                  items: cartItems.map(item => ({
-                                    id: item.id,
-                                    name: item.name || '',
-                                    price: item.price,
-                                    quantity: item.quantity,
-                                  })),
-                                });
-                              } catch (e) {
-                                console.error('Analytics tracking error:', e);
-                              }
-                            }}
-                            className="mr-4"
-                          />
-                          <div className="flex-1">
-                            <p className="font-semibold text-nubia-black">📱 {t('checkout.payment.paytech', 'Orange Money / Wave')}</p>
-                            <p className="text-sm text-nubia-black/70">{t('checkout.payment.paytech_desc', 'Mobile Money Sénégal')}</p>
-                          </div>
-                        </label>
-                      )}
-
-                      {/* CMI - Only for Morocco */}
-                      {formData.country === 'MA' && (
-                        <label
-                          onClick={() => setPaymentMethod('cmi')}
-                          className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${paymentMethod === 'cmi' ? 'border-nubia-gold bg-nubia-gold/10' : 'border-nubia-gold/30 hover:bg-nubia-gold/10'
-                            }`}
-                        >
-                          <input
-                            type="radio"
-                            name="paymentMethod"
-                            value="cmi"
-                            checked={paymentMethod === 'cmi'}
-                            onChange={() => {
-                              console.log('[Checkout] CMI radio clicked');
-                              setPaymentMethod('cmi');
-
-                              try {
-                                const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-                                trackAddPaymentInfo({
-                                  value: subtotal,
-                                  payment_type: 'cmi',
-                                  items: cartItems.map(item => ({
-                                    id: item.id,
-                                    name: item.name || '',
-                                    price: item.price,
-                                    quantity: item.quantity,
-                                  })),
-                                });
-                              } catch (e) {
-                                console.error('Analytics tracking error:', e);
-                              }
-                            }}
-                            className="mr-4"
-                          />
-                          <div className="flex-1">
-                            <p className="font-semibold text-nubia-black">💳 {t('checkout.payment.cmi', 'Carte bancaire')}</p>
-                            <p className="text-sm text-nubia-black/70">{t('checkout.payment.cmi_desc', 'Visa / Mastercard (Maroc)')}</p>
-                          </div>
-                        </label>
-                      )}
-
-                      {/* COD - Available everywhere */}
-                      <label
-                        onClick={() => setPaymentMethod('cod')}
-                        className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${paymentMethod === 'cod' ? 'border-nubia-gold bg-nubia-gold/10' : 'border-nubia-gold/30 hover:bg-nubia-gold/10'
-                          }`}
-                      >
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="cod"
-                          checked={paymentMethod === 'cod'}
-                          onChange={() => {
-                            console.log('[Checkout] COD radio clicked');
-                            setPaymentMethod('cod');
-
-                            try {
-                              const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-                              trackAddPaymentInfo({
-                                value: subtotal,
-                                payment_type: 'cod',
-                                items: cartItems.map(item => ({
-                                  id: item.id,
-                                  name: item.name || '',
-                                  price: item.price,
-                                  quantity: item.quantity,
-                                })),
-                              });
-                            } catch (e) {
-                              console.error('Analytics tracking error:', e);
-                            }
-                          }}
-                          className="mr-4"
-                        />
-                        <div className="flex-1">
-                          <p className="font-semibold text-nubia-black">💵 {t('checkout.payment.cod', 'Paiement à la livraison')}</p>
-                          <p className="text-sm text-nubia-black/70">{t('checkout.payment.cod_desc', 'Régler à la réception de votre commande')}</p>
-                        </div>
+                      <label className="block text-sm font-semibold text-nubia-black mb-2">
+                        {t('checkout.payment.select_method', 'Choisir votre mode de paiement')}
                       </label>
+                      <select
+                        value={paymentSubMethod || paymentMethod}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          console.log('[Checkout] Payment method selected:', value);
+
+                          if (value === 'cod') {
+                            setPaymentMethod('cod');
+                            setPaymentSubMethod('');
+                          } else if (value) {
+                            setPaymentMethod('paytech');
+                            setPaymentSubMethod(value);
+                          } else {
+                            setPaymentMethod('');
+                            setPaymentSubMethod('');
+                          }
+
+                          try {
+                            const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                            trackAddPaymentInfo({
+                              value: subtotal,
+                              payment_type: value === 'cod' ? 'cod' : 'paytech',
+                              items: cartItems.map(item => ({
+                                id: item.id,
+                                name: item.name || '',
+                                price: item.price,
+                                quantity: item.quantity,
+                              })),
+                            });
+                          } catch (err) {
+                            console.error('Analytics tracking error:', err);
+                          }
+                        }}
+                        className="w-full px-4 py-3 border-2 border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold bg-white text-nubia-black"
+                      >
+                        <option value="">{t('checkout.payment.select_placeholder', '-- Sélectionnez --')}</option>
+
+                        {/* Mobile Money Options (Senegal) */}
+                        {(formData.country === 'SN' || !formData.country) && (
+                          <optgroup label="📱 Mobile Money (Sénégal)">
+                            <option value="wave">🌊 Wave</option>
+                            <option value="orange_money">🟠 Orange Money</option>
+                            <option value="free_money">🟢 Free Money</option>
+                          </optgroup>
+                        )}
+
+                        {/* Card Payment (All countries) */}
+                        <optgroup label="💳 Carte Bancaire">
+                          <option value="card">Visa / Mastercard / Amex</option>
+                        </optgroup>
+
+                        {/* Cash on Delivery */}
+                        <optgroup label="💵 Paiement à la livraison">
+                          <option value="cod">{t('checkout.payment.cod', 'Paiement à la livraison')}</option>
+                        </optgroup>
+                      </select>
                     </div>
 
-                    {/* Payment method info */}
-                    {paymentMethod === 'paytech' && (
-                      <p className="text-sm text-nubia-black/70">
-                        {t('checkout.payment.paytech_note', 'Vous serez redirigé vers PayTech pour compléter votre paiement via Orange Money ou Wave.')}
-                      </p>
-                    )}
-                    {paymentMethod === 'cmi' && (
-                      <p className="text-sm text-nubia-black/70">
-                        {t('checkout.payment.cmi_note', 'Vous serez redirigé vers CMI pour payer par carte bancaire de manière sécurisée.')}
-                      </p>
+                    {/* Selected method info */}
+                    {paymentMethod === 'paytech' && paymentSubMethod && (
+                      <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                        <p className="text-sm text-green-800">
+                          ✅ {paymentSubMethod === 'wave' && 'Wave sélectionné - Paiement rapide et sécurisé'}
+                          {paymentSubMethod === 'orange_money' && 'Orange Money sélectionné - Payez avec votre compte Orange'}
+                          {paymentSubMethod === 'free_money' && 'Free Money sélectionné - Payez avec votre compte Free'}
+                          {paymentSubMethod === 'card' && 'Carte bancaire sélectionnée - Visa, Mastercard, Amex acceptés'}
+                        </p>
+                      </div>
                     )}
 
-                    {/* Warning if no online payment available */}
-                    {formData.country && formData.country !== 'SN' && formData.country !== 'MA' && (
-                      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <p className="text-sm text-yellow-800">
-                          {t('checkout.payment.cod_only', 'Le paiement en ligne n\'est pas disponible pour votre pays. Seul le paiement à la livraison est possible.')}
+                    {paymentMethod === 'cod' && (
+                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-sm text-blue-800">
+                          💵 {t('checkout.payment.cod_note', 'Vous paierez en espèces à la livraison de votre commande.')}
                         </p>
                       </div>
                     )}
