@@ -20,29 +20,43 @@ const CartSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    // Rate limiting check
-    if (cartRateLimit) {
-      const identifier = getClientIdentifier(request);
-      const { success, limit, remaining, reset } = await cartRateLimit.limit(identifier);
+    // Validate environment variables
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('[Cart] Missing Supabase environment variables');
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
 
-      if (!success) {
-        console.warn(`[Cart] Rate limit exceeded for ${identifier}`);
+    // Rate limiting check (with safe fallback)
+    try {
+      if (cartRateLimit) {
+        const identifier = getClientIdentifier(request);
+        const { success, limit, remaining, reset } = await cartRateLimit.limit(identifier);
 
-        const response = NextResponse.json(
-          {
-            error: 'Trop de requêtes. Veuillez réessayer dans quelques instants.',
-            retryAfter: Math.ceil((reset - Date.now()) / 1000),
-          },
-          { status: 429 }
-        );
+        if (!success) {
+          console.warn(`[Cart] Rate limit exceeded for ${identifier}`);
 
+          const response = NextResponse.json(
+            {
+              error: 'Trop de requêtes. Veuillez réessayer dans quelques instants.',
+              retryAfter: Math.ceil((reset - Date.now()) / 1000),
+            },
+            { status: 429 }
+          );
+
+          addRateLimitHeaders(response.headers, { limit, remaining, reset });
+          return response;
+        }
+
+        const response = await handleCartRequest(request);
         addRateLimitHeaders(response.headers, { limit, remaining, reset });
         return response;
       }
-
-      const response = await handleCartRequest(request);
-      addRateLimitHeaders(response.headers, { limit, remaining, reset });
-      return response;
+    } catch (rateLimitError) {
+      // If rate limiting fails, continue without it
+      console.warn('[Cart] Rate limiting failed, continuing without it:', rateLimitError);
     }
 
     return await handleCartRequest(request);
