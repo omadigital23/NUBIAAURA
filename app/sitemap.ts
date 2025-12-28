@@ -17,16 +17,26 @@ const CATEGORIES = [
   'super100',
 ];
 
-// Static pages
+// Static pages (public only - admin/client pages excluded from sitemap)
 const STATIC_PAGES = [
+  // Main pages
   { path: '', priority: 1.0, changeFrequency: 'weekly' as const },
   { path: '/catalogue', priority: 0.9, changeFrequency: 'daily' as const },
+  { path: '/catalogue/recherche', priority: 0.7, changeFrequency: 'daily' as const },
   { path: '/sur-mesure', priority: 0.9, changeFrequency: 'weekly' as const },
   { path: '/a-propos', priority: 0.7, changeFrequency: 'monthly' as const },
   { path: '/contact', priority: 0.7, changeFrequency: 'monthly' as const },
-  { path: '/panier', priority: 0.5, changeFrequency: 'weekly' as const },
+
+  // Shopping pages
+  { path: '/panier', priority: 0.6, changeFrequency: 'weekly' as const },
+  { path: '/checkout', priority: 0.5, changeFrequency: 'weekly' as const },
+  { path: '/commandes', priority: 0.4, changeFrequency: 'weekly' as const },
+
+  // Auth pages (for users looking to create account)
   { path: '/auth/login', priority: 0.4, changeFrequency: 'monthly' as const },
   { path: '/auth/signup', priority: 0.4, changeFrequency: 'monthly' as const },
+
+  // Legal pages
   { path: '/mentions-legales', priority: 0.3, changeFrequency: 'yearly' as const },
   { path: '/politique-de-confidentialite', priority: 0.3, changeFrequency: 'yearly' as const },
   { path: '/conditions-generales', priority: 0.3, changeFrequency: 'yearly' as const },
