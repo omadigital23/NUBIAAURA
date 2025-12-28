@@ -221,20 +221,30 @@ export async function POST(request: NextRequest) {
     });
     console.log('[Payment Init] Quote:', quote);
 
-    // Idempotency check
-    const redis = Redis.fromEnv();
+    // Idempotency check (optional - requires Redis)
+    let redis: Redis | null = null;
     const idemKey = request.headers.get('idempotency-key') || request.headers.get('Idempotency-Key') || body.orderId || null;
     const idemRedisKey = idemKey ? `idem:payments:init:${idemKey}` : null;
-    if (idemRedisKey) {
-      const existing = await redis.get(idemRedisKey);
-      if (existing) {
-        const parsed = typeof existing === 'string' ? JSON.parse(existing) : existing;
-        return NextResponse.json({
-          success: true,
-          paymentLink: parsed.paymentLink || parsed.redirect_url,
-          reference: parsed.reference,
-          orderId: parsed.orderId
-        }, { status: 200 });
+
+    // Try to initialize Redis for idempotency (graceful fallback if not configured)
+    if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+      try {
+        redis = Redis.fromEnv();
+        if (idemRedisKey && redis) {
+          const existing = await redis.get(idemRedisKey);
+          if (existing) {
+            const parsed = typeof existing === 'string' ? JSON.parse(existing) : existing;
+            return NextResponse.json({
+              success: true,
+              paymentLink: parsed.paymentLink || parsed.redirect_url,
+              reference: parsed.reference,
+              orderId: parsed.orderId
+            }, { status: 200 });
+          }
+        }
+      } catch (redisErr) {
+        console.warn('[Payment Init] Redis not available, skipping idempotency check:', redisErr);
+        redis = null;
       }
     }
 
@@ -355,14 +365,18 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Cache for idempotency
-    if (idemRedisKey) {
-      await redis.set(idemRedisKey, JSON.stringify({
-        orderId: order.id,
-        redirect_url: session.redirectUrl,
-        reference: session.transactionId,
-        gateway: gateway,
-      }), { ex: 900 });
+    // Cache for idempotency (only if Redis is available)
+    if (idemRedisKey && redis) {
+      try {
+        await redis.set(idemRedisKey, JSON.stringify({
+          orderId: order.id,
+          redirect_url: session.redirectUrl,
+          reference: session.transactionId,
+          gateway: gateway,
+        }), { ex: 900 });
+      } catch (cacheErr) {
+        console.warn('[Payment Init] Failed to cache idempotency:', cacheErr);
+      }
     }
 
     // Return response based on gateway type
