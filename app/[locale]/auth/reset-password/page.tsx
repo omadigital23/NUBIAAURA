@@ -99,12 +99,15 @@ export default function ResetPasswordPage() {
         console.warn('Failed to send password change notification');
       }
 
+      // Sign out to clear the reset session - user needs to login with new password
+      await supabase.auth.signOut();
+
       setSuccess(true);
       setPassword('');
       setConfirmPassword('');
 
       setTimeout(() => {
-        router.push(`/${locale}/auth/login`);
+        router.push(`/${locale}/auth/login?message=password_reset_success`);
       }, 2000);
     } catch (err: any) {
       setError(err.message || t('auth.error_resetting', 'Erreur lors de la réinitialisation'));
