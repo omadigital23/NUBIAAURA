@@ -653,7 +653,7 @@ export default function CheckoutPage() {
                       <p className="text-sm text-nubia-black/70">{t('checkout.payment.secured', 'Paiement 100% sécurisé')}</p>
                     </div>
 
-                    {/* Payment Method Select */}
+                    {/* Payment Method Select - All methods listed individually */}
                     <div className="space-y-4">
                       <label className="block text-sm font-semibold text-nubia-black mb-2">
                         {t('checkout.payment.select_method', 'Choisir votre mode de paiement')}
@@ -693,26 +693,28 @@ export default function CheckoutPage() {
                         }}
                         className="w-full px-4 py-3 border-2 border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold bg-white text-nubia-black"
                       >
-                        <option value="">{t('checkout.payment.select_placeholder', '-- Sélectionnez --')}</option>
+                        <option value="">{t('checkout.payment.select_placeholder', '-- Sélectionnez un mode de paiement --')}</option>
 
-                        {/* Mobile Money Options (Senegal) */}
-                        {(formData.country === 'SN' || !formData.country) && (
-                          <optgroup label="📱 Mobile Money (Sénégal)">
-                            <option value="wave">🌊 Wave</option>
-                            <option value="orange_money">🟠 Orange Money</option>
-                            <option value="free_money">🟢 Free Money</option>
-                          </optgroup>
-                        )}
+                        {/* Mobile Money - Wave */}
+                        <option value="wave">🌊 Wave (Mobile Money)</option>
 
-                        {/* Card Payment (All countries) */}
-                        <optgroup label="💳 Carte Bancaire">
-                          <option value="card">Visa / Mastercard / Amex</option>
-                        </optgroup>
+                        {/* Mobile Money - Orange Money */}
+                        <option value="orange_money">🟠 Orange Money</option>
+
+                        {/* Mobile Money - Free Money */}
+                        <option value="free_money">🟢 Free Money</option>
+
+                        {/* Visa */}
+                        <option value="visa">💳 Visa</option>
+
+                        {/* Mastercard */}
+                        <option value="mastercard">💳 Mastercard</option>
+
+                        {/* American Express */}
+                        <option value="amex">💳 American Express</option>
 
                         {/* Cash on Delivery */}
-                        <optgroup label="💵 Paiement à la livraison">
-                          <option value="cod">{t('checkout.payment.cod', 'Paiement à la livraison')}</option>
-                        </optgroup>
+                        <option value="cod">💵 {t('checkout.payment.cod', 'Paiement à la livraison')}</option>
                       </select>
                     </div>
 
@@ -720,10 +722,12 @@ export default function CheckoutPage() {
                     {paymentMethod === 'paytech' && paymentSubMethod && (
                       <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                         <p className="text-sm text-green-800">
-                          ✅ {paymentSubMethod === 'wave' && 'Wave sélectionné - Paiement rapide et sécurisé'}
-                          {paymentSubMethod === 'orange_money' && 'Orange Money sélectionné - Payez avec votre compte Orange'}
-                          {paymentSubMethod === 'free_money' && 'Free Money sélectionné - Payez avec votre compte Free'}
-                          {paymentSubMethod === 'card' && 'Carte bancaire sélectionnée - Visa, Mastercard, Amex acceptés'}
+                          ✅ {paymentSubMethod === 'wave' && t('checkout.payment.wave_selected', 'Wave sélectionné - Paiement rapide et sécurisé')}
+                          {paymentSubMethod === 'orange_money' && t('checkout.payment.orange_selected', 'Orange Money sélectionné - Payez avec votre compte Orange')}
+                          {paymentSubMethod === 'free_money' && t('checkout.payment.free_selected', 'Free Money sélectionné - Payez avec votre compte Free')}
+                          {paymentSubMethod === 'visa' && t('checkout.payment.visa_selected', 'Visa sélectionné - Paiement sécurisé par carte')}
+                          {paymentSubMethod === 'mastercard' && t('checkout.payment.mastercard_selected', 'Mastercard sélectionné - Paiement sécurisé par carte')}
+                          {paymentSubMethod === 'amex' && t('checkout.payment.amex_selected', 'American Express sélectionné - Paiement sécurisé par carte')}
                         </p>
                       </div>
                     )}

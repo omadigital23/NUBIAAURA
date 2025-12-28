@@ -26,11 +26,15 @@ const PAYTECH_ENV = (process.env.PAYTECH_ENV || 'test') as 'test' | 'prod';
 const PAYTECH_API_URL = 'https://paytech.sn/api/payment/request-payment';
 
 // Target payment methods mapping
+// Note: PayTech uses 'Carte Bancaire' for all card types (Visa, Mastercard, Amex)
 const TARGET_PAYMENT_MAP: Record<string, string> = {
     wave: 'Wave',
     orange_money: 'Orange Money',
     free_money: 'Free Money',
     card: 'Carte Bancaire',
+    visa: 'Carte Bancaire',
+    mastercard: 'Carte Bancaire',
+    amex: 'Carte Bancaire',
 };
 
 /**
