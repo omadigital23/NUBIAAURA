@@ -349,8 +349,16 @@ export async function POST(request: NextRequest) {
     const session = await provider.createSession(orderPayload, body.paymentSubMethod);
 
     if (!session.success) {
+      console.error('[Payment Init] Session creation failed:', {
+        error: session.error,
+        errorCode: session.errorCode,
+        gateway: gateway,
+      });
       return NextResponse.json({
-        error: session.error || 'Erreur lors de l\'initialisation du paiement'
+        error: session.error || 'Erreur lors de l\'initialisation du paiement',
+        errorCode: session.errorCode,
+        gateway: gateway,
+        debug: process.env.NODE_ENV === 'development' ? session : undefined,
       }, { status: 500 });
     }
 
