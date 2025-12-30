@@ -173,31 +173,18 @@ export class AirwallexProvider implements IPaymentProvider {
 
             const locale = order.locale || 'fr';
 
-            // Create PaymentIntent
+
+            // Create PaymentIntent - Minimal required fields only
             const paymentIntentPayload = {
-                request_id: `req_${order.orderId}_${Date.now()}`,
+                request_id: `req_${Date.now()}_${Math.random().toString(36).substring(7)}`,
                 amount: order.amount,
                 currency: order.currency,
                 merchant_order_id: order.orderId,
-                order: {
-                    type: 'physical_goods',
-                },
-                metadata: {
-                    order_number: order.orderNumber,
-                    customer_email: order.customer.email,
-                    customer_phone: order.customer.phone,
-                    customer_name: `${order.customer.firstName} ${order.customer.lastName}`,
-                },
                 return_url: `${appBaseUrl}/${locale}/payments/callback?orderId=${order.orderId}&status=success&gateway=airwallex`,
-                // Descriptor shown on customer's statement
-                descriptor: 'NUBIA AURA',
             };
 
-            console.log('[Airwallex] Creating PaymentIntent:', {
-                amount: order.amount,
-                currency: order.currency,
-                orderId: order.orderId,
-            });
+            console.log('[Airwallex] Creating PaymentIntent with payload:', JSON.stringify(paymentIntentPayload, null, 2));
+            console.log('[Airwallex] API URL:', `${AIRWALLEX_API_URL}/pa/payment_intents/create`);
 
             const response = await fetch(`${AIRWALLEX_API_URL}/pa/payment_intents/create`, {
                 method: 'POST',
