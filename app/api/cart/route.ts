@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { cartRateLimit, getClientIdentifier, addRateLimitHeaders } from '@/lib/rate-limit-upstash';
 import * as Sentry from '@sentry/nextjs';
 
-const CartItemSchema = z.object({
+const AddItemSchema = z.object({
   id: z.string(),
   name: z.string(),
   price: z.number(),
@@ -12,11 +12,25 @@ const CartItemSchema = z.object({
   image: z.string(),
 });
 
-const CartSchema = z.object({
-  action: z.enum(['add', 'remove', 'update', 'get', 'clear']),
-  item: CartItemSchema.optional(),
-  user_id: z.string().uuid().optional(),
+const RemoveItemSchema = z.object({
+  id: z.string(),
 });
+
+const UpdateItemSchema = z.object({
+  id: z.string(),
+  quantity: z.number().int(),
+  name: z.string().optional(),
+  price: z.number().optional(),
+  image: z.string().optional(),
+});
+
+const CartSchema = z.discriminatedUnion('action', [
+  z.object({ action: z.literal('add'), item: AddItemSchema, user_id: z.string().uuid().optional() }),
+  z.object({ action: z.literal('remove'), item: RemoveItemSchema, user_id: z.string().uuid().optional() }),
+  z.object({ action: z.literal('update'), item: UpdateItemSchema, user_id: z.string().uuid().optional() }),
+  z.object({ action: z.literal('get'), item: z.unknown().optional(), user_id: z.string().uuid().optional() }),
+  z.object({ action: z.literal('clear'), item: z.unknown().optional(), user_id: z.string().uuid().optional() }),
+]);
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,15 +43,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Rate limiting check (with safe fallback)
-    try {
-      if (cartRateLimit) {
+    let rateLimitHeaders: { limit: number; remaining: number; reset: number } | null = null;
+
+    // Rate limiting check
+    if (cartRateLimit) {
+      try {
         const identifier = getClientIdentifier(request);
         const { success, limit, remaining, reset } = await cartRateLimit.limit(identifier);
 
         if (!success) {
           console.warn(`[Cart] Rate limit exceeded for ${identifier}`);
-
           const response = NextResponse.json(
             {
               error: 'Trop de requêtes. Veuillez réessayer dans quelques instants.',
@@ -45,21 +60,24 @@ export async function POST(request: NextRequest) {
             },
             { status: 429 }
           );
-
           addRateLimitHeaders(response.headers, { limit, remaining, reset });
           return response;
         }
 
-        const response = await handleCartRequest(request);
-        addRateLimitHeaders(response.headers, { limit, remaining, reset });
-        return response;
+        rateLimitHeaders = { limit, remaining, reset };
+      } catch (rateLimitError) {
+        console.warn('[Cart] Rate limiting failed, continuing without it:', rateLimitError);
       }
-    } catch (rateLimitError) {
-      // If rate limiting fails, continue without it
-      console.warn('[Cart] Rate limiting failed, continuing without it:', rateLimitError);
     }
 
-    return await handleCartRequest(request);
+    const response = await handleCartRequest(request);
+
+    if (rateLimitHeaders) {
+      addRateLimitHeaders(response.headers, rateLimitHeaders);
+    }
+
+    return response;
+
   } catch (error: any) {
     console.error('[Cart] Error:', error);
     Sentry.captureException(error, {
@@ -83,7 +101,6 @@ export async function POST(request: NextRequest) {
 async function handleCartRequest(request: NextRequest) {
   try {
     const body = await request.json();
-
     const parsed = CartSchema.parse(body);
 
     const supabase = createClient(
@@ -104,9 +121,7 @@ async function handleCartRequest(request: NextRequest) {
       token = cookieToken?.value || null;
     }
 
-    console.log('[Cart API] Token from Authorization header:', !!authHeader);
-    console.log('[Cart API] Token from cookie:', !!request.cookies.get('sb-auth-token'));
-    console.log('[Cart API] Final token present:', !!token);
+    // console.log('[Cart API] Token checks...', { hasHeader: !!authHeader, hasCookie: !!request.cookies.get('sb-auth-token') });
 
     if (!token) {
       return NextResponse.json(
@@ -117,7 +132,7 @@ async function handleCartRequest(request: NextRequest) {
 
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) {
-      console.error('[Cart API] Auth error:', authError);
+      // console.error('[Cart API] Auth error:', authError);
       return NextResponse.json(
         { error: 'Invalid authentication', code: 'AUTH_INVALID' },
         { status: 401 }
@@ -181,12 +196,14 @@ async function handleCartRequest(request: NextRequest) {
       return NextResponse.json({ items: transformedItems });
     }
 
-    if (parsed.action === 'add' && parsed.item) {
+    if (parsed.action === 'add') {
+      const item = parsed.item;
+
       // Vérifier que le produit existe et est en stock
       const { data: product, error: productError } = await supabase
         .from('products')
         .select('id, inStock, name, name_fr, name_en, price, image_url, stock')
-        .eq('id', parsed.item.id)
+        .eq('id', item.id)
         .single();
 
       if (productError || !product) {
@@ -231,7 +248,7 @@ async function handleCartRequest(request: NextRequest) {
         .from('cart_items')
         .select('*')
         .eq('cart_id', cartId)
-        .eq('product_id', parsed.item.id)
+        .eq('product_id', item.id)
         .single();
 
       if (existingError && existingError.code !== 'PGRST116') {
@@ -244,7 +261,7 @@ async function handleCartRequest(request: NextRequest) {
         const { error: updateError } = await supabase
           .from('cart_items')
           .update({
-            quantity: existingItem.quantity + parsed.item.quantity,
+            quantity: existingItem.quantity + item.quantity,
             updated_at: new Date().toISOString()
           })
           .eq('id', existingItem.id);
@@ -258,9 +275,9 @@ async function handleCartRequest(request: NextRequest) {
           .from('cart_items')
           .insert({
             cart_id: cartId,
-            product_id: parsed.item.id,
-            quantity: parsed.item.quantity,
-            price: parsed.item.price,
+            product_id: item.id,
+            quantity: item.quantity,
+            price: item.price,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           });
@@ -270,23 +287,20 @@ async function handleCartRequest(request: NextRequest) {
         }
       }
 
-      // NOTE: Stock is NOT decremented here anymore
-      // Stock reservations are created at checkout time instead
-      // This allows users to abandon carts without losing stock
-
       // Retourner l'item mis à jour
       const transformedItem = {
-        id: parsed.item.id,
+        id: item.id,
         name: product.name_fr || product.name || 'Produit',
         price: Number(product.price),
-        quantity: existingItem ? existingItem.quantity + parsed.item.quantity : parsed.item.quantity,
-        image: product.image_url || parsed.item.image,
+        quantity: existingItem ? existingItem.quantity + item.quantity : item.quantity,
+        image: product.image_url || item.image,
       };
 
       return NextResponse.json({ success: true, item: transformedItem });
     }
 
-    if (parsed.action === 'remove' && parsed.item) {
+    if (parsed.action === 'remove') {
+      const item = parsed.item;
       // Récupérer le panier et l'item à supprimer
       const { data: cart } = await supabase
         .from('carts')
@@ -303,37 +317,28 @@ async function handleCartRequest(request: NextRequest) {
         .from('cart_items')
         .delete()
         .eq('cart_id', cart.id)
-        .eq('product_id', parsed.item.id);
+        .eq('product_id', item.id);
 
       if (deleteError) {
         return NextResponse.json({ error: deleteError.message }, { status: 500 });
       }
 
-      // NOTE: Stock restoration is NOT needed here
-      // Stock was never decremented from cart, only reserved at checkout
-
       return NextResponse.json({ success: true });
     }
 
-    if (parsed.action === 'update' && parsed.item) {
+    if (parsed.action === 'update') {
+      const item = parsed.item;
       // Vérifier que le produit existe
       const { data: product, error: productError } = await supabase
         .from('products')
         .select('id, inStock')
-        .eq('id', parsed.item.id)
+        .eq('id', item.id)
         .single();
 
       if (productError || !product) {
         return NextResponse.json(
           { error: 'Product not found' },
           { status: 404 }
-        );
-      }
-
-      if (!product.inStock) {
-        return NextResponse.json(
-          { error: 'Product out of stock' },
-          { status: 400 }
         );
       }
 
@@ -348,13 +353,13 @@ async function handleCartRequest(request: NextRequest) {
         return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
       }
 
-      if (parsed.item.quantity <= 0) {
+      if (item.quantity <= 0) {
         // Si quantité = 0, supprimer l'item
         const { error: deleteError } = await supabase
           .from('cart_items')
           .delete()
           .eq('cart_id', cart.id)
-          .eq('product_id', parsed.item.id);
+          .eq('product_id', item.id);
 
         if (deleteError) {
           return NextResponse.json({ error: deleteError.message }, { status: 500 });
@@ -364,11 +369,11 @@ async function handleCartRequest(request: NextRequest) {
         const { error: updateError } = await supabase
           .from('cart_items')
           .update({
-            quantity: parsed.item.quantity,
+            quantity: item.quantity,
             updated_at: new Date().toISOString()
           })
           .eq('cart_id', cart.id)
-          .eq('product_id', parsed.item.id);
+          .eq('product_id', item.id);
 
         if (updateError) {
           return NextResponse.json({ error: updateError.message }, { status: 500 });
@@ -377,11 +382,11 @@ async function handleCartRequest(request: NextRequest) {
 
       // Retourner l'item mis à jour
       const transformedItem = {
-        id: parsed.item.id,
-        name: parsed.item.name,
-        price: parsed.item.price,
-        quantity: parsed.item.quantity,
-        image: parsed.item.image,
+        id: item.id,
+        name: item.name || "",
+        price: item.price || 0,
+        quantity: item.quantity,
+        image: item.image || "",
       };
 
       return NextResponse.json({ success: true, item: transformedItem });
