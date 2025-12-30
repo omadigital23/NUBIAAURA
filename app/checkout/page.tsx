@@ -13,6 +13,7 @@ import CheckoutDebugPanel from '@/components/CheckoutDebugPanel';
 import { trackBeginCheckout, trackAddShippingInfo, trackAddPaymentInfo } from '@/lib/analytics-config';
 import { CountrySelect, PhoneInput, type CountryData } from '@/components/checkout/CountryPhoneInput';
 import { PaymentMethodsSelector } from '@/components/checkout/PaymentMethodsSelector';
+import { getPriceForCountry, getCurrencyForCountry } from '@/lib/utils/currency-converter';
 import { supabase } from '@/lib/supabase';
 
 export default function CheckoutPage() {
@@ -453,6 +454,27 @@ export default function CheckoutPage() {
   const tax = quote?.tax ?? clientTax;
   const total = quote?.total ?? clientTotal;
 
+  // Currency conversion based on selected country
+  const priceDisplay = useMemo(() => {
+    const country = formData.country || 'SN'; // Default to Senegal
+    const currency = getCurrencyForCountry(country);
+
+    const convertedSubtotal = getPriceForCountry(subtotal, country, locale as 'fr' | 'en');
+    const convertedShipping = getPriceForCountry(shipping, country, locale as 'fr' | 'en');
+    const convertedTax = getPriceForCountry(tax, country, locale as 'fr' | 'en');
+    const convertedTotal = getPriceForCountry(total, country, locale as 'fr' | 'en');
+
+    return {
+      currency,
+      subtotal: convertedSubtotal,
+      shipping: convertedShipping,
+      tax: convertedTax,
+      total: convertedTotal,
+      // Helper to format any XOF amount to display currency
+      formatPrice: (amountXOF: number) => getPriceForCountry(amountXOF, country, locale as 'fr' | 'en').formatted,
+    };
+  }, [formData.country, subtotal, shipping, tax, total, locale]);
+
   return (
     <div className="min-h-screen bg-nubia-white flex flex-col">
       <Header />
@@ -743,7 +765,7 @@ export default function CheckoutPage() {
                           <p className="font-semibold text-nubia-black">{item.name}</p>
                           <p className="text-sm text-nubia-black/70">Quantité: {item.quantity}</p>
                         </div>
-                        <p className="font-semibold text-nubia-black">{(item.price * item.quantity).toLocaleString('fr-FR')} FCFA</p>
+                        <p className="font-semibold text-nubia-black">{priceDisplay.formatPrice(item.price * item.quantity)}</p>
                       </div>
                     ))}
                   </div>
@@ -751,20 +773,20 @@ export default function CheckoutPage() {
                   <div className="space-y-3 mb-6 border-b border-nubia-gold/20 pb-6">
                     <div className="flex justify-between text-nubia-black/70">
                       <span>Sous-total</span>
-                      <span>{subtotal.toLocaleString('fr-FR')} FCFA</span>
+                      <span>{priceDisplay.subtotal.formatted}</span>
                     </div>
                     <div className="flex justify-between text-nubia-black/70">
                       <span>Livraison</span>
-                      <span>{shipping === 0 ? 'Gratuit' : `${shipping.toLocaleString('fr-FR')} FCFA`}</span>
+                      <span>{shipping === 0 ? 'Gratuit' : priceDisplay.shipping.formatted}</span>
                     </div>
                     <div className="flex justify-between text-nubia-black/70">
                       <span>Taxes</span>
-                      <span>{tax.toLocaleString('fr-FR')} FCFA</span>
+                      <span>{priceDisplay.tax.formatted}</span>
                     </div>
                     {promoDiscount && (
                       <div className="flex justify-between text-green-600 font-medium">
                         <span>✔ {promoDiscount.code}</span>
-                        <span>-{promoDiscount.amount.toLocaleString('fr-FR')} FCFA</span>
+                        <span>-{priceDisplay.formatPrice(promoDiscount.amount)}</span>
                       </div>
                     )}
                   </div>
@@ -839,7 +861,7 @@ export default function CheckoutPage() {
                   <div className="flex justify-between items-center">
                     <span className="font-playfair text-xl font-bold text-nubia-black">Total</span>
                     <span className="font-playfair text-2xl font-bold text-nubia-gold">
-                      {(total - (promoDiscount?.amount || 0)).toLocaleString('fr-FR')} FCFA
+                      {priceDisplay.formatPrice(total - (promoDiscount?.amount || 0))}
                     </span>
                   </div>
                 </>
