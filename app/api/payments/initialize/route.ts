@@ -13,6 +13,7 @@ import { Redis } from '@upstash/redis';
 import { computeQuote, ShippingMethod } from '@/lib/pricing';
 import { getLocaleFromPath } from '@/lib/i18n';
 import { paymentRatelimit, checkRateLimit } from '@/lib/rate-limit';
+import { convertFromXOF } from '@/lib/utils/currency-converter';
 import * as Sentry from '@sentry/nextjs';
 import {
   PaymentProviderFactory,
@@ -312,7 +313,7 @@ export async function POST(request: NextRequest) {
     const orderPayload: OrderPayload = {
       orderId: order.id,
       orderNumber: order.order_number,
-      amount: quote.total,
+      amount: convertFromXOF(quote.total, currency),
       currency: currency,
       customer: {
         email: validatedData.email,

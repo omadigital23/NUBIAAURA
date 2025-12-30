@@ -123,8 +123,8 @@ export class PaytechProvider implements IPaymentProvider {
             let targetPayment: string | undefined;
             if (method && TARGET_PAYMENT_MAP[method]) {
                 targetPayment = TARGET_PAYMENT_MAP[method];
-            } else if (order.currency === 'USD' || order.currency === 'EUR') {
-                // International payments use card
+            } else if (order.currency === 'USD' || order.currency === 'EUR' || order.currency === 'MAD') {
+                // International payments (and Morocco) use card
                 targetPayment = 'Carte Bancaire';
             }
 
