@@ -143,6 +143,9 @@ export class PaytechProvider implements IPaymentProvider {
                 amount: order.amount,
                 currency: order.currency,
                 method: targetPayment || 'all',
+                apiKeyPresent: !!PAYTECH_API_KEY,
+                secretKeyPresent: !!PAYTECH_SECRET_KEY,
+                env: PAYTECH_ENV,
             });
 
             // Call PayTech API
@@ -154,6 +157,13 @@ export class PaytechProvider implements IPaymentProvider {
                     'Accept': 'application/json',
                 },
                 timeout: 15000,
+            });
+
+            console.log('[PayTech] API Response:', {
+                success: response.data.success,
+                hasRedirectUrl: !!response.data.redirect_url,
+                hasToken: !!response.data.token,
+                errorMessage: response.data.message,
             });
 
             if (response.data.success === 1) {
@@ -182,22 +192,29 @@ export class PaytechProvider implements IPaymentProvider {
                     redirectUrl,
                 };
             } else {
-                console.error('[PayTech] API error:', response.data);
+                console.error('[PayTech] API error:', {
+                    fullResponse: JSON.stringify(response.data),
+                    status: response.status,
+                });
                 return {
                     success: false,
                     gateway: this.gateway,
-                    error: response.data.message || 'Erreur lors de l\'initialisation du paiement',
+                    error: response.data.message || response.data.error || 'Erreur lors de l\'initialisation du paiement',
                     errorCode: 'API_ERROR',
                 };
             }
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            console.error('[PayTech] Create session error:', errorMessage);
+        } catch (error: unknown) {
+            const axiosError = error as { response?: { data?: unknown; status?: number }; message?: string };
+            console.error('[PayTech] Create session error:', {
+                message: axiosError.message || 'Unknown error',
+                responseData: axiosError.response?.data,
+                responseStatus: axiosError.response?.status,
+            });
 
             return {
                 success: false,
                 gateway: this.gateway,
-                error: 'Erreur de connexion à PayTech. Veuillez réessayer.',
+                error: `Erreur PayTech: ${axiosError.message || 'Connexion échouée'}`,
                 errorCode: 'CONNECTION_ERROR',
             };
         }
