@@ -26,15 +26,23 @@ const PAYTECH_ENV = (process.env.PAYTECH_ENV || 'test') as 'test' | 'prod';
 const PAYTECH_API_URL = 'https://paytech.sn/api/payment/request-payment';
 
 // Target payment methods mapping
-// Note: PayTech uses 'Carte Bancaire' for all card types (Visa, Mastercard, Amex)
+// Based on PayTech documentation: https://docs.intech.sn/doc_paytech.php
 const TARGET_PAYMENT_MAP: Record<string, string> = {
+    // Mobile Money - Senegal
     wave: 'Wave',
     orange_money: 'Orange Money',
     free_money: 'Free Money',
+    wizall: 'Wizall',
+    expresso: 'Emoney',  // Expresso/Mixx uses Emoney
+    kpay: 'Emoney',      // K-Pay uses Emoney
+    kashkash: 'Emoney',  // KashKash uses Emoney
+    // Cards
     card: 'Carte Bancaire',
     visa: 'Carte Bancaire',
     mastercard: 'Carte Bancaire',
     amex: 'Carte Bancaire',
+    // International
+    paypal: 'PayPal',
 };
 
 /**

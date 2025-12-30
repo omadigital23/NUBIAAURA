@@ -15,7 +15,7 @@ import { Lock, CreditCard, Smartphone, Truck, Globe, Building2, Wallet } from 'l
 
 // Payment method type
 export type PaymentMethod = 'paytech' | 'cod';
-export type PaymentSubMethod = 'wave' | 'orange_money' | 'free_money' | 'card' | null;
+export type PaymentSubMethod = 'wave' | 'orange_money' | 'free_money' | 'wizall' | 'expresso' | 'kpay' | 'kashkash' | 'paypal' | 'card' | null;
 
 interface PaymentOption {
     id: string;
@@ -72,7 +72,7 @@ const PAYMENT_OPTIONS: Record<string, { title: string; subtitle: string; options
                 label: 'Wave',
                 description: 'Payez instantanément avec votre compte Wave',
                 icon: <Wallet className="w-5 h-5 text-[#1DC1EC]" />,
-                badge: '🇸🇳 Sénégal',
+                badge: 'Populaire',
                 badgeColor: 'bg-[#1DC1EC]/10 text-[#1DC1EC]',
             },
             {
@@ -82,7 +82,7 @@ const PAYMENT_OPTIONS: Record<string, { title: string; subtitle: string; options
                 label: 'Orange Money',
                 description: 'Payez avec votre compte Orange Money',
                 icon: <Smartphone className="w-5 h-5 text-orange-500" />,
-                badge: '🇸🇳 Sénégal',
+                badge: 'Orange',
                 badgeColor: 'bg-orange-100 text-orange-700',
             },
             {
@@ -92,15 +92,50 @@ const PAYMENT_OPTIONS: Record<string, { title: string; subtitle: string; options
                 label: 'Free Money',
                 description: 'Payez avec votre compte Free Money',
                 icon: <Smartphone className="w-5 h-5 text-green-600" />,
-                badge: '🇸🇳 Sénégal',
                 badgeColor: 'bg-green-100 text-green-700',
+            },
+            {
+                id: 'wizall',
+                method: 'paytech',
+                subMethod: 'wizall',
+                label: 'Wizall Money',
+                description: 'Payez avec votre porte-monnaie Wizall',
+                icon: <Wallet className="w-5 h-5 text-purple-600" />,
+                badgeColor: 'bg-purple-100 text-purple-700',
+            },
+            {
+                id: 'expresso',
+                method: 'paytech',
+                subMethod: 'expresso',
+                label: 'Expresso / Mixx',
+                description: 'Payez via Expresso ou Mixx',
+                icon: <Smartphone className="w-5 h-5 text-red-500" />,
+                badgeColor: 'bg-red-100 text-red-700',
+            },
+            {
+                id: 'kpay',
+                method: 'paytech',
+                subMethod: 'kpay',
+                label: 'K-Pay',
+                description: 'Solution de paiement Kalpē',
+                icon: <Wallet className="w-5 h-5 text-blue-600" />,
+                badgeColor: 'bg-blue-100 text-blue-700',
+            },
+            {
+                id: 'kashkash',
+                method: 'paytech',
+                subMethod: 'kashkash',
+                label: 'KashKash',
+                description: 'Transfert et paiement marchand',
+                icon: <Wallet className="w-5 h-5 text-teal-600" />,
+                badgeColor: 'bg-teal-100 text-teal-700',
             },
             {
                 id: 'paytech_card_sn',
                 method: 'paytech',
                 subMethod: 'card',
                 label: 'Carte bancaire',
-                description: 'Visa, Mastercard via PayTech',
+                description: 'Visa, Mastercard, GIM-UEMOA',
                 icon: <CreditCard className="w-5 h-5" />,
             },
             {
