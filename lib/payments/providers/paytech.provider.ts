@@ -159,6 +159,12 @@ export class PaytechProvider implements IPaymentProvider {
                 env: PAYTECH_ENV,
             });
 
+            console.log('[PayTech] DEBUG - Sending to API:', {
+                item_price: paymentRequest.item_price,
+                currency: paymentRequest.currency,
+                ref_command: paymentRequest.ref_command
+            });
+
             // Call PayTech API
             const response = await axios.post(PAYTECH_API_URL, paymentRequest, {
                 headers: {

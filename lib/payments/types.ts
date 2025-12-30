@@ -7,7 +7,7 @@
 // Enums & Constants
 // =========================================
 
-export type CountryCode = 'MA' | 'SN' | 'OTHER';
+export type CountryCode = 'MA' | 'SN' | 'EU' | 'OTHER';
 
 export type Currency = 'MAD' | 'XOF' | 'USD' | 'EUR';
 
@@ -29,10 +29,17 @@ export type PaymentStatus =
     | 'cancelled'        // Cancelled by user
     | 'refunded';        // Refunded
 
+// European countries using EUR
+const EUROPEAN_COUNTRIES = [
+    'FR', 'DE', 'ES', 'IT', 'BE', 'NL', 'PT', 'AT', 'IE', 'FI',
+    'GR', 'LU', 'SK', 'SI', 'EE', 'LV', 'LT', 'CY', 'MT'
+];
+
 // Country to gateway mapping - PayTech for all countries
 export const COUNTRY_GATEWAY_MAP: Record<CountryCode, PaymentGateway[]> = {
     MA: ['paytech', 'cod'],          // Morocco: PayTech + COD
     SN: ['paytech', 'cod'],          // Senegal: PayTech + COD
+    EU: ['paytech', 'cod'],          // Europe: PayTech (cards) + COD
     OTHER: ['paytech', 'cod'],       // International: PayTech (cards) + COD
 };
 
@@ -40,8 +47,16 @@ export const COUNTRY_GATEWAY_MAP: Record<CountryCode, PaymentGateway[]> = {
 export const COUNTRY_CURRENCY_MAP: Record<CountryCode, Currency> = {
     MA: 'MAD',
     SN: 'XOF',
+    EU: 'EUR',
     OTHER: 'USD',
 };
+
+/**
+ * Check if a country code is European
+ */
+export function isEuropeanCountry(country: string): boolean {
+    return EUROPEAN_COUNTRIES.includes(country.toUpperCase());
+}
 
 // =========================================
 // Interfaces
@@ -258,6 +273,13 @@ export const COUNTRY_INFO: Record<CountryCode, CountryInfo> = {
         availableGateways: ['paytech', 'cod'],
         availableMethods: ['paytech_wave', 'paytech_om', 'paytech_fm', 'cod'],
     },
+    EU: {
+        code: 'EU',
+        name: 'Europe',
+        currency: 'EUR',
+        availableGateways: ['paytech', 'cod'],
+        availableMethods: ['paytech_card', 'cod'],
+    },
     OTHER: {
         code: 'OTHER',
         name: 'International',
@@ -274,6 +296,8 @@ export function getCountryCode(country: string): CountryCode {
     const code = country.toUpperCase();
     if (code === 'MA' || code === 'MAROC' || code === 'MOROCCO') return 'MA';
     if (code === 'SN' || code === 'SENEGAL' || code === 'SÉNÉGAL') return 'SN';
+    // Check if European country
+    if (isEuropeanCountry(code)) return 'EU';
     return 'OTHER';
 }
 
