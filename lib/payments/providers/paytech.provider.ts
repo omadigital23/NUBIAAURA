@@ -34,15 +34,14 @@ const TARGET_PAYMENT_MAP: Record<string, string> = {
     free_money: 'Free Money',
     wizall: 'Wizall',
     expresso: 'Emoney',  // Expresso/Mixx uses Emoney
-    kpay: 'Emoney',      // K-Pay uses Emoney
-    kashkash: 'Emoney',  // KashKash uses Emoney
+    // Mobile Money - Côte d'Ivoire
+    mtn_money: 'Mtn Money CI',
+    moov_money: 'Moov Money CI',
     // Cards
     card: 'Carte Bancaire',
     visa: 'Carte Bancaire',
     mastercard: 'Carte Bancaire',
     amex: 'Carte Bancaire',
-    // International
-    paypal: 'PayPal',
 };
 
 /**
