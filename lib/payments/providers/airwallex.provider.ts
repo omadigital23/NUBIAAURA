@@ -19,6 +19,7 @@ import {
 // Configuration
 const AIRWALLEX_CLIENT_ID = process.env.AIRWALLEX_CLIENT_ID || '';
 const AIRWALLEX_API_KEY = process.env.AIRWALLEX_API_KEY || '';
+const AIRWALLEX_WEBHOOK_SECRET = process.env.AIRWALLEX_WEBHOOK_SECRET || '';
 const AIRWALLEX_ENV = (process.env.AIRWALLEX_ENV || 'demo') as 'demo' | 'prod';
 
 // API URLs
@@ -72,20 +73,35 @@ async function getAuthToken(): Promise<string> {
 
 /**
  * Verify Airwallex webhook signature
+ * Based on Airwallex documentation:
+ * - x-timestamp: Unix timestamp in milliseconds
+ * - x-signature: HMAC-SHA256(timestamp + payload, webhook_secret)
  */
 function verifyWebhookSignature(payload: string, signature: string, timestamp: string): boolean {
-    if (!AIRWALLEX_API_KEY) return false;
+    if (!AIRWALLEX_WEBHOOK_SECRET) {
+        console.warn('[Airwallex] Webhook secret not configured');
+        return false;
+    }
 
     try {
         // Airwallex uses HMAC-SHA256 for webhook verification
-        // Signature = HMAC-SHA256(timestamp + payload, secret)
+        // value_to_digest = x-timestamp (string) + raw JSON payload (string)
         const message = `${timestamp}${payload}`;
         const expectedSignature = crypto
-            .createHmac('sha256', AIRWALLEX_API_KEY)
+            .createHmac('sha256', AIRWALLEX_WEBHOOK_SECRET)
             .update(message)
             .digest('hex');
 
-        return signature === expectedSignature;
+        const isValid = signature === expectedSignature;
+
+        if (!isValid) {
+            console.log('[Airwallex] Signature mismatch:', {
+                received: signature.substring(0, 20) + '...',
+                expected: expectedSignature.substring(0, 20) + '...',
+            });
+        }
+
+        return isValid;
     } catch (error) {
         console.error('[Airwallex] Webhook verification error:', error);
         return false;
