@@ -5,13 +5,14 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AuthModal from '@/components/AuthModal';
-import { Lock, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { useCartContext } from '@/contexts/CartContext';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/hooks/useAuth';
 import CheckoutDebugPanel from '@/components/CheckoutDebugPanel';
 import { trackBeginCheckout, trackAddShippingInfo, trackAddPaymentInfo } from '@/lib/analytics-config';
 import { CountrySelect, PhoneInput, type CountryData } from '@/components/checkout/CountryPhoneInput';
+import { PaymentMethodsSelector } from '@/components/checkout/PaymentMethodsSelector';
 import { supabase } from '@/lib/supabase';
 
 export default function CheckoutPage() {
@@ -646,99 +647,35 @@ export default function CheckoutPage() {
                 {/* Step 3: Payment */}
                 {step === 3 && (
                   <div className="space-y-6">
-                    <h2 className="font-playfair text-2xl font-bold text-nubia-black mb-6">{t('checkout.payment.title', 'Informations de Paiement')}</h2>
+                    {/* Dynamic Payment Methods based on selected country */}
+                    <PaymentMethodsSelector
+                      country={formData.country}
+                      selectedMethod={paymentMethod}
+                      selectedSubMethod={paymentSubMethod as any}
+                      onMethodChange={(method, subMethod) => {
+                        console.log('[Checkout] Payment method changed:', method, subMethod);
+                        setPaymentMethod(method);
+                        setPaymentSubMethod(subMethod || '');
 
-                    <div className="flex items-center gap-2 p-4 bg-nubia-gold/10 rounded-lg">
-                      <Lock className="text-nubia-gold" size={20} />
-                      <p className="text-sm text-nubia-black/70">{t('checkout.payment.secured', 'Paiement 100% sécurisé')}</p>
-                    </div>
-
-                    {/* Payment Method Select - All methods listed individually */}
-                    <div className="space-y-4">
-                      <label className="block text-sm font-semibold text-nubia-black mb-2">
-                        {t('checkout.payment.select_method', 'Choisir votre mode de paiement')}
-                      </label>
-                      <select
-                        value={paymentSubMethod || paymentMethod}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          console.log('[Checkout] Payment method selected:', value);
-
-                          if (value === 'cod') {
-                            setPaymentMethod('cod');
-                            setPaymentSubMethod('');
-                          } else if (value) {
-                            setPaymentMethod('paytech');
-                            setPaymentSubMethod(value);
-                          } else {
-                            setPaymentMethod('');
-                            setPaymentSubMethod('');
-                          }
-
-                          try {
-                            const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-                            trackAddPaymentInfo({
-                              value: subtotal,
-                              payment_type: value === 'cod' ? 'cod' : 'paytech',
-                              items: cartItems.map(item => ({
-                                id: item.id,
-                                name: item.name || '',
-                                price: item.price,
-                                quantity: item.quantity,
-                              })),
-                            });
-                          } catch (err) {
-                            console.error('Analytics tracking error:', err);
-                          }
-                        }}
-                        className="w-full px-4 py-3 border-2 border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold bg-white text-nubia-black"
-                      >
-                        <option value="">{t('checkout.payment.select_placeholder', '-- Sélectionnez un mode de paiement --')}</option>
-
-                        {/* Mobile Money - Wave */}
-                        <option value="wave">🌊 Wave (Mobile Money)</option>
-
-                        {/* Mobile Money - Orange Money */}
-                        <option value="orange_money">🟠 Orange Money</option>
-
-                        {/* Mobile Money - Free Money */}
-                        <option value="free_money">🟢 Free Money</option>
-
-                        {/* Visa */}
-                        <option value="visa">💳 Visa</option>
-
-                        {/* Mastercard */}
-                        <option value="mastercard">💳 Mastercard</option>
-
-                        {/* American Express */}
-                        <option value="amex">💳 American Express</option>
-
-                        {/* Cash on Delivery */}
-                        <option value="cod">💵 {t('checkout.payment.cod', 'Paiement à la livraison')}</option>
-                      </select>
-                    </div>
-
-                    {/* Selected method info */}
-                    {paymentMethod === 'paytech' && paymentSubMethod && (
-                      <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                        <p className="text-sm text-green-800">
-                          ✅ {paymentSubMethod === 'wave' && t('checkout.payment.wave_selected', 'Wave sélectionné - Paiement rapide et sécurisé')}
-                          {paymentSubMethod === 'orange_money' && t('checkout.payment.orange_selected', 'Orange Money sélectionné - Payez avec votre compte Orange')}
-                          {paymentSubMethod === 'free_money' && t('checkout.payment.free_selected', 'Free Money sélectionné - Payez avec votre compte Free')}
-                          {paymentSubMethod === 'visa' && t('checkout.payment.visa_selected', 'Visa sélectionné - Paiement sécurisé par carte')}
-                          {paymentSubMethod === 'mastercard' && t('checkout.payment.mastercard_selected', 'Mastercard sélectionné - Paiement sécurisé par carte')}
-                          {paymentSubMethod === 'amex' && t('checkout.payment.amex_selected', 'American Express sélectionné - Paiement sécurisé par carte')}
-                        </p>
-                      </div>
-                    )}
-
-                    {paymentMethod === 'cod' && (
-                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <p className="text-sm text-blue-800">
-                          💵 {t('checkout.payment.cod_note', 'Vous paierez en espèces à la livraison de votre commande.')}
-                        </p>
-                      </div>
-                    )}
+                        // Track analytics
+                        try {
+                          const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                          trackAddPaymentInfo({
+                            value: subtotal,
+                            payment_type: method,
+                            items: cartItems.map(item => ({
+                              id: item.id,
+                              name: item.name || '',
+                              price: item.price,
+                              quantity: item.quantity,
+                            })),
+                          });
+                        } catch (err) {
+                          console.error('Analytics tracking error:', err);
+                        }
+                      }}
+                      disabled={loading}
+                    />
                   </div>
                 )}
 
