@@ -2,7 +2,7 @@
  * Payment Methods Selector Component
  * 
  * Displays available payment methods based on country with clear explanations:
- * - Morocco: Chaabi Payment (Banque Populaire - cards)
+ * - Morocco: PayTech (Visa, Mastercard, Amex)
  * - Senegal: PayTech (Wave, Orange Money, Free Money)
  * - International: PayTech (Visa, Mastercard, Amex)
  * - All: Cash on Delivery

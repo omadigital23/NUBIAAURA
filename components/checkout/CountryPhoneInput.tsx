@@ -21,7 +21,7 @@ export interface CountryData {
     phoneCode: string;
     phoneFormat: string;
     phonePlaceholder: string;
-    paymentGateway: 'chaabi' | 'paytech' | 'paytech_intl';
+    paymentGateway: 'paytech' | 'paytech_intl';
     currency: string;
 }
 
@@ -29,7 +29,7 @@ export interface CountryData {
 export const COUNTRIES: CountryData[] = [
     // Africa - Primary markets
     { code: 'SN', name: 'Sénégal', flag: '🇸🇳', phoneCode: '+221', phoneFormat: '77 XXX XX XX', phonePlaceholder: '77 123 45 67', paymentGateway: 'paytech', currency: 'XOF' },
-    { code: 'MA', name: 'Maroc', flag: '🇲🇦', phoneCode: '+212', phoneFormat: '6XX XX XX XX', phonePlaceholder: '612 34 56 78', paymentGateway: 'chaabi', currency: 'MAD' },
+    { code: 'MA', name: 'Maroc', flag: '🇲🇦', phoneCode: '+212', phoneFormat: '6XX XX XX XX', phonePlaceholder: '612 34 56 78', paymentGateway: 'paytech', currency: 'MAD' },
     { code: 'CI', name: 'Côte d\'Ivoire', flag: '🇨🇮', phoneCode: '+225', phoneFormat: '07 XX XX XX XX', phonePlaceholder: '07 12 34 56 78', paymentGateway: 'paytech', currency: 'XOF' },
     { code: 'ML', name: 'Mali', flag: '🇲🇱', phoneCode: '+223', phoneFormat: '7X XX XX XX', phonePlaceholder: '76 12 34 56', paymentGateway: 'paytech', currency: 'XOF' },
     { code: 'BF', name: 'Burkina Faso', flag: '🇧🇫', phoneCode: '+226', phoneFormat: '7X XX XX XX', phonePlaceholder: '70 12 34 56', paymentGateway: 'paytech', currency: 'XOF' },

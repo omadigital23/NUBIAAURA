@@ -1,9 +1,8 @@
 /**
  * Payment Initialization API
  * 
- * Unified endpoint for all payment gateways:
- * - Chaabi Payment (Morocco - MAD)
- * - PayTech (Senegal - XOF, International - USD)
+ * Unified endpoint for payment gateways:
+ * - PayTech (Senegal - XOF, Morocco - MAD, International - USD/EUR)
  * - COD (Cash on Delivery - everywhere)
  */
 
@@ -17,7 +16,6 @@ import { paymentRatelimit, checkRateLimit } from '@/lib/rate-limit';
 import * as Sentry from '@sentry/nextjs';
 import {
   PaymentProviderFactory,
-  // getCountryCode, // Temporarily unused - will be needed when Chaabi is configured
   getCurrencyForCountry,
   OrderPayload,
   PaymentGateway,

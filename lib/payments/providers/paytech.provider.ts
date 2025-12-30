@@ -117,7 +117,8 @@ export class PaytechProvider implements IPaymentProvider {
                 targetPayment = 'Carte Bancaire';
             }
 
-            // Build payment request
+            // Build payment request with locale-aware URLs
+            const locale = order.locale || 'fr';
             const paymentRequest = {
                 item_name: `Commande ${order.orderNumber}`,
                 item_price: order.amount,
@@ -126,8 +127,8 @@ export class PaytechProvider implements IPaymentProvider {
                 command_name: `Commande Nubia Aura - ${order.orderNumber}`,
                 env: PAYTECH_ENV,
                 ipn_url: `${appBaseUrl}/api/webhooks/paytech`,
-                success_url: `${appBaseUrl}/payments/callback?orderId=${order.orderId}&status=success&gateway=paytech`,
-                cancel_url: `${appBaseUrl}/payments/callback?orderId=${order.orderId}&status=cancelled&gateway=paytech`,
+                success_url: `${appBaseUrl}/${locale}/payments/callback?orderId=${order.orderId}&status=success&gateway=paytech`,
+                cancel_url: `${appBaseUrl}/${locale}/payments/callback?orderId=${order.orderId}&status=cancelled&gateway=paytech`,
                 custom_field: JSON.stringify({
                     customer_email: order.customer.email,
                     customer_phone: order.customer.phone,

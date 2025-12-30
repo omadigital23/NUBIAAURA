@@ -1,6 +1,7 @@
 /**
  * Payment Provider Factory
  * Creates the appropriate provider based on country and method
+ * Supports: PayTech + COD
  */
 
 import {
@@ -9,13 +10,11 @@ import {
     getCountryCode,
     COUNTRY_GATEWAY_MAP,
 } from './types';
-import { chaabiProvider } from './providers/chaabi.provider';
 import { paytechProvider } from './providers/paytech.provider';
 import { codProvider } from './providers/cod.provider';
 
 // Provider registry
 const PROVIDERS: Record<PaymentGateway, IPaymentProvider> = {
-    chaabi: chaabiProvider,
     paytech: paytechProvider,
     cod: codProvider,
 };
@@ -99,7 +98,6 @@ export class PaymentProviderFactory {
      */
     static getConfigurationStatus(): Record<PaymentGateway, boolean> {
         return {
-            chaabi: chaabiProvider.isConfigured(),
             paytech: paytechProvider.isConfigured(),
             cod: codProvider.isConfigured(),
         };

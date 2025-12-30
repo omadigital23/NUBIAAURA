@@ -1,6 +1,6 @@
 /**
  * Payment System Types
- * Unified type definitions for the multi-gateway payment system
+ * Unified type definitions for PayTech + COD payment system
  */
 
 // =========================================
@@ -11,14 +11,13 @@ export type CountryCode = 'MA' | 'SN' | 'OTHER';
 
 export type Currency = 'MAD' | 'XOF' | 'USD' | 'EUR';
 
-export type PaymentGateway = 'chaabi' | 'paytech' | 'cod';
+export type PaymentGateway = 'paytech' | 'cod';
 
 export type PaymentMethodType =
-    | 'chaabi_card'      // Chaabi Payment - Cards (Morocco)
     | 'paytech_wave'     // PayTech - Wave (Senegal)
     | 'paytech_om'       // PayTech - Orange Money (Senegal)
     | 'paytech_fm'       // PayTech - Free Money (Senegal)
-    | 'paytech_card'     // PayTech - International cards (USD/EUR)
+    | 'paytech_card'     // PayTech - International cards (USD/EUR/MAD)
     | 'cod';             // Cash on Delivery (everywhere)
 
 export type PaymentStatus =
@@ -30,9 +29,9 @@ export type PaymentStatus =
     | 'cancelled'        // Cancelled by user
     | 'refunded';        // Refunded
 
-// Country to gateway mapping
+// Country to gateway mapping - PayTech for all countries
 export const COUNTRY_GATEWAY_MAP: Record<CountryCode, PaymentGateway[]> = {
-    MA: ['chaabi', 'cod'],           // Morocco: Chaabi + COD
+    MA: ['paytech', 'cod'],          // Morocco: PayTech + COD
     SN: ['paytech', 'cod'],          // Senegal: PayTech + COD
     OTHER: ['paytech', 'cod'],       // International: PayTech (cards) + COD
 };
@@ -88,7 +87,7 @@ export interface PaymentSession {
     // For redirect-based payments (PayTech)
     redirectUrl?: string;
 
-    // For form-based payments (Chaabi)
+    // For form-based payments (legacy support)
     formData?: Record<string, string>;
     gatewayUrl?: string;
 
@@ -165,42 +164,6 @@ export interface IPaymentProvider {
      * @returns Current payment status
      */
     getStatus?(transactionId: string): Promise<PaymentStatus>;
-}
-
-// =========================================
-// Chaabi Payment Types (M2T/Payzone)
-// =========================================
-
-export interface ChaabiConfig {
-    apiKey: string;        // UUID 36 chars
-    secretKey: string;     // HMAC secret
-    gatewayUrl: string;    // Payzone gateway URL
-    isProduction: boolean;
-}
-
-export interface ChaabiPaymentRequest {
-    api_key: string;
-    order_id: string;
-    amount: string;        // Amount in centimes
-    currency: string;      // '504' for MAD
-    hash: string;          // HMAC-SHA256 signature
-    callback_url: string;
-    success_url: string;
-    fail_url: string;
-    customer_email?: string;
-    customer_name?: string;
-    description?: string;
-}
-
-export interface ChaabiWebhookPayload {
-    order_id: string;
-    transaction_id: string;
-    status: 'approved' | 'declined' | 'pending';
-    auth_code?: string;
-    amount: string;
-    currency: string;
-    hash: string;
-    timestamp: string;
 }
 
 // =========================================
@@ -285,8 +248,8 @@ export const COUNTRY_INFO: Record<CountryCode, CountryInfo> = {
         code: 'MA',
         name: 'Maroc',
         currency: 'MAD',
-        availableGateways: ['chaabi', 'cod'],
-        availableMethods: ['chaabi_card', 'cod'],
+        availableGateways: ['paytech', 'cod'],
+        availableMethods: ['paytech_card', 'cod'],
     },
     SN: {
         code: 'SN',

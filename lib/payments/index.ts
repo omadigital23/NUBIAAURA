@@ -2,8 +2,7 @@
  * Payment System - Unified Exports
  * 
  * Architecture:
- * - Chaabi Payment (Morocco - MAD)
- * - PayTech (Senegal - XOF, International - USD)
+ * - PayTech (Senegal - XOF, Morocco - MAD, International - USD/EUR)
  * - COD (Cash on Delivery - everywhere)
  */
 
@@ -11,7 +10,6 @@
 export * from './types';
 
 // Providers
-export { ChaabiProvider, chaabiProvider } from './providers/chaabi.provider';
 export { PaytechProvider, paytechProvider } from './providers/paytech.provider';
 export { CODProvider, codProvider } from './providers/cod.provider';
 

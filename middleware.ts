@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 const locales = ['fr', 'en'];
 const defaultLocale = 'fr';
 
-// Payment gateway configuration by country
+// Payment gateway configuration by country - PayTech for all
 const COUNTRY_GATEWAY_CONFIG: Record<string, { gateway: string; currency: string }> = {
-  MA: { gateway: 'chaabi', currency: 'MAD' },    // Morocco
+  MA: { gateway: 'paytech', currency: 'MAD' },   // Morocco
   SN: { gateway: 'paytech', currency: 'XOF' },   // Senegal
 };
 const DEFAULT_GATEWAY_CONFIG = { gateway: 'paytech', currency: 'USD' }; // International
