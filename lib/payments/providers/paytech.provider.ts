@@ -106,7 +106,11 @@ export class PaytechProvider implements IPaymentProvider {
                 };
             }
 
-            const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+            // Use production URL - PayTech requires HTTPS for IPN
+            const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL ||
+                process.env.NEXT_PUBLIC_SITE_URL ||
+                (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+                'https://nubiaaura.com';
 
             // Determine target payment method
             let targetPayment: string | undefined;
