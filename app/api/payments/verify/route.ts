@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { verifyPaymentByReference, verifyPayment, isPaymentSuccessful } from '@/lib/flutterwave';
 import { Redis } from '@upstash/redis';
-import { checkRateLimit, paymentRatelimit } from '@/lib/rate-limit';
 import { getLocaleFromPath, getTranslations, getTranslationKey } from '@/lib/i18n';
 import { trackPurchase } from '@/lib/analytics-config';
 import * as Sentry from '@sentry/nextjs';
@@ -27,14 +26,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: msg }, { status: 403 });
     }
 
-    const rl = await checkRateLimit((() => {
-      const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'global';
-      return `payverify:${String(ip).split(',')[0].trim()}`;
-    })(), paymentRatelimit);
-    if (!rl.success) {
-      const msg = getTranslationKey(commonNs, 'common.error') || 'Too many requests';
-      return NextResponse.json({ error: msg }, { status: 429 });
-    }
+    // Rate limiting removed for payment verification to allow retries
+    // The endpoint is protected by origin check above
 
     const body = await request.json();
     const { reference, orderId: rawOrderId, tx_ref, transaction_id, status } = body;
