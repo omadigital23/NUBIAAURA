@@ -36,6 +36,67 @@ interface PaydunyaWebhookData {
     fail_reason?: string;
 }
 
+/**
+ * Parse PHP-style nested form data (data[key][subkey]=value) into a JavaScript object
+ */
+function parseNestedFormData(params: URLSearchParams): PaydunyaWebhookData {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result: any = {};
+
+    for (const [key, value] of params.entries()) {
+        // Match patterns like: data[response_code] or data[invoice][token]
+        const match = key.match(/^data\[([^\]]+)\](?:\[([^\]]+)\])?(?:\[([^\]]+)\])?(?:\[([^\]]+)\])?$/);
+        if (match) {
+            const key1 = match[1];
+            const key2 = match[2];
+            const key3 = match[3];
+            const key4 = match[4];
+
+            if (key4) {
+                // 4 levels deep: data[invoice][items][item_0][name]
+                if (!result[key1]) result[key1] = {};
+                if (!result[key1][key2]) result[key1][key2] = {};
+                if (!result[key1][key2][key3]) result[key1][key2][key3] = {};
+                result[key1][key2][key3][key4] = value;
+            } else if (key3) {
+                // 3 levels deep: data[invoice][items][item_0]
+                if (!result[key1]) result[key1] = {};
+                if (!result[key1][key2]) result[key1][key2] = {};
+                result[key1][key2][key3] = value;
+            } else if (key2) {
+                // 2 levels deep: data[invoice][token]
+                if (!result[key1]) result[key1] = {};
+                result[key1][key2] = value;
+            } else {
+                // 1 level deep: data[response_code]
+                result[key1] = value;
+            }
+        }
+    }
+
+    // Map the parsed data to our expected interface structure
+    return {
+        hash: result.hash || '',
+        status: result.status || (result.response_code === '00' ? 'completed' : 'pending'),
+        response_code: result.response_code || '',
+        response_text: result.response_text || '',
+        invoice: {
+            token: result.invoice?.token || '',
+            total_amount: result.invoice?.total_amount || '0',
+            description: result.invoice?.description || '',
+        },
+        customer: result.customer ? {
+            name: result.customer.name || '',
+            phone: result.customer.phone || '',
+            email: result.customer.email || '',
+        } : undefined,
+        custom_data: result.custom_data,
+        mode: result.mode || 'test',
+        receipt_url: result.receipt_url,
+        fail_reason: result.fail_reason,
+    };
+}
+
 export async function POST(request: NextRequest) {
     try {
         // PayDunya sends data as application/x-www-form-urlencoded or JSON
@@ -51,22 +112,38 @@ export async function POST(request: NextRequest) {
             // PayDunya wraps data in a 'data' key
             webhookData = body.data || body;
         } else {
-            // Handle form-urlencoded - PayDunya sends data=JSON_STRING
+            // Handle form-urlencoded - PayDunya sends data in PHP-style nested format
+            // Example: data[response_code]=00&data[hash]=abc123&data[invoice][token]=xxx
             const params = new URLSearchParams(bodyText);
+
+            // First try: data=JSON_STRING format
             const dataStr = params.get('data');
             if (dataStr) {
-                webhookData = JSON.parse(dataStr);
-            } else {
-                // Fallback: try parsing the whole body as JSON
                 try {
-                    const parsed = JSON.parse(bodyText);
-                    webhookData = parsed.data || parsed;
+                    webhookData = JSON.parse(dataStr);
                 } catch {
-                    console.error('[PayDunya Webhook] Failed to parse body:', bodyText.substring(0, 500));
-                    return NextResponse.json({ error: 'Invalid payload format' }, { status: 400 });
+                    // data exists but isn't JSON, continue to nested parsing
+                    webhookData = parseNestedFormData(params);
+                }
+            } else {
+                // Check for PHP-style nested format: data[key]=value
+                const hasNestedData = Array.from(params.keys()).some(key => key.startsWith('data['));
+                if (hasNestedData) {
+                    webhookData = parseNestedFormData(params);
+                } else {
+                    // Fallback: try parsing the whole body as JSON
+                    try {
+                        const parsed = JSON.parse(bodyText);
+                        webhookData = parsed.data || parsed;
+                    } catch {
+                        console.error('[PayDunya Webhook] Failed to parse body:', bodyText.substring(0, 500));
+                        return NextResponse.json({ error: 'Invalid payload format' }, { status: 400 });
+                    }
                 }
             }
         }
+
+        console.log('[PayDunya Webhook] Parsed webhook data:', JSON.stringify(webhookData, null, 2).substring(0, 500));
 
         console.log('[PayDunya Webhook] Received:', {
             status: webhookData.status,
