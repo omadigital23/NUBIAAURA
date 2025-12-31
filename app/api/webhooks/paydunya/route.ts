@@ -222,7 +222,7 @@ export async function POST(request: NextRequest) {
             const { error: updateError } = await supabase
                 .from('orders')
                 .update({
-                    status: 'paid',
+                    status: 'processing',
                     payment_status: 'completed',
                     payment_method: 'paydunya',
                     payment_details: {
