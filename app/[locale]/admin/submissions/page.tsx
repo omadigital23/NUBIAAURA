@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Mail, Phone, Calendar, Eye, CheckCircle, XCircle } from 'lucide-react';
+import { Mail, Phone, Calendar, Eye, CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 interface ContactSubmission {
     id: string;
@@ -155,6 +156,15 @@ export default function SubmissionsPage() {
             {/* Header */}
             <div className="bg-gradient-to-r from-nubia-black to-nubia-dark text-white py-8">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex items-center gap-4 mb-2">
+                        <Link
+                            href="/admin/dashboard"
+                            className="flex items-center gap-2 text-nubia-white/80 hover:text-nubia-gold transition-colors"
+                        >
+                            <ArrowLeft size={20} />
+                            <span className="text-sm">Retour au Dashboard</span>
+                        </Link>
+                    </div>
                     <h1 className="text-3xl font-bold">Dashboard Admin - Soumissions</h1>
                     <p className="text-nubia-white/80 mt-2">Gérez vos messages, commandes et abonnés</p>
                 </div>
