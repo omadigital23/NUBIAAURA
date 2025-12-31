@@ -31,14 +31,25 @@ async function sendWhatsAppNotification(data: WhatsAppNotification): Promise<boo
     // Nettoyer le numéro de téléphone (enlever +, espaces, etc.)
     const cleanPhone = data.phone.replace(/[^0-9]/g, '');
 
+    // Préparer le message pour CallMeBot:
+    // 1. Remplacer les \n littéraux par de vrais sauts de ligne puis encoder
+    // 2. Limiter la longueur (CallMeBot a une limite ~1500 chars)
+    let message = data.message
+      .replace(/\\n/g, '\n')  // Convert literal \n to actual newlines
+      .substring(0, 1500);    // Limit length
+
     // Encoder le message pour l'URL
-    const encodedMessage = encodeURIComponent(data.message);
+    // CallMeBot requires %0A for newlines, not %0D%0A
+    const encodedMessage = encodeURIComponent(message)
+      .replace(/%0D%0A/g, '%0A')  // Replace CRLF with LF
+      .replace(/%0D/g, '%0A');    // Replace CR with LF
 
     // URL de l'API CallMeBot
     const url = `https://api.callmebot.com/whatsapp.php?phone=${cleanPhone}&text=${encodedMessage}&apikey=${apiKey}`;
 
     console.log(`[CallMeBot] Sending notification to: ${cleanPhone}`);
     console.log(`[CallMeBot] API Key: ${apiKey.substring(0, 3)}***`);
+    console.log(`[CallMeBot] Message length: ${message.length}`);
 
     const response = await fetch(url, {
       method: 'GET',
@@ -46,14 +57,15 @@ async function sendWhatsAppNotification(data: WhatsAppNotification): Promise<boo
 
     const responseText = await response.text();
     console.log(`[CallMeBot] Response status: ${response.status}`);
-    console.log(`[CallMeBot] Response body: ${responseText}`);
+    console.log(`[CallMeBot] Response body: ${responseText.substring(0, 200)}`);
 
-    if (!response.ok) {
-      throw new Error(`CallMeBot API error: ${response.status} - ${responseText}`);
+    // CallMeBot returns HTML, check for success indicators
+    if (responseText.includes('Message queued') || responseText.includes('Message Sent') || response.ok) {
+      console.log('✅ WhatsApp notification sent to:', data.phone);
+      return true;
+    } else {
+      throw new Error(`CallMeBot API error: ${response.status} - ${responseText.substring(0, 100)}`);
     }
-
-    console.log('✅ WhatsApp notification sent to:', data.phone);
-    return true;
   } catch (error: any) {
     console.error('❌ WhatsApp notification error:', error.message);
     return false;
