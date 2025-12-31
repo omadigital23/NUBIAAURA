@@ -25,6 +25,7 @@ export async function GET(
     }
 
     let userId: string | null = null;
+    let isPublicAccess = false;
 
     if (token) {
       try {
@@ -46,25 +47,21 @@ export async function GET(
           userId = user.id;
           console.log('[Orders API] Authenticated user:', userId);
         } else {
-          console.error('[Orders API] Auth error:', userError);
+          console.warn('[Orders API] Auth error (token may be expired):', userError?.message);
+          // Token is invalid/expired - allow public access
+          isPublicAccess = true;
         }
       } catch (e) {
         console.error('[Orders API] Error getting user:', e);
+        isPublicAccess = true;
       }
     } else {
-      console.warn('[Orders API] No token found');
+      console.log('[Orders API] No token found - allowing public access');
+      isPublicAccess = true;
     }
 
-    // If no userId, return 401
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    // Get order and verify it belongs to the user
-    const { data: order, error } = await supabase
+    // Build query
+    let query = supabase
       .from('orders')
       .select(
         `
@@ -81,9 +78,14 @@ export async function GET(
         )
       `
       )
-      .eq('id', id)
-      .eq('user_id', userId)
-      .single();
+      .eq('id', id);
+
+    // If authenticated, verify ownership
+    if (userId && !isPublicAccess) {
+      query = query.eq('user_id', userId);
+    }
+
+    const { data: order, error } = await query.single();
 
     if (error) {
       console.error('[Orders API] Query error:', error);
@@ -94,11 +96,22 @@ export async function GET(
     }
 
     if (!order) {
-      console.error('[Orders API] Order not found for user:', userId, 'Order ID:', id);
+      console.error('[Orders API] Order not found for ID:', id);
       return NextResponse.json(
         { error: 'Order not found' },
         { status: 404 }
       );
+    }
+
+    // For public access, sanitize sensitive data
+    if (isPublicAccess) {
+      console.log('[Orders API] Public access - returning order with limited data');
+      // Remove user_id for privacy, but keep shipping address for confirmation
+      const sanitizedOrder = {
+        ...order,
+        user_id: undefined,
+      };
+      return NextResponse.json({ order: sanitizedOrder, isPublicAccess: true }, { status: 200 });
     }
 
     return NextResponse.json({ order }, { status: 200 });
@@ -110,3 +123,4 @@ export async function GET(
     );
   }
 }
+
