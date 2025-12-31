@@ -388,6 +388,20 @@ export async function POST(request: NextRequest) {
 
     // Return response based on gateway type
     if (session.redirectUrl) {
+      // Save payment token to order for later verification
+      if (session.transactionId) {
+        await supabase
+          .from('orders')
+          .update({
+            payment_details: {
+              gateway: gateway,
+              token: session.transactionId,
+              initialized_at: new Date().toISOString(),
+            }
+          })
+          .eq('id', order.id);
+      }
+
       // PayTech style - redirect URL
       return NextResponse.json({
         success: true,

@@ -89,6 +89,58 @@ export async function POST(request: NextRequest) {
         }, { status: 400 });
       } else {
         // Payment still pending - IPN may not have arrived yet
+        // Try to verify directly with PayDunya API as fallback
+        try {
+          const { data: orderData } = await supabase
+            .from('orders')
+            .select('payment_details')
+            .eq('id', orderId)
+            .single();
+
+          const paymentToken = orderData?.payment_details?.token || reference;
+
+          if (paymentToken) {
+            console.log('[Payment Verify] Checking PayDunya API directly for token:', paymentToken);
+
+            // Import and use PayDunya provider for direct verification
+            const { paydunyaProvider } = await import('@/lib/payments');
+            const confirmResult = await paydunyaProvider.confirmPayment(paymentToken);
+
+            if (confirmResult.success && confirmResult.status === 'paid') {
+              // Update order status since IPN didn't arrive yet
+              await supabase
+                .from('orders')
+                .update({
+                  status: 'paid',
+                  payment_status: 'paid',
+                  updated_at: new Date().toISOString(),
+                })
+                .eq('id', orderId);
+
+              // Finalize stock reservations
+              try {
+                await supabase
+                  .from('stock_reservations')
+                  .update({ finalized_at: new Date().toISOString() })
+                  .eq('order_id', orderId as string)
+                  .is('finalized_at', null)
+                  .is('released_at', null);
+              } catch (e) {
+                console.error('Finalize reservations error (paydunya direct verify):', e);
+              }
+
+              return NextResponse.json({
+                success: true,
+                message: 'Paiement PayDunya vérifié avec succès',
+                paymentStatus: 'completed',
+                orderStatus: 'processing'
+              }, { status: 200 });
+            }
+          }
+        } catch (directVerifyError) {
+          console.warn('[Payment Verify] Direct PayDunya verification failed:', directVerifyError);
+        }
+
         // Return pending status so frontend can retry
         return NextResponse.json({
           success: false,
