@@ -31,8 +31,8 @@ jest.mock('@/lib/rate-limit-upstash', () => ({
 }));
 
 jest.mock('@/lib/sanitize', () => ({
-    sanitizeEmail: jest.fn((email) => email?.toLowerCase().trim() || ''),
-    sanitizeText: jest.fn((text) => text?.trim() || ''),
+    sanitizeEmail: jest.fn((email: string) => email?.toLowerCase().trim() || ''),
+    sanitizeText: jest.fn((text: string) => text?.trim() || ''),
 }));
 
 jest.mock('@sentry/nextjs', () => ({
@@ -47,7 +47,7 @@ jest.mock('@/lib/analytics-config', () => ({
 jest.mock('@supabase/supabase-js', () => ({
     createClient: jest.fn(() => ({
         auth: {
-            signInWithPassword: jest.fn(async ({ email, password }) => {
+            signInWithPassword: jest.fn(async ({ email, password }: { email: string; password: string }) => {
                 if (email === 'valid@example.com' && password === 'correctpassword') {
                     return {
                         data: {
@@ -63,7 +63,7 @@ jest.mock('@supabase/supabase-js', () => ({
                 };
             }),
             admin: {
-                createUser: jest.fn(async ({ email }) => {
+                createUser: jest.fn(async ({ email }: { email: string }) => {
                     if (email === 'existing@example.com') {
                         return {
                             data: null,
@@ -81,7 +81,7 @@ jest.mock('@supabase/supabase-js', () => ({
             },
         },
         from: jest.fn(() => ({
-            insert: jest.fn().mockResolvedValue({ error: null }),
+            insert: jest.fn().mockImplementation(async () => ({ error: null })),
             select: jest.fn().mockReturnThis(),
             eq: jest.fn().mockReturnThis(),
             single: jest.fn(),
@@ -113,16 +113,18 @@ describe('Auth API - Login', () => {
             });
 
             await loginPOST(request);
-            expect(authRateLimit.limit).toHaveBeenCalled();
+            expect(authRateLimit?.limit).toHaveBeenCalled();
         });
 
         it('should return 429 when login rate limit is exceeded', async () => {
-            (authRateLimit.limit as jest.Mock).mockResolvedValueOnce({
-                success: false,
-                limit: 5,
-                remaining: 0,
-                reset: Date.now() + 60000,
-            });
+            if (authRateLimit && authRateLimit.limit) {
+                (authRateLimit.limit as jest.Mock).mockImplementation(async () => ({
+                    success: false,
+                    limit: 5,
+                    remaining: 0,
+                    reset: Date.now() + 60000,
+                }));
+            }
 
             const request = new NextRequest('http://localhost:3000/api/auth/login', {
                 method: 'POST',
@@ -167,7 +169,7 @@ describe('Auth API - Login', () => {
                 }),
             });
 
-            const response = await loginPOST(request);
+            await loginPOST(request);
             expect(sanitizeEmail).toHaveBeenCalled();
         });
     });
@@ -195,7 +197,7 @@ describe('Auth API - Login', () => {
             await loginPOST(request);
             expect(Sentry.captureException).toHaveBeenCalled();
 
-            const captureCall = (Sentry.captureException as jest.Mock).mock.calls[0];
+            const captureCall = (Sentry.captureException as jest.Mock).mock.calls[0] as any;
             expect(captureCall[1].tags.route).toBe('auth/login');
         });
 
@@ -302,7 +304,7 @@ describe('Auth API - Signup', () => {
             });
 
             await signupPOST(request);
-            expect(authRateLimit.limit).toHaveBeenCalled();
+            expect(authRateLimit?.limit).toHaveBeenCalled();
         });
     });
 
@@ -370,7 +372,7 @@ describe('Auth API - Signup', () => {
             await signupPOST(request);
             expect(Sentry.captureException).toHaveBeenCalled();
 
-            const captureCall = (Sentry.captureException as jest.Mock).mock.calls[0];
+            const captureCall = (Sentry.captureException as jest.Mock).mock.calls[0] as any;
             expect(captureCall[1].tags.route).toBe('auth/signup');
         });
 

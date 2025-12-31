@@ -185,12 +185,12 @@ describe('Rate Limiting Integration', () => {
                 reset: Date.now() + 60000,
             }));
 
-            (Ratelimit as any).mockImplementation(() => ({
+            (Ratelimit as unknown as jest.Mock).mockImplementation(() => ({
                 limit: mockLimit,
             }));
 
             // Test that when success=false, we should return 429
-            const result = await mockLimit('test-identifier');
+            const result = await mockLimit();
             expect(result.success).toBe(false);
             expect(result.remaining).toBe(0);
         });

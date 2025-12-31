@@ -11,7 +11,7 @@ import { createClient } from '@supabase/supabase-js';
 import * as Sentry from '@sentry/nextjs';
 import crypto from 'crypto';
 import { paydunyaProvider } from '@/lib/payments';
-import { sendOrderConfirmationEmail } from '@/lib/smtp-email';
+import { sendOrderConfirmationEmail } from '@/lib/email-service';
 import { notifyManagerNewOrder } from '@/lib/whatsapp-notifications';
 
 // PayDunya webhook payload interface

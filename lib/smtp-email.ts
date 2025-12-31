@@ -22,7 +22,7 @@ const fromName = process.env.SMTP_FROM_NAME || 'Nubia Aura';
 // Créer le transporteur
 const transporter = nodemailer.createTransport(smtpConfig);
 
-interface EmailOptions {
+export interface EmailOptions {
   to: string;
   subject: string;
   html: string;

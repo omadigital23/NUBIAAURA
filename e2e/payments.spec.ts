@@ -5,18 +5,19 @@
  * Run: npx playwright test e2e/payments.spec.ts
  */
 
+// @ts-ignore
 import { test, expect } from '@playwright/test';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
 test.describe('Payment Flow E2E Tests', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }: { page: any }) => {
     // Navigate to checkout page
     await page.goto(`${BASE_URL}/fr/checkout`);
     await page.waitForLoadState('networkidle');
   });
 
-  test('should display checkout form', async ({ page }) => {
+  test('should display checkout form', async ({ page }: { page: any }) => {
     // Check form elements exist
     await expect(page.locator('input[name="firstName"]')).toBeVisible();
     await expect(page.locator('input[name="lastName"]')).toBeVisible();
@@ -29,7 +30,7 @@ test.describe('Payment Flow E2E Tests', () => {
     await expect(page.locator('select[name="shippingMethod"]')).toBeVisible();
   });
 
-  test('should validate required fields', async ({ page }) => {
+  test('should validate required fields', async ({ page }: { page: any }) => {
     // Try to submit empty form
     const submitButton = page.locator('button:has-text("Passer la Commande")');
     await submitButton.click();
@@ -39,7 +40,7 @@ test.describe('Payment Flow E2E Tests', () => {
     await expect(errorMessages.first()).toBeVisible();
   });
 
-  test('should validate email format', async ({ page }) => {
+  test('should validate email format', async ({ page }: { page: any }) => {
     // Fill form with invalid email
     await page.fill('input[name="firstName"]', 'Amadou');
     await page.fill('input[name="lastName"]', 'Test');
@@ -59,7 +60,7 @@ test.describe('Payment Flow E2E Tests', () => {
     await expect(errorMessages).toContainText(/email|invalid/i);
   });
 
-  test('should fill form with valid data', async ({ page }) => {
+  test('should fill form with valid data', async ({ page }: { page: any }) => {
     // Fill form with valid data
     await page.fill('input[name="firstName"]', 'Amadou');
     await page.fill('input[name="lastName"]', 'Test');
@@ -76,7 +77,7 @@ test.describe('Payment Flow E2E Tests', () => {
     await expect(page.locator('input[name="email"]')).toHaveValue('test@example.com');
   });
 
-  test('should submit form and redirect to Flutterwave', async ({ page }) => {
+  test('should submit form and redirect to Flutterwave', async ({ page }: { page: any }) => {
     // Fill form
     await page.fill('input[name="firstName"]', 'Amadou');
     await page.fill('input[name="lastName"]', 'Test');
@@ -103,7 +104,7 @@ test.describe('Payment Flow E2E Tests', () => {
     expect(isFlutterwave || isConfirmation).toBeTruthy();
   });
 
-  test('should handle different shipping methods', async ({ page }) => {
+  test('should handle different shipping methods', async ({ page }: { page: any }) => {
     const methods = ['standard', 'express'];
 
     for (const method of methods) {
@@ -128,10 +129,10 @@ test.describe('Payment Flow E2E Tests', () => {
     }
   });
 
-  test('should display cart summary', async ({ page }) => {
+  test('should display cart summary', async ({ page }: { page: any }) => {
     // Check if cart summary is visible
     const cartSummary = page.locator('[data-testid="cart-summary"]');
-    
+
     if (await cartSummary.isVisible()) {
       // Verify cart items are displayed
       const cartItems = page.locator('[data-testid="cart-item"]');
@@ -144,7 +145,7 @@ test.describe('Payment Flow E2E Tests', () => {
     }
   });
 
-  test('should show loading state during submission', async ({ page }) => {
+  test('should show loading state during submission', async ({ page }: { page: any }) => {
     // Fill form
     await page.fill('input[name="firstName"]', 'Amadou');
     await page.fill('input[name="lastName"]', 'Test');
@@ -166,7 +167,7 @@ test.describe('Payment Flow E2E Tests', () => {
     }
   });
 
-  test('should handle network errors gracefully', async ({ page }) => {
+  test('should handle network errors gracefully', async ({ page }: { page: any }) => {
     // Simulate network error
     await page.context().setOffline(true);
 
@@ -191,7 +192,7 @@ test.describe('Payment Flow E2E Tests', () => {
     await page.context().setOffline(false);
   });
 
-  test('should support multiple languages', async ({ page }) => {
+  test('should support multiple languages', async ({ page }: { page: any }) => {
     // Check French version
     let heading = page.locator('h1');
     await expect(heading).toContainText(/checkout|commande|paiement/i);
@@ -205,7 +206,7 @@ test.describe('Payment Flow E2E Tests', () => {
     await expect(heading).toContainText(/checkout|payment|order/i);
   });
 
-  test('should remember form data on page reload', async ({ page }) => {
+  test('should remember form data on page reload', async ({ page }: { page: any }) => {
     // Fill form
     await page.fill('input[name="firstName"]', 'Amadou');
     await page.fill('input[name="email"]', 'test@example.com');
@@ -223,7 +224,7 @@ test.describe('Payment Flow E2E Tests', () => {
     expect(firstName || email).toBeDefined();
   });
 
-  test('should validate phone number format', async ({ page }) => {
+  test('should validate phone number format', async ({ page }: { page: any }) => {
     // Fill form with invalid phone
     await page.fill('input[name="firstName"]', 'Amadou');
     await page.fill('input[name="lastName"]', 'Test');
@@ -242,7 +243,7 @@ test.describe('Payment Flow E2E Tests', () => {
     await expect(errorMessages).toContainText(/phone|number/i);
   });
 
-  test('should display success message after payment', async ({ page }) => {
+  test('should display success message after payment', async ({ page }: { page: any }) => {
     // Navigate to callback page (simulating successful payment)
     await page.goto(`${BASE_URL}/payments/callback?reference=TEST-123`);
     await page.waitForLoadState('networkidle');

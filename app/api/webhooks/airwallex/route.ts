@@ -119,11 +119,17 @@ export async function POST(request: NextRequest) {
                     };
 
                     if (shippingAddress?.email) {
+                        const shippingAddressStr = [
+                            shippingAddress.address,
+                            shippingAddress.city,
+                            shippingAddress.zipCode,
+                            shippingAddress.country,
+                        ].filter(Boolean).join(', ');
+
                         await sendOrderConfirmationEmail(
                             shippingAddress.email,
                             {
-                                orderNumber: order.order_number,
-                                orderId: result.orderId,
+                                orderId: order.order_number || result.orderId,
                                 customerName: `${shippingAddress.firstName || ''} ${shippingAddress.lastName || ''}`.trim() || 'Client',
                                 total: order.total,
                                 items: (orderItems || []).map((item: {
@@ -135,6 +141,8 @@ export async function POST(request: NextRequest) {
                                     quantity: item.quantity,
                                     price: item.price,
                                 })),
+                                shippingAddress: shippingAddressStr || 'Non spécifiée',
+                                estimatedDelivery: '5-7 jours ouvrés',
                             }
                         );
                         console.log('[Airwallex Webhook] Confirmation email sent');
