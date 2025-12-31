@@ -274,17 +274,26 @@ export class PaydunyaProvider implements IPaymentProvider {
 
             const result: PaydunyaInvoiceResponse = await response.json();
 
-            if (result.response_code === '00' && result.token && result.invoice_url) {
+            // PayDunya returns the invoice URL in response_text when successful
+            // The token can be in a separate field or extracted from the URL
+            const invoiceUrl = result.invoice_url ||
+                (result.response_code === '00' && result.response_text?.startsWith('http') ? result.response_text : null);
+
+            // Extract token from URL if not provided separately
+            // URL format: https://paydunya.com/sandbox-checkout/invoice/test_eHQuBXLZde
+            const extractedToken = result.token || (invoiceUrl ? invoiceUrl.split('/').pop() : null);
+
+            if (result.response_code === '00' && invoiceUrl) {
                 console.log('[PayDunya] Payment session created:', {
-                    token: result.token,
-                    url: result.invoice_url?.substring(0, 50) + '...',
+                    token: extractedToken,
+                    url: invoiceUrl?.substring(0, 60) + '...',
                 });
 
                 return {
                     success: true,
                     gateway: this.gateway,
-                    transactionId: result.token,
-                    redirectUrl: result.invoice_url,
+                    transactionId: extractedToken || '',
+                    redirectUrl: invoiceUrl,
                 };
             } else {
                 console.error('[PayDunya] Invoice creation failed:', {
