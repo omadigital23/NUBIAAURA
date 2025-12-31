@@ -11,8 +11,8 @@ import { createClient } from '@supabase/supabase-js';
 import * as Sentry from '@sentry/nextjs';
 import crypto from 'crypto';
 import { paydunyaProvider } from '@/lib/payments';
-import { sendOrderConfirmationEmail } from '@/lib/email-service';
-import { sendWhatsAppMessage } from '@/lib/twilio';
+import { sendOrderConfirmationEmail } from '@/lib/smtp-email';
+import { notifyManagerNewOrder } from '@/lib/whatsapp-notifications';
 
 // PayDunya webhook payload interface
 interface PaydunyaWebhookData {
@@ -203,7 +203,6 @@ export async function POST(request: NextRequest) {
                     const emailResult = await sendOrderConfirmationEmail(
                         customerEmail,
                         {
-                            orderNumber: order.order_number,
                             orderId: orderId,
                             customerName: customerName || 'Client',
                             total: order.total,
@@ -212,25 +211,36 @@ export async function POST(request: NextRequest) {
                                 quantity: item.quantity,
                                 price: item.price,
                             })),
+                            shippingAddress: `${shippingAddress?.address || ''}, ${shippingAddress?.city || ''}, ${shippingAddress?.country || ''}`.trim(),
+                            estimatedDelivery: '3-5 jours ouvrables',
                         }
                     );
 
                     console.log('[PayDunya Webhook] Confirmation email sent:', emailResult);
                 }
 
-                // Send WhatsApp notification to manager
-                const managerPhone = process.env.MANAGER_WHATSAPP_NUMBER;
-                if (managerPhone) {
-                    await sendWhatsAppMessage(
-                        managerPhone,
-                        `🎉 Nouvelle commande payée!\n\n` +
-                        `Commande: ${order.order_number}\n` +
-                        `Montant: ${order.total.toLocaleString()} FCFA\n` +
-                        `Client: ${customerName}\n` +
-                        `Méthode: PayDunya\n\n` +
-                        `Voir dans l'admin: ${process.env.NEXT_PUBLIC_APP_URL}/admin/orders/${orderId}`
-                    );
-                    console.log('[PayDunya Webhook] WhatsApp notification sent');
+                // Send WhatsApp notification to manager with complete details
+                try {
+                    await notifyManagerNewOrder({
+                        orderId: order.order_number,
+                        customerName: customerName || 'Client',
+                        customerEmail: customerEmail,
+                        customerPhone: shippingAddress?.phone || webhookData.customer?.phone,
+                        total: order.total,
+                        itemCount: (orderItems || []).length,
+                        items: (orderItems || []).map((item: { products?: { name?: string }; quantity: number; price: number }) => ({
+                            name: item.products?.name || 'Produit',
+                            quantity: item.quantity,
+                            price: item.price,
+                        })),
+                        address: shippingAddress?.address,
+                        city: shippingAddress?.city,
+                        country: shippingAddress?.country,
+                        paymentMethod: 'paydunya',
+                    });
+                    console.log('[PayDunya Webhook] WhatsApp notification sent to manager');
+                } catch (whatsappError) {
+                    console.error('[PayDunya Webhook] WhatsApp notification error:', whatsappError);
                 }
             } catch (emailError) {
                 console.error('[PayDunya Webhook] Email/WhatsApp error:', emailError);
