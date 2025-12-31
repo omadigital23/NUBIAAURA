@@ -1,7 +1,7 @@
 export type ShippingMethod = 'standard' | 'express';
 
 // Centralized pricing configuration (no UI text here)
-export const TAX_RATE = 0.18; // 18%
+export const TAX_RATE = 0; // No taxes applied
 export const FREE_SHIPPING_THRESHOLD = 100_000; // FCFA
 export const SHIPPING_COSTS: Record<ShippingMethod, number> = {
   standard: 5_000,

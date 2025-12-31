@@ -447,7 +447,7 @@ export default function CheckoutPage() {
 
   const clientSubtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const clientShipping = shippingMethod === 'express' ? 15000 : clientSubtotal > 100000 ? 0 : 5000;
-  const clientTax = Math.round(clientSubtotal * 0.18);
+  const clientTax = 0; // No taxes applied
   const clientTotal = clientSubtotal + clientShipping + clientTax;
   const subtotal = quote?.subtotal ?? clientSubtotal;
   const shipping = quote?.shipping ?? clientShipping;
