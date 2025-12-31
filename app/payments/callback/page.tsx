@@ -16,12 +16,12 @@ function PaymentCallbackContent() {
   const { clearCart } = useCartContext();
   const { t, locale } = useTranslation();
 
-  const [status, setStatus] = useState<'loading' | 'success' | 'failed'>('loading');
+  const [status, setStatus] = useState<'loading' | 'success' | 'failed' | 'pending'>('loading');
   const [message, setMessage] = useState('Vérification du paiement en cours...');
   const [orderDetails, setOrderDetails] = useState<any>(null);
 
   useEffect(() => {
-    const verifyPayment = async (retryCount = 0) => {
+    const verifyPayment = async (currentRetry = 0) => {
       try {
         const orderId = searchParams.get('orderId');
         const reference = searchParams.get('reference');
@@ -70,10 +70,18 @@ function PaymentCallbackContent() {
           setTimeout(() => {
             router.push(`/${locale}/merci?orderId=${orderId || tx_ref}`);
           }, 3000);
-        } else if (data.isPending && retryCount < 5) {
-          // IPN may not have arrived yet - retry after 2 seconds
-          setMessage(t('callback.pending_message', 'Confirmation en cours... Veuillez patienter.'));
-          setTimeout(() => verifyPayment(retryCount + 1), 2000);
+        } else if (data.isPending && currentRetry < 10) {
+          // IPN may not have arrived yet - show pending state and retry
+          setStatus('pending');
+          setMessage(t('callback.pending_message', `Confirmation en cours... (Tentative ${currentRetry + 1}/10)`));
+          setTimeout(() => verifyPayment(currentRetry + 1), 2000);
+        } else if (currentRetry >= 10) {
+          // Max retries reached - still pending, redirect to orders page
+          setStatus('pending');
+          setMessage(t('callback.max_retries', 'Le paiement est en cours de traitement. Vous recevrez une confirmation par email.'));
+          setTimeout(() => {
+            router.push(`/${locale}/commandes`);
+          }, 5000);
         } else {
           setStatus('failed');
           setMessage(data.message || t('callback.failed_message', "Le paiement n'a pas pu être vérifié"));
@@ -149,6 +157,21 @@ function PaymentCallbackContent() {
                 >
                   {t('callback.buttons.go_to_confirmation', 'Aller à la Confirmation')}
                 </button>
+              </>
+            )}
+
+            {status === 'pending' && (
+              <>
+                <Loader className="mx-auto mb-6 text-nubia-gold animate-spin" size={48} />
+                <h1 className="font-playfair text-3xl font-bold text-nubia-black mb-4">
+                  {t('callback.pending_title', 'Confirmation en Cours')}
+                </h1>
+                <p className="text-nubia-black/70 text-lg mb-6">{message}</p>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                  <p className="text-yellow-800 text-sm">
+                    {t('callback.pending_info', 'Votre paiement a été effectué. Nous attendons la confirmation de PayDunya. Cela peut prendre quelques secondes.')}
+                  </p>
+                </div>
               </>
             )}
 

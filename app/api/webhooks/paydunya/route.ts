@@ -42,20 +42,29 @@ export async function POST(request: NextRequest) {
         const contentType = request.headers.get('content-type') || '';
         let webhookData: PaydunyaWebhookData;
 
+        // Read body as text first (can only read once)
+        const bodyText = await request.text();
+        console.log('[PayDunya Webhook] Raw body received:', bodyText.substring(0, 200));
+
         if (contentType.includes('application/json')) {
-            const body = await request.json();
-            webhookData = body.data;
+            const body = JSON.parse(bodyText);
+            // PayDunya wraps data in a 'data' key
+            webhookData = body.data || body;
         } else {
-            // Handle form-urlencoded
-            const formData = await request.formData();
-            const dataStr = formData.get('data');
-            if (typeof dataStr === 'string') {
+            // Handle form-urlencoded - PayDunya sends data=JSON_STRING
+            const params = new URLSearchParams(bodyText);
+            const dataStr = params.get('data');
+            if (dataStr) {
                 webhookData = JSON.parse(dataStr);
             } else {
-                // Try to read as JSON from body
-                const text = await request.text();
-                const parsed = JSON.parse(text);
-                webhookData = parsed.data;
+                // Fallback: try parsing the whole body as JSON
+                try {
+                    const parsed = JSON.parse(bodyText);
+                    webhookData = parsed.data || parsed;
+                } catch {
+                    console.error('[PayDunya Webhook] Failed to parse body:', bodyText.substring(0, 500));
+                    return NextResponse.json({ error: 'Invalid payload format' }, { status: 400 });
+                }
             }
         }
 
