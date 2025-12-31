@@ -13,6 +13,8 @@
  * - Cards (Visa, Mastercard)
  * 
  * API Documentation: https://paydunya.com/developers
+ * 
+ * IMPORTANT: Uses direct API calls instead of SDK to avoid serverless compatibility issues
  */
 
 import crypto from 'crypto';
@@ -26,16 +28,16 @@ import {
     PaymentStatus,
 } from '../types';
 
-// PayDunya SDK
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const paydunya = require('paydunya');
-
 // Configuration from environment variables
 const PAYDUNYA_MASTER_KEY = process.env.PAYDUNYA_MASTER_KEY || '';
 const PAYDUNYA_PRIVATE_KEY = process.env.PAYDUNYA_PRIVATE_KEY || '';
-const PAYDUNYA_PUBLIC_KEY = process.env.PAYDUNYA_PUBLIC_KEY || '';
 const PAYDUNYA_TOKEN = process.env.PAYDUNYA_TOKEN || '';
 const PAYDUNYA_MODE = (process.env.PAYDUNYA_MODE || 'test') as 'test' | 'live';
+
+// API Base URLs
+const API_BASE_URL = PAYDUNYA_MODE === 'live'
+    ? 'https://app.paydunya.com/api/v1'
+    : 'https://app.paydunya.com/sandbox-api/v1';
 
 // Channel mapping for payment method restrictions
 // Reference: https://paydunya.com/developers/channels
@@ -108,6 +110,33 @@ export interface PaydunyaWebhookPayload {
     };
 }
 
+// PayDunya API response interfaces
+interface PaydunyaInvoiceResponse {
+    response_code: string;
+    response_text: string;
+    description?: string;
+    token?: string;
+    invoice_url?: string;
+    status?: string;
+}
+
+interface PaydunyaConfirmResponse {
+    response_code: string;
+    response_text: string;
+    invoice?: {
+        status: 'pending' | 'completed' | 'cancelled';
+        token: string;
+        total_amount: number;
+    };
+    customer?: {
+        name: string;
+        phone: string;
+        email: string;
+    };
+    custom_data?: Record<string, string>;
+    receipt_url?: string;
+}
+
 /**
  * Verify PayDunya IPN using SHA-512 hash of Master Key
  */
@@ -129,13 +158,11 @@ function verifyPaydunyaHash(receivedHash: string): boolean {
 
 /**
  * PayDunya Payment Provider Implementation
+ * Uses direct API calls instead of SDK for serverless compatibility
  */
 export class PaydunyaProvider implements IPaymentProvider {
     readonly gateway: PaymentGateway = 'paydunya';
     readonly supportedCurrencies: Currency[] = ['XOF'];
-
-    private setup: typeof paydunya.Setup | null = null;
-    private store: typeof paydunya.Store | null = null;
 
     /**
      * Check if PayDunya is configured
@@ -145,40 +172,15 @@ export class PaydunyaProvider implements IPaymentProvider {
     }
 
     /**
-     * Initialize PayDunya SDK
+     * Get common headers for PayDunya API requests
      */
-    private initializeSDK(): void {
-        if (this.setup && this.store) return;
-
-        if (!this.isConfigured()) {
-            throw new Error('PayDunya is not configured');
-        }
-
-        // Setup API keys
-        this.setup = new paydunya.Setup({
-            masterKey: PAYDUNYA_MASTER_KEY,
-            privateKey: PAYDUNYA_PRIVATE_KEY,
-            publicKey: PAYDUNYA_PUBLIC_KEY,
-            token: PAYDUNYA_TOKEN,
-            mode: PAYDUNYA_MODE,
-        });
-
-        // Get base URL for callbacks
-        const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL ||
-            process.env.NEXT_PUBLIC_SITE_URL ||
-            (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
-            'https://nubiaaura.com';
-
-        // Store configuration
-        this.store = new paydunya.Store({
-            name: 'NUBIA AURA',
-            tagline: 'Mode africaine authentique',
-            phoneNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '+221781234567',
-            postalAddress: 'Dakar, Sénégal',
-            websiteURL: appBaseUrl,
-            logoURL: `${appBaseUrl}/images/logo.png`,
-            callbackURL: `${appBaseUrl}/api/webhooks/paydunya`,
-        });
+    private getHeaders(): Record<string, string> {
+        return {
+            'Content-Type': 'application/json',
+            'PAYDUNYA-MASTER-KEY': PAYDUNYA_MASTER_KEY,
+            'PAYDUNYA-PRIVATE-KEY': PAYDUNYA_PRIVATE_KEY,
+            'PAYDUNYA-TOKEN': PAYDUNYA_TOKEN,
+        };
     }
 
     /**
@@ -198,8 +200,6 @@ export class PaydunyaProvider implements IPaymentProvider {
                 };
             }
 
-            this.initializeSDK();
-
             // Get base URL for callbacks
             const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL ||
                 process.env.NEXT_PUBLIC_SITE_URL ||
@@ -208,45 +208,53 @@ export class PaydunyaProvider implements IPaymentProvider {
 
             const locale = order.locale || 'fr';
 
-            // Create invoice
-            const invoice = new paydunya.CheckoutInvoice(this.setup, this.store);
+            // Build items object for PayDunya
+            const items: Record<string, { name: string; quantity: number; unit_price: number; total_price: number; description: string }> = {};
+            order.items.forEach((item, index) => {
+                items[`item_${index}`] = {
+                    name: item.name || 'Article',
+                    quantity: item.quantity,
+                    unit_price: item.price,
+                    total_price: item.price * item.quantity,
+                    description: '',
+                };
+            });
 
-            // Add items
-            for (const item of order.items) {
-                invoice.addItem(
-                    item.name || 'Article',
-                    item.quantity,
-                    item.price,
-                    item.price * item.quantity,
-                    ''
-                );
-            }
-
-            // Set total amount (PayDunya requires explicit total)
-            invoice.totalAmount = order.amount;
-
-            // Set description
-            invoice.description = `Commande ${order.orderNumber} - NUBIA AURA`;
-
-            // Configure URLs
-            invoice.returnURL = `${appBaseUrl}/${locale}/payments/callback?orderId=${order.orderId}&status=success&gateway=paydunya`;
-            invoice.cancelURL = `${appBaseUrl}/${locale}/payments/callback?orderId=${order.orderId}&status=cancelled&gateway=paydunya`;
-            invoice.callbackURL = `${appBaseUrl}/api/webhooks/paydunya`;
-
-            // Add custom data for order tracking
-            invoice.addCustomData('order_id', order.orderId);
-            invoice.addCustomData('order_number', order.orderNumber);
-            invoice.addCustomData('customer_email', order.customer.email);
-            invoice.addCustomData('customer_phone', order.customer.phone);
-            invoice.addCustomData('customer_name', `${order.customer.firstName} ${order.customer.lastName}`);
-
-            // Add shipping taxes if applicable (for display purposes)
-            // The total already includes shipping, this is just for display
-
-            // Restrict payment channels if specific method requested
+            // Build channels array if specific method requested
+            const channels: string[] = [];
             if (method && CHANNEL_MAP[method]) {
-                invoice.addChannel(CHANNEL_MAP[method]);
+                channels.push(CHANNEL_MAP[method]);
             }
+
+            // Build request payload
+            const payload = {
+                invoice: {
+                    items,
+                    total_amount: order.amount,
+                    description: `Commande ${order.orderNumber} - NUBIA AURA`,
+                },
+                store: {
+                    name: 'NUBIA AURA',
+                    tagline: 'Mode africaine authentique',
+                    phone: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '+221781234567',
+                    postal_address: 'Dakar, Sénégal',
+                    website_url: appBaseUrl,
+                    logo_url: `${appBaseUrl}/images/logo.png`,
+                },
+                actions: {
+                    return_url: `${appBaseUrl}/${locale}/payments/callback?orderId=${order.orderId}&status=success&gateway=paydunya`,
+                    cancel_url: `${appBaseUrl}/${locale}/payments/callback?orderId=${order.orderId}&status=cancelled&gateway=paydunya`,
+                    callback_url: `${appBaseUrl}/api/webhooks/paydunya`,
+                },
+                custom_data: {
+                    order_id: order.orderId,
+                    order_number: order.orderNumber,
+                    customer_email: order.customer.email,
+                    customer_phone: order.customer.phone,
+                    customer_name: `${order.customer.firstName} ${order.customer.lastName}`,
+                },
+                ...(channels.length > 0 && { channels }),
+            };
 
             console.log('[PayDunya] Initializing payment:', {
                 orderId: order.orderId,
@@ -257,31 +265,37 @@ export class PaydunyaProvider implements IPaymentProvider {
                 mode: PAYDUNYA_MODE,
             });
 
-            // Create the invoice
-            await invoice.create();
+            // Make API request
+            const response = await fetch(`${API_BASE_URL}/checkout-invoice/create`, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify(payload),
+            });
 
-            if (invoice.status === 'success' || invoice.url) {
+            const result: PaydunyaInvoiceResponse = await response.json();
+
+            if (result.response_code === '00' && result.token && result.invoice_url) {
                 console.log('[PayDunya] Payment session created:', {
-                    token: invoice.token,
-                    url: invoice.url?.substring(0, 50) + '...',
+                    token: result.token,
+                    url: result.invoice_url?.substring(0, 50) + '...',
                 });
 
                 return {
                     success: true,
                     gateway: this.gateway,
-                    transactionId: invoice.token,
-                    redirectUrl: invoice.url,
+                    transactionId: result.token,
+                    redirectUrl: result.invoice_url,
                 };
             } else {
                 console.error('[PayDunya] Invoice creation failed:', {
-                    status: invoice.status,
-                    responseText: invoice.responseText,
+                    responseCode: result.response_code,
+                    responseText: result.response_text,
                 });
 
                 return {
                     success: false,
                     gateway: this.gateway,
-                    error: invoice.responseText || 'Erreur lors de la création de la facture PayDunya',
+                    error: result.response_text || 'Erreur lors de la création de la facture PayDunya',
                     errorCode: 'INVOICE_CREATION_FAILED',
                 };
             }
@@ -346,20 +360,26 @@ export class PaydunyaProvider implements IPaymentProvider {
                 return 'pending';
             }
 
-            this.initializeSDK();
+            const response = await fetch(`${API_BASE_URL}/checkout-invoice/confirm/${token}`, {
+                method: 'GET',
+                headers: this.getHeaders(),
+            });
 
-            const invoice = new paydunya.CheckoutInvoice(this.setup, this.store);
-            await invoice.confirm(token);
+            const result: PaydunyaConfirmResponse = await response.json();
 
-            switch (invoice.status) {
-                case 'completed':
-                    return 'paid';
-                case 'cancelled':
-                    return 'cancelled';
-                case 'pending':
-                default:
-                    return 'pending';
+            if (result.response_code === '00' && result.invoice) {
+                switch (result.invoice.status) {
+                    case 'completed':
+                        return 'paid';
+                    case 'cancelled':
+                        return 'cancelled';
+                    case 'pending':
+                    default:
+                        return 'pending';
+                }
             }
+
+            return 'pending';
         } catch (error) {
             console.error('[PayDunya] Get status error:', error);
             return 'pending';
@@ -381,21 +401,27 @@ export class PaydunyaProvider implements IPaymentProvider {
                 return { success: false, status: 'pending' };
             }
 
-            this.initializeSDK();
+            const response = await fetch(`${API_BASE_URL}/checkout-invoice/confirm/${token}`, {
+                method: 'GET',
+                headers: this.getHeaders(),
+            });
 
-            const invoice = new paydunya.CheckoutInvoice(this.setup, this.store);
-            await invoice.confirm(token);
+            const result: PaydunyaConfirmResponse = await response.json();
 
-            const status: PaymentStatus = invoice.status === 'completed' ? 'paid' :
-                invoice.status === 'cancelled' ? 'cancelled' : 'pending';
+            if (result.response_code === '00' && result.invoice) {
+                const status: PaymentStatus = result.invoice.status === 'completed' ? 'paid' :
+                    result.invoice.status === 'cancelled' ? 'cancelled' : 'pending';
 
-            return {
-                success: invoice.status === 'completed',
-                status,
-                customer: invoice.customer,
-                receiptUrl: invoice.receiptURL,
-                orderId: invoice.customData?.order_id,
-            };
+                return {
+                    success: result.invoice.status === 'completed',
+                    status,
+                    customer: result.customer,
+                    receiptUrl: result.receipt_url,
+                    orderId: result.custom_data?.order_id,
+                };
+            }
+
+            return { success: false, status: 'pending' };
         } catch (error) {
             console.error('[PayDunya] Confirm payment error:', error);
             return { success: false, status: 'pending' };
