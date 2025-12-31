@@ -193,12 +193,13 @@ export async function POST(request: NextRequest) {
                 const customerName = webhookData.customer?.name ||
                     `${shippingAddress?.firstName || ''} ${shippingAddress?.lastName || ''}`.trim();
 
+                // Fetch order items (needed for both email and WhatsApp)
+                const { data: orderItems } = await supabase
+                    .from('order_items')
+                    .select('*, products(*)')
+                    .eq('order_id', orderId);
+
                 if (customerEmail) {
-                    // Fetch order items
-                    const { data: orderItems } = await supabase
-                        .from('order_items')
-                        .select('*, products(*)')
-                        .eq('order_id', orderId);
 
                     const emailResult = await sendOrderConfirmationEmail(
                         customerEmail,
