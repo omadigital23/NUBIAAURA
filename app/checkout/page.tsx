@@ -27,7 +27,7 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [isProcessingOrder, setIsProcessingOrder] = useState(false);
   const [shippingMethod, setShippingMethod] = useState('standard');
-  const [paymentMethod, setPaymentMethod] = useState<'paytech' | 'cod' | ''>('');
+  const [paymentMethod, setPaymentMethod] = useState<'paydunya' | 'cod' | ''>('');
   const [paymentSubMethod, setPaymentSubMethod] = useState<string>('');
   const [quote, setQuote] = useState<{ subtotal: number; shipping: number; tax: number; total: number } | null>(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
@@ -304,7 +304,7 @@ export default function CheckoutPage() {
       setIsProcessingOrder(true);
 
       // Require explicit payment method selection
-      if (step === 3 && (!paymentMethod || (paymentMethod !== 'cod' && paymentMethod !== 'paytech'))) {
+      if (step === 3 && (!paymentMethod || (paymentMethod !== 'cod' && paymentMethod !== 'paydunya'))) {
         setError(t('checkout.errors.select_payment', 'Veuillez choisir un mode de paiement'));
         setLoading(false);
         return;
@@ -366,7 +366,7 @@ export default function CheckoutPage() {
       }
 
       console.log('[Checkout] Processing online payment:', paymentMethod);
-      // Initialize payment with PayTech or CMI (with timeout to avoid infinite loading)
+      // Initialize payment with PayDunya (with timeout to avoid infinite loading)
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
@@ -389,7 +389,7 @@ export default function CheckoutPage() {
           city: formData.city,
           zipCode: formData.zipCode,
           country: formData.country,
-          paymentMethod, // 'paytech' only
+          paymentMethod, // 'paydunya' only
           paymentSubMethod, // 'wave', 'orange_money', 'card', etc.
           cartItems: cartItems.map((item) => ({
             product_id: item.id,
@@ -411,7 +411,7 @@ export default function CheckoutPage() {
       const paymentData = await response.json();
       console.log('[Checkout] Payment initialization response data:', paymentData);
 
-      // Redirect to payment page (PayTech or CMI)
+      // Redirect to payment page (PayDunya)
       if (paymentData.paymentLink || paymentData.redirect_url) {
         console.log('[Checkout] Redirecting to payment link:', paymentData.paymentLink || paymentData.redirect_url);
         window.location.href = paymentData.paymentLink || paymentData.redirect_url;

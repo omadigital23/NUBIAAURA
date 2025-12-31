@@ -1,7 +1,7 @@
 /**
  * Payment Provider Factory
  * Creates the appropriate provider based on country and method
- * Supports: PayTech (UEMOA) + Airwallex (Morocco, Europe, International) + COD
+ * Supports: PayDunya (UEMOA) + Airwallex (Morocco, Europe, International) + COD
  */
 
 import {
@@ -10,13 +10,13 @@ import {
     getCountryCode,
     COUNTRY_GATEWAY_MAP,
 } from './types';
-import { paytechProvider } from './providers/paytech.provider';
+import { paydunyaProvider } from './providers/paydunya.provider';
 import { airwallexProvider } from './providers/airwallex.provider';
 import { codProvider } from './providers/cod.provider';
 
 // Provider registry
 const PROVIDERS: Record<PaymentGateway, IPaymentProvider> = {
-    paytech: paytechProvider,
+    paydunya: paydunyaProvider,
     airwallex: airwallexProvider,
     cod: codProvider,
 };
@@ -100,7 +100,7 @@ export class PaymentProviderFactory {
      */
     static getConfigurationStatus(): Record<PaymentGateway, boolean> {
         return {
-            paytech: paytechProvider.isConfigured(),
+            paydunya: paydunyaProvider.isConfigured(),
             airwallex: airwallexProvider.isConfigured(),
             cod: codProvider.isConfigured(),
         };

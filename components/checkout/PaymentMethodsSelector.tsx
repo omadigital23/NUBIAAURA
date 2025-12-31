@@ -16,8 +16,21 @@ import { useEffect, useState } from 'react';
 import { Lock, CreditCard, Smartphone, Truck, Globe, Wallet } from 'lucide-react';
 
 // Payment method type
-export type PaymentMethod = 'paytech' | 'cod';
-export type PaymentSubMethod = 'wave' | 'orange_money' | 'free_money' | 'wizall' | 'expresso' | 'mtn_money' | 'moov_money' | 'card' | null;
+export type PaymentMethod = 'paydunya' | 'cod';
+export type PaymentSubMethod =
+    | 'wave'
+    | 'orange_money'
+    | 'free_money'
+    | 'wizall'
+    | 'expresso'
+    | 'mtn_money'
+    | 'moov_money'
+    | 'orange_money_bf'
+    | 'moov_money_bf'
+    | 'tmoney'
+    | 'moov_money_tg'
+    | 'card'
+    | null;
 
 interface PaymentOption {
     id: string;
@@ -39,8 +52,8 @@ interface CountryPaymentConfig {
 
 // Common payment options
 const CARD_OPTION: PaymentOption = {
-    id: 'paytech_card',
-    method: 'paytech',
+    id: 'paydunya_card',
+    method: 'paydunya',
     subMethod: 'card',
     label: 'Carte bancaire',
     description: 'Visa, Mastercard',
@@ -58,6 +71,7 @@ const COD_OPTION: PaymentOption = {
 // Payment options by country
 const PAYMENT_OPTIONS: Record<string, CountryPaymentConfig> = {
     // 🇸🇳 Sénégal - Full range of options
+    // 🇸🇳 Sénégal - Wave & Orange Money
     SN: {
         title: 'Paiement pour le Sénégal',
         subtitle: 'Payez en Francs CFA (XOF)',
@@ -65,7 +79,7 @@ const PAYMENT_OPTIONS: Record<string, CountryPaymentConfig> = {
         options: [
             {
                 id: 'wave_sn',
-                method: 'paytech',
+                method: 'paydunya',
                 subMethod: 'wave',
                 label: 'Wave',
                 description: 'Paiement instantané Wave',
@@ -75,39 +89,12 @@ const PAYMENT_OPTIONS: Record<string, CountryPaymentConfig> = {
             },
             {
                 id: 'orange_money_sn',
-                method: 'paytech',
+                method: 'paydunya',
                 subMethod: 'orange_money',
                 label: 'Orange Money',
                 description: 'Paiement Orange Money',
                 icon: <Smartphone className="w-5 h-5 text-orange-500" />,
                 badgeColor: 'bg-orange-100 text-orange-700',
-            },
-            {
-                id: 'free_money_sn',
-                method: 'paytech',
-                subMethod: 'free_money',
-                label: 'Free Money',
-                description: 'Paiement Free Money',
-                icon: <Smartphone className="w-5 h-5 text-green-600" />,
-                badgeColor: 'bg-green-100 text-green-700',
-            },
-            {
-                id: 'wizall_sn',
-                method: 'paytech',
-                subMethod: 'wizall',
-                label: 'Wizall Money',
-                description: 'Porte-monnaie électronique Wizall',
-                icon: <Wallet className="w-5 h-5 text-purple-600" />,
-                badgeColor: 'bg-purple-100 text-purple-700',
-            },
-            {
-                id: 'expresso_sn',
-                method: 'paytech',
-                subMethod: 'expresso',
-                label: 'Expresso / Mixx',
-                description: 'E-money Expresso',
-                icon: <Smartphone className="w-5 h-5 text-red-500" />,
-                badgeColor: 'bg-red-100 text-red-700',
             },
             { ...CARD_OPTION, id: 'card_sn', description: 'Visa, Mastercard' },
             { ...COD_OPTION, id: 'cod_sn' },
@@ -122,7 +109,7 @@ const PAYMENT_OPTIONS: Record<string, CountryPaymentConfig> = {
         options: [
             {
                 id: 'wave_ci',
-                method: 'paytech',
+                method: 'paydunya',
                 subMethod: 'wave',
                 label: 'Wave',
                 description: 'Paiement Wave CI',
@@ -132,7 +119,7 @@ const PAYMENT_OPTIONS: Record<string, CountryPaymentConfig> = {
             },
             {
                 id: 'orange_money_ci',
-                method: 'paytech',
+                method: 'paydunya',
                 subMethod: 'orange_money',
                 label: 'Orange Money',
                 description: 'Paiement Orange Money CI',
@@ -141,7 +128,7 @@ const PAYMENT_OPTIONS: Record<string, CountryPaymentConfig> = {
             },
             {
                 id: 'mtn_money_ci',
-                method: 'paytech',
+                method: 'paydunya',
                 subMethod: 'mtn_money',
                 label: 'MTN Money',
                 description: 'Paiement MTN Mobile Money',
@@ -150,7 +137,7 @@ const PAYMENT_OPTIONS: Record<string, CountryPaymentConfig> = {
             },
             {
                 id: 'moov_money_ci',
-                method: 'paytech',
+                method: 'paydunya',
                 subMethod: 'moov_money',
                 label: 'Moov Money',
                 description: 'Paiement Moov Money',
@@ -162,7 +149,7 @@ const PAYMENT_OPTIONS: Record<string, CountryPaymentConfig> = {
         ],
     },
 
-    // 🇲🇱 Mali
+    // 🇲🇱 Mali - Orange Money
     ML: {
         title: 'Paiement pour le Mali',
         subtitle: 'Payez en Francs CFA (XOF)',
@@ -170,7 +157,7 @@ const PAYMENT_OPTIONS: Record<string, CountryPaymentConfig> = {
         options: [
             {
                 id: 'orange_money_ml',
-                method: 'paytech',
+                method: 'paydunya',
                 subMethod: 'orange_money',
                 label: 'Orange Money',
                 description: 'Paiement Orange Money Mali',
@@ -178,17 +165,68 @@ const PAYMENT_OPTIONS: Record<string, CountryPaymentConfig> = {
                 badge: 'Populaire',
                 badgeColor: 'bg-orange-100 text-orange-700',
             },
+            { ...CARD_OPTION, id: 'card_ml' },
+            { ...COD_OPTION, id: 'cod_ml' },
+        ],
+    },
+
+    // 🇧🇫 Burkina Faso
+    BF: {
+        title: 'Paiement pour le Burkina Faso',
+        subtitle: 'Payez en Francs CFA (XOF)',
+        flag: '🇧🇫',
+        options: [
             {
-                id: 'moov_money_ml',
-                method: 'paytech',
-                subMethod: 'moov_money',
-                label: 'Moov Africa (Malitel)',
-                description: 'Paiement Moov Africa',
+                id: 'orange_money_bf',
+                method: 'paydunya',
+                subMethod: 'orange_money_bf',
+                label: 'Orange Money',
+                description: 'Paiement Orange Money BF',
+                icon: <Smartphone className="w-5 h-5 text-orange-500" />,
+                badge: 'Populaire',
+                badgeColor: 'bg-orange-100 text-orange-700',
+            },
+            {
+                id: 'moov_money_bf',
+                method: 'paydunya',
+                subMethod: 'moov_money_bf',
+                label: 'Moov Money',
+                description: 'Paiement Moov Africa BF',
                 icon: <Smartphone className="w-5 h-5 text-blue-500" />,
                 badgeColor: 'bg-blue-100 text-blue-700',
             },
-            { ...CARD_OPTION, id: 'card_ml' },
-            { ...COD_OPTION, id: 'cod_ml' },
+            { ...CARD_OPTION, id: 'card_bf' },
+            { ...COD_OPTION, id: 'cod_bf' },
+        ],
+    },
+
+    // 🇹🇬 Togo
+    TG: {
+        title: 'Paiement pour le Togo',
+        subtitle: 'Payez en Francs CFA (XOF)',
+        flag: '🇹🇬',
+        options: [
+            {
+                id: 'tmoney_tg',
+                method: 'paydunya',
+                subMethod: 'tmoney',
+                label: 'T-Money',
+                description: 'Paiement T-Money Togo',
+                icon: <Smartphone className="w-5 h-5 text-yellow-500" />,
+                badge: 'Populaire',
+                badgeColor: 'bg-yellow-100 text-yellow-700',
+            },
+            {
+                id: 'moov_money_tg',
+                method: 'paydunya',
+                subMethod: 'moov_money_tg',
+                label: 'Moov Money',
+                description: 'Paiement Moov Africa Togo',
+                icon: <Smartphone className="w-5 h-5 text-blue-500" />,
+                badgeColor: 'bg-blue-100 text-blue-700',
+            },
+            { ...CARD_OPTION, id: 'card_tg' },
+            { ...COD_OPTION, id: 'cod_tg' },
         ],
     },
 
@@ -200,7 +238,7 @@ const PAYMENT_OPTIONS: Record<string, CountryPaymentConfig> = {
         options: [
             {
                 id: 'mtn_money_bj',
-                method: 'paytech',
+                method: 'paydunya',
                 subMethod: 'mtn_money',
                 label: 'MTN Money',
                 description: 'Paiement MTN Mobile Money',
@@ -210,7 +248,7 @@ const PAYMENT_OPTIONS: Record<string, CountryPaymentConfig> = {
             },
             {
                 id: 'moov_money_bj',
-                method: 'paytech',
+                method: 'paydunya',
                 subMethod: 'moov_money',
                 label: 'Moov Money',
                 description: 'Paiement Moov Money Bénin',
@@ -240,10 +278,12 @@ const PAYMENT_OPTIONS: Record<string, CountryPaymentConfig> = {
         flag: '🌍',
         options: [
             {
-                ...CARD_OPTION,
-                id: 'card_intl',
-                label: 'Carte bancaire internationale',
-                description: 'Visa, Mastercard',
+                id: 'paydunya_card_intl',
+                method: 'paydunya',
+                subMethod: 'card',
+                label: 'Carte Bancaire (Visa/Mastercard)',
+                description: 'Paiement sécurisé par PayDunya',
+                icon: <CreditCard className="w-5 h-5 text-nubia-gold" />,
                 badge: 'International',
                 badgeColor: 'bg-blue-100 text-blue-700',
             },
@@ -265,6 +305,10 @@ function getCountryCode(country: string): string {
     if (code === 'BJ' || code === 'BENIN' || code === 'BÉNIN') return 'BJ';
     // Maroc
     if (code === 'MA' || code === 'MAROC' || code === 'MOROCCO') return 'MA';
+    // Burkina Faso
+    if (code === 'BF' || code === 'BURKINA FASO' || code === 'BURKINA') return 'BF';
+    // Togo
+    if (code === 'TG' || code === 'TOGO') return 'TG';
     // Autres pays
     return 'OTHER';
 }
@@ -402,7 +446,7 @@ export function PaymentMethodsSelector({
             {/* Payment providers info */}
             <div className="mt-6 pt-4 border-t border-gray-200">
                 <p className="text-xs text-gray-400 text-center">
-                    Paiements sécurisés par PayTech
+                    Paiements sécurisés par PayDunya
                 </p>
                 <div className="flex justify-center gap-4 mt-3 opacity-50">
                     <img src="/images/payments/visa.svg" alt="Visa" className="h-6" onError={(e) => e.currentTarget.style.display = 'none'} />

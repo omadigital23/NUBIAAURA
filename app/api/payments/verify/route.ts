@@ -63,12 +63,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // PayTech payments are verified via IPN webhook (server-to-server)
+    // PayDunya payments are verified via IPN webhook (server-to-server)
     // The callback page just checks the order status
-    if (orderPaymentMethod === 'paytech') {
-      console.log('[Payment Verify] PayTech order detected, checking IPN status');
+    if (orderPaymentMethod === 'paydunya') {
+      console.log('[Payment Verify] PayDunya order detected, checking IPN status');
 
-      // PayTech IPN has already updated the order status
+      // PayDunya IPN has already updated the order status
       if (orderPaymentStatus === 'paid' || orderPaymentStatus === 'completed') {
         // Finalize stock reservations
         try {
@@ -79,19 +79,19 @@ export async function POST(request: NextRequest) {
             .is('finalized_at', null)
             .is('released_at', null);
         } catch (e) {
-          console.error('Finalize reservations error (paytech verify):', e);
+          console.error('Finalize reservations error (paydunya verify):', e);
         }
 
         return NextResponse.json({
           success: true,
-          message: 'Paiement PayTech vérifié avec succès',
+          message: 'Paiement PayDunya vérifié avec succès',
           paymentStatus: 'completed',
           orderStatus: 'processing'
         }, { status: 200 });
       } else if (orderPaymentStatus === 'failed') {
         return NextResponse.json({
           success: false,
-          message: 'Le paiement PayTech a échoué',
+          message: 'Le paiement PayDunya a échoué',
           paymentStatus: 'failed'
         }, { status: 400 });
       } else {
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
         // Return pending status so frontend can retry
         return NextResponse.json({
           success: false,
-          message: 'Paiement PayTech en attente de confirmation. Veuillez patienter.',
+          message: 'Paiement PayDunya en attente de confirmation. Veuillez patienter.',
           paymentStatus: orderPaymentStatus,
           isPending: true
         }, { status: 202 });

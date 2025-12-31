@@ -28,8 +28,8 @@ function PaymentCallbackContent() {
         const tx_ref = searchParams.get('tx_ref');
         const transaction_id = searchParams.get('transaction_id');
         const fwStatus = searchParams.get('status');
-        // PayTech specific param
-        const paytechToken = searchParams.get('token');
+        // PayDunya/Generic param
+        const gatewayToken = searchParams.get('token');
 
         if (!orderId && !tx_ref) {
           setStatus('failed');
@@ -45,7 +45,7 @@ function PaymentCallbackContent() {
           },
           body: JSON.stringify({
             orderId,
-            reference: reference || paytechToken,
+            reference: reference || gatewayToken,
             tx_ref,
             transaction_id,
             status: fwStatus,
@@ -71,7 +71,7 @@ function PaymentCallbackContent() {
             router.push(`/${locale}/merci?orderId=${orderId || tx_ref}`);
           }, 3000);
         } else if (data.isPending && retryCount < 5) {
-          // PayTech IPN may not have arrived yet - retry after 2 seconds
+          // IPN may not have arrived yet - retry after 2 seconds
           setMessage(t('callback.pending_message', 'Confirmation en cours... Veuillez patienter.'));
           setTimeout(() => verifyPayment(retryCount + 1), 2000);
         } else {

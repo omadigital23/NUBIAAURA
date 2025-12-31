@@ -2,7 +2,7 @@
  * Payment Initialization API
  * 
  * Unified endpoint for payment gateways:
- * - PayTech (UEMOA - Senegal, Côte d'Ivoire, Mali, Benin - XOF)
+ * - PayDunya (UEMOA - Senegal, Côte d'Ivoire, Mali, Benin - XOF)
  * - Airwallex (Morocco - MAD, Europe - EUR, International - USD)
  * - COD (Cash on Delivery - everywhere)
  */
@@ -42,7 +42,7 @@ const PaymentInitializationSchema = z.object({
 
   // Payment options
   locale: z.enum(['fr', 'en']).optional(),
-  paymentMethod: z.enum(['paytech', 'airwallex', 'cod']).optional(),
+  paymentMethod: z.enum(['paydunya', 'airwallex', 'cod']).optional(),
   paymentSubMethod: z.string().optional(), // 'wave', 'orange_money', etc.
 
   // Cart items
@@ -72,7 +72,7 @@ const PaymentInitializationSchema = z.object({
 
 /**
  * Determine the payment gateway based on country and method
- * - PayTech for UEMOA countries (Senegal, Côte d'Ivoire, Mali, Benin)
+ * - PayDunya for UEMOA countries (Senegal, Côte d'Ivoire, Mali, Benin)
  * - Airwallex for Morocco, Europe, and International
  * - COD available everywhere
  */
@@ -81,7 +81,7 @@ function determineGateway(country: string, method?: string): PaymentGateway {
   if (method === 'cod') return 'cod';
 
   // If specific gateway requested and valid
-  if (method === 'paytech' && isUEMOACountry(country)) return 'paytech';
+  if (method === 'paydunya' && isUEMOACountry(country)) return 'paydunya';
   if (method === 'airwallex' && !isUEMOACountry(country)) return 'airwallex';
 
   // Auto-detect based on country

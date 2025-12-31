@@ -46,7 +46,7 @@ export type PaymentStatus =
 
 export type PaymentMethod =
   | 'cod'
-  | 'paytech'
+  | 'paydunya'
   | 'cmi'
   | 'card'
   | 'mobile_money';

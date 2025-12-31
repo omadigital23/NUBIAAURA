@@ -2,7 +2,7 @@
  * Payment System - Unified Exports
  * 
  * Architecture:
- * - PayTech (UEMOA - Senegal, Côte d'Ivoire, Mali, Benin - XOF)
+ * - PayDunya (UEMOA - Senegal, Côte d'Ivoire, Mali, Benin - XOF)
  * - Airwallex (Morocco - MAD, Europe - EUR, International - USD)
  * - COD (Cash on Delivery - everywhere)
  */
@@ -11,7 +11,8 @@
 export * from './types';
 
 // Providers
-export { PaytechProvider, paytechProvider } from './providers/paytech.provider';
+export { PaydunyaProvider, paydunyaProvider } from './providers/paydunya.provider';
+export type { PaydunyaWebhookPayload } from './providers/paydunya.provider';
 export { AirwallexProvider, airwallexProvider } from './providers/airwallex.provider';
 export type { AirwallexWebhookPayload } from './providers/airwallex.provider';
 export { CODProvider, codProvider } from './providers/cod.provider';

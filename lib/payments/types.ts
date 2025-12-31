@@ -1,6 +1,6 @@
 /**
  * Payment System Types
- * Unified type definitions for PayTech + Airwallex + COD payment system
+ * Unified type definitions for PayDunya + Airwallex + COD payment system
  */
 
 // =========================================
@@ -20,14 +20,16 @@ export type CountryCode = 'MA' | 'UEMOA' | 'EU' | 'OTHER';
 
 export type Currency = 'MAD' | 'XOF' | 'USD' | 'EUR';
 
-export type PaymentGateway = 'paytech' | 'airwallex' | 'cod';
+export type PaymentGateway = 'paydunya' | 'airwallex' | 'cod';
 
 export type PaymentMethodType =
-    | 'paytech_wave'     // PayTech - Wave (UEMOA)
-    | 'paytech_om'       // PayTech - Orange Money (UEMOA)
-    | 'paytech_fm'       // PayTech - Free Money (Senegal)
-    | 'paytech_mtn'      // PayTech - MTN Money (Côte d'Ivoire)
-    | 'paytech_moov'     // PayTech - Moov Money (Côte d'Ivoire)
+    | 'paydunya_wave'    // PayDunya - Wave (UEMOA)
+    | 'paydunya_om'      // PayDunya - Orange Money (UEMOA)
+    | 'paydunya_fm'      // PayDunya - Free Money (Senegal)
+    | 'paydunya_mtn'     // PayDunya - MTN Money (Côte d'Ivoire, Benin)
+    | 'paydunya_moov'    // PayDunya - Moov Money (Côte d'Ivoire, Mali, Benin)
+    | 'paydunya_wizall'  // PayDunya - Wizall (Senegal)
+    | 'paydunya_card'    // PayDunya - Cards (Visa, Mastercard)
     | 'airwallex_card'   // Airwallex - Cards (MA, EU, International)
     | 'cod';             // Cash on Delivery (everywhere)
 
@@ -41,11 +43,11 @@ export type PaymentStatus =
     | 'refunded';        // Refunded
 
 // Country to gateway mapping
-// PayTech for UEMOA (Senegal, Côte d'Ivoire, Mali, Benin, etc.)
+// PayDunya for UEMOA (Senegal, Côte d'Ivoire, Mali, Benin, etc.)
 // Airwallex for Morocco, Europe, and International
 export const COUNTRY_GATEWAY_MAP: Record<CountryCode, PaymentGateway[]> = {
     MA: ['airwallex', 'cod'],          // Morocco: Airwallex + COD
-    UEMOA: ['paytech', 'cod'],         // UEMOA (SN, CI, ML, BJ...): PayTech + COD
+    UEMOA: ['paydunya', 'cod'],        // UEMOA (SN, CI, ML, BJ...): PayDunya + COD
     EU: ['airwallex', 'cod'],          // Europe: Airwallex + COD
     OTHER: ['airwallex', 'cod'],       // International: Airwallex + COD
 };
@@ -196,44 +198,59 @@ export interface IPaymentProvider {
 }
 
 // =========================================
-// PayTech Types (Intech Group) - UEMOA Only
+// PayDunya Types - UEMOA Only
 // =========================================
 
-export interface PaytechConfig {
-    apiKey: string;
-    secretKey: string;
-    env: 'test' | 'prod';
-}
-
-export interface PaytechPaymentRequest {
-    item_name: string;
-    item_price: number;
-    currency: 'XOF';  // PayTech now only for XOF
-    ref_command: string;
-    command_name: string;
-    env: 'test' | 'prod';
-    ipn_url: string;
-    success_url: string;
-    cancel_url: string;
-    custom_field?: string;
-    target_payment?: string;  // 'wave', 'Orange Money', 'Free Money', etc.
-}
-
-export interface PaytechWebhookPayload {
-    type_event: 'sale_complete' | 'sale_canceled';
-    ref_command: string;
-    item_name: string;
-    item_price: string;
-    payment_method: string;
-    client_phone: string;
-    client_email?: string;
-    env: 'test' | 'prod';
+export interface PaydunyaConfig {
+    masterKey: string;
+    privateKey: string;
+    publicKey: string;
     token: string;
-    api_key_sha256: string;
-    api_secret_sha256: string;
-    hmac_compute?: string;  // HMAC-SHA256 (recommended method)
-    custom_field?: string;
+    mode: 'test' | 'live';
 }
+
+export interface PaydunyaInvoice {
+    token: string;
+    total_amount: number;
+    description: string;
+    items?: Record<string, {
+        name: string;
+        quantity: string;
+        unit_price: string;
+        total_price: string;
+        description?: string;
+    }>;
+    taxes?: Record<string, {
+        name: string;
+        amount: string;
+    }>;
+}
+
+export interface PaydunyaWebhookPayload {
+    data: {
+        hash: string;  // SHA-512 of MasterKey for verification
+        status: 'pending' | 'completed' | 'cancelled';
+        response_code: string;
+        response_text: string;
+        invoice: PaydunyaInvoice;
+        customer?: {
+            name: string;
+            phone: string;
+            email: string;
+        };
+        custom_data?: Record<string, string>;
+        actions?: {
+            cancel_url?: string;
+            callback_url?: string;
+            return_url?: string;
+        };
+        mode: 'test' | 'live';
+        receipt_url?: string;
+        fail_reason?: string;
+    };
+}
+
+
 
 // =========================================
 // Airwallex Types - Morocco, Europe, International
@@ -329,8 +346,8 @@ export const COUNTRY_INFO: Record<CountryCode, CountryInfo> = {
         code: 'UEMOA',
         name: 'Afrique de l\'Ouest (UEMOA)',
         currency: 'XOF',
-        availableGateways: ['paytech', 'cod'],
-        availableMethods: ['paytech_wave', 'paytech_om', 'paytech_fm', 'paytech_mtn', 'paytech_moov', 'cod'],
+        availableGateways: ['paydunya', 'cod'],
+        availableMethods: ['paydunya_wave', 'paydunya_om', 'paydunya_fm', 'paydunya_mtn', 'paydunya_moov', 'paydunya_wizall', 'paydunya_card', 'cod'],
     },
     EU: {
         code: 'EU',
@@ -357,13 +374,13 @@ export function getCountryCode(country: string): CountryCode {
     // Morocco
     if (code === 'MA' || code === 'MAROC' || code === 'MOROCCO') return 'MA';
 
-    // UEMOA countries (Senegal, Côte d'Ivoire, Mali, Benin, etc.) - Use PayTech
+    // UEMOA countries (Senegal, Côte d'Ivoire, Mali, Benin, etc.) - Use PayDunya
     if (isUEMOACountry(code)) return 'UEMOA';
 
     // European countries - Use Airwallex
     if (isEuropeanCountry(code)) return 'EU';
 
-    // Rest of world - Use Airwallex
+    // Rest of world - Use PayDunya (Card)
     return 'OTHER';
 }
 
