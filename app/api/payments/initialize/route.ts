@@ -2,8 +2,7 @@
  * Payment Initialization API
  * 
  * Unified endpoint for payment gateways:
- * - PayDunya (UEMOA - Senegal, Côte d'Ivoire, Mali, Benin - XOF)
- * - Airwallex (Morocco - MAD, Europe - EUR, International - USD)
+ * - PayDunya (All countries - Mobile Money for UEMOA, Cards everywhere)
  * - COD (Cash on Delivery - everywhere)
  */
 
@@ -19,10 +18,8 @@ import * as Sentry from '@sentry/nextjs';
 import {
   PaymentProviderFactory,
   getCurrencyForCountry,
-  getPrimaryGatewayForCountry,
   OrderPayload,
   PaymentGateway,
-  isUEMOACountry,
 } from '@/lib/payments';
 
 // Validation schema
@@ -42,7 +39,7 @@ const PaymentInitializationSchema = z.object({
 
   // Payment options
   locale: z.enum(['fr', 'en']).optional(),
-  paymentMethod: z.enum(['paydunya', 'airwallex', 'cod']).optional(),
+  paymentMethod: z.enum(['paydunya', 'cod']).optional(),
   paymentSubMethod: z.string().optional(), // 'wave', 'orange_money', etc.
 
   // Cart items
@@ -72,20 +69,15 @@ const PaymentInitializationSchema = z.object({
 
 /**
  * Determine the payment gateway based on country and method
- * - PayDunya for UEMOA countries (Senegal, Côte d'Ivoire, Mali, Benin)
- * - Airwallex for Morocco, Europe, and International
+ * - PayDunya for all countries
  * - COD available everywhere
  */
-function determineGateway(country: string, method?: string): PaymentGateway {
+function determineGateway(_country: string, method?: string): PaymentGateway {
   // If COD explicitly specified
   if (method === 'cod') return 'cod';
 
-  // If specific gateway requested and valid
-  if (method === 'paydunya' && isUEMOACountry(country)) return 'paydunya';
-  if (method === 'airwallex' && !isUEMOACountry(country)) return 'airwallex';
-
-  // Auto-detect based on country
-  return getPrimaryGatewayForCountry(country);
+  // PayDunya for all countries
+  return 'paydunya';
 }
 
 export async function POST(request: NextRequest) {

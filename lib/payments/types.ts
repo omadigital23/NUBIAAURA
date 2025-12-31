@@ -1,16 +1,16 @@
 /**
  * Payment System Types
- * Unified type definitions for PayDunya + Airwallex + COD payment system
+ * Unified type definitions for PayDunya + COD payment system
  */
 
 // =========================================
 // Enums & Constants
 // =========================================
 
-// UEMOA countries using XOF (PayTech)
+// UEMOA countries using XOF
 export const UEMOA_COUNTRIES = ['SN', 'CI', 'ML', 'BJ', 'BF', 'TG', 'NE', 'GW'];
 
-// European countries using EUR (Airwallex)
+// European countries using EUR
 export const EUROPEAN_COUNTRIES = [
     'FR', 'DE', 'ES', 'IT', 'BE', 'NL', 'PT', 'AT', 'IE', 'FI',
     'GR', 'LU', 'SK', 'SI', 'EE', 'LV', 'LT', 'CY', 'MT'
@@ -20,7 +20,7 @@ export type CountryCode = 'MA' | 'UEMOA' | 'EU' | 'OTHER';
 
 export type Currency = 'MAD' | 'XOF' | 'USD' | 'EUR';
 
-export type PaymentGateway = 'paydunya' | 'airwallex' | 'cod';
+export type PaymentGateway = 'paydunya' | 'cod';
 
 export type PaymentMethodType =
     | 'paydunya_wave'    // PayDunya - Wave (UEMOA)
@@ -29,8 +29,7 @@ export type PaymentMethodType =
     | 'paydunya_mtn'     // PayDunya - MTN Money (Côte d'Ivoire, Benin)
     | 'paydunya_moov'    // PayDunya - Moov Money (Côte d'Ivoire, Mali, Benin)
     | 'paydunya_wizall'  // PayDunya - Wizall (Senegal)
-    | 'paydunya_card'    // PayDunya - Cards (Visa, Mastercard)
-    | 'airwallex_card'   // Airwallex - Cards (MA, EU, International)
+    | 'paydunya_card'    // PayDunya - Cards (Visa, Mastercard) - All countries
     | 'cod';             // Cash on Delivery (everywhere)
 
 export type PaymentStatus =
@@ -43,13 +42,12 @@ export type PaymentStatus =
     | 'refunded';        // Refunded
 
 // Country to gateway mapping
-// PayDunya for UEMOA (Senegal, Côte d'Ivoire, Mali, Benin, etc.)
-// Airwallex for Morocco, Europe, and International
+// PayDunya for ALL countries (UEMOA, Morocco, Europe, International)
 export const COUNTRY_GATEWAY_MAP: Record<CountryCode, PaymentGateway[]> = {
-    MA: ['airwallex', 'cod'],          // Morocco: Airwallex + COD
+    MA: ['paydunya', 'cod'],           // Morocco: PayDunya Card + COD
     UEMOA: ['paydunya', 'cod'],        // UEMOA (SN, CI, ML, BJ...): PayDunya + COD
-    EU: ['airwallex', 'cod'],          // Europe: Airwallex + COD
-    OTHER: ['airwallex', 'cod'],       // International: Airwallex + COD
+    EU: ['paydunya', 'cod'],           // Europe: PayDunya Card + COD
+    OTHER: ['paydunya', 'cod'],        // International: PayDunya Card + COD
 };
 
 // Country to currency mapping
@@ -115,7 +113,7 @@ export interface PaymentSession {
     gateway: PaymentGateway;
     transactionId?: string;
 
-    // For redirect-based payments (PayTech, Airwallex)
+    // For redirect-based payments (PayDunya)
     redirectUrl?: string;
 
     // For form-based payments (legacy support)
@@ -198,7 +196,7 @@ export interface IPaymentProvider {
 }
 
 // =========================================
-// PayDunya Types - UEMOA Only
+// PayDunya Types - All Countries
 // =========================================
 
 export interface PaydunyaConfig {
@@ -252,50 +250,7 @@ export interface PaydunyaWebhookPayload {
 
 
 
-// =========================================
-// Airwallex Types - Morocco, Europe, International
-// =========================================
 
-export interface AirwallexConfig {
-    clientId: string;
-    apiKey: string;
-    env: 'demo' | 'prod';
-}
-
-export interface AirwallexPaymentIntentRequest {
-    request_id: string;
-    amount: number;
-    currency: 'MAD' | 'EUR' | 'USD';
-    merchant_order_id: string;
-    order?: {
-        type: 'physical_goods' | 'digital_goods' | 'service';
-    };
-    metadata?: Record<string, string>;
-    return_url: string;
-    descriptor?: string;
-}
-
-export interface AirwallexWebhookPayload {
-    id: string;
-    name: string; // 'payment_intent.succeeded', 'payment_intent.cancelled', etc.
-    account_id: string;
-    data: {
-        object: {
-            id: string;
-            request_id: string;
-            amount: number;
-            currency: string;
-            merchant_order_id: string;
-            status: 'SUCCEEDED' | 'REQUIRES_PAYMENT_METHOD' | 'REQUIRES_CAPTURE' | 'CANCELLED';
-            captured_amount?: number;
-            payment_method?: {
-                type: string;
-            };
-            metadata?: Record<string, string>;
-        };
-    };
-    created_at: string;
-}
 
 // =========================================
 // COD Types
@@ -339,8 +294,8 @@ export const COUNTRY_INFO: Record<CountryCode, CountryInfo> = {
         code: 'MA',
         name: 'Maroc',
         currency: 'MAD',
-        availableGateways: ['airwallex', 'cod'],
-        availableMethods: ['airwallex_card', 'cod'],
+        availableGateways: ['paydunya', 'cod'],
+        availableMethods: ['paydunya_card', 'cod'],
     },
     UEMOA: {
         code: 'UEMOA',
@@ -353,15 +308,15 @@ export const COUNTRY_INFO: Record<CountryCode, CountryInfo> = {
         code: 'EU',
         name: 'Europe',
         currency: 'EUR',
-        availableGateways: ['airwallex', 'cod'],
-        availableMethods: ['airwallex_card', 'cod'],
+        availableGateways: ['paydunya', 'cod'],
+        availableMethods: ['paydunya_card', 'cod'],
     },
     OTHER: {
         code: 'OTHER',
         name: 'International',
         currency: 'USD',
-        availableGateways: ['airwallex', 'cod'],
-        availableMethods: ['airwallex_card', 'cod'],
+        availableGateways: ['paydunya', 'cod'],
+        availableMethods: ['paydunya_card', 'cod'],
     },
 };
 
@@ -377,7 +332,7 @@ export function getCountryCode(country: string): CountryCode {
     // UEMOA countries (Senegal, Côte d'Ivoire, Mali, Benin, etc.) - Use PayDunya
     if (isUEMOACountry(code)) return 'UEMOA';
 
-    // European countries - Use Airwallex
+    // European countries - Use PayDunya Card
     if (isEuropeanCountry(code)) return 'EU';
 
     // Rest of world - Use PayDunya (Card)

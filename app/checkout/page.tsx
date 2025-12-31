@@ -416,7 +416,7 @@ export default function CheckoutPage() {
         console.log('[Checkout] Redirecting to payment link:', paymentData.paymentLink || paymentData.redirect_url);
         window.location.href = paymentData.paymentLink || paymentData.redirect_url;
       } else if (paymentData.formData) {
-        // Airwallex or other gateways may require form submission
+        // Some gateways may require form submission
         console.log('[Checkout] Gateway form submission required');
         // Create and submit form for gateway
         const form = document.createElement('form');

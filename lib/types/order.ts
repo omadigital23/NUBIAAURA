@@ -47,7 +47,6 @@ export type PaymentStatus =
 export type PaymentMethod =
   | 'cod'
   | 'paydunya'
-  | 'airwallex'
   | 'card'
   | 'mobile_money';
 

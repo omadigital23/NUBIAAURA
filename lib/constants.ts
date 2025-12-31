@@ -57,23 +57,14 @@ export const PAYMENT_METHODS = {
     icon: '💵',
     countries: ['SN', 'MA'],
   },
-  paytech: {
-    id: 'paytech',
-    name_fr: 'Orange Money / Wave',
-    name_en: 'Orange Money / Wave',
+  paydunya: {
+    id: 'paydunya',
+    name_fr: 'Mobile Money / Carte',
+    name_en: 'Mobile Money / Card',
     icon: '📱',
-    countries: ['SN'],
-    description_fr: 'Mobile Money Sénégal',
-    description_en: 'Senegal Mobile Money',
-  },
-  airwallex: {
-    id: 'airwallex',
-    name_fr: 'Carte bancaire',
-    name_en: 'Credit Card',
-    icon: '💳',
-    countries: ['MA'],
-    description_fr: 'Visa / Mastercard (Maroc)',
-    description_en: 'Visa / Mastercard (Morocco)',
+    countries: ['SN', 'CI', 'ML', 'BJ', 'MA'],
+    description_fr: 'Wave, Orange Money, Carte bancaire',
+    description_en: 'Wave, Orange Money, Credit Card',
   },
 } as const;
 

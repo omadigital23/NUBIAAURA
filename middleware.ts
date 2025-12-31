@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 const locales = ['fr', 'en'];
 const defaultLocale = 'fr';
 
-// Payment gateway configuration by country - PayDunya for UEMOA
+// Payment gateway configuration by country - PayDunya for all
 const COUNTRY_GATEWAY_CONFIG: Record<string, { gateway: string; currency: string }> = {
-  MA: { gateway: 'airwallex', currency: 'MAD' },   // Morocco
+  MA: { gateway: 'paydunya', currency: 'MAD' },   // Morocco
   SN: { gateway: 'paydunya', currency: 'XOF' },   // Senegal
 };
 const DEFAULT_GATEWAY_CONFIG = { gateway: 'paydunya', currency: 'USD' }; // International (PayDunya Card)

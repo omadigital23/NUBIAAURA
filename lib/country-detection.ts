@@ -9,7 +9,7 @@ export interface CountryInfo {
     code: SupportedCountry;
     name: string;
     currency: string;
-    paymentMethod: 'paytech' | 'airwallex' | 'paydunya' | 'cod';
+    paymentMethod: 'paydunya' | 'cod';
 }
 
 const COUNTRY_CONFIG: Record<SupportedCountry, CountryInfo> = {
@@ -17,13 +17,13 @@ const COUNTRY_CONFIG: Record<SupportedCountry, CountryInfo> = {
         code: 'SN',
         name: 'Sénégal',
         currency: 'XOF',
-        paymentMethod: 'paytech',
+        paymentMethod: 'paydunya',
     },
     MA: {
         code: 'MA',
         name: 'Maroc',
         currency: 'MAD',
-        paymentMethod: 'airwallex',
+        paymentMethod: 'paydunya',
     },
     OTHER: {
         code: 'OTHER',
@@ -90,7 +90,7 @@ export function getAvailablePaymentMethods(countryCode: SupportedCountry): strin
         case 'SN':
             return ['paydunya', 'cod'];
         case 'MA':
-            return ['airwallex', 'cod'];
+            return ['paydunya', 'cod'];
         default:
             return ['paydunya', 'cod'];
     }
