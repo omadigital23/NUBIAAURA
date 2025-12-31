@@ -9,6 +9,7 @@ import Footer from '@/components/Footer';
 import { CheckCircle, XCircle, Loader } from 'lucide-react';
 import { useCartContext } from '@/contexts/CartContext';
 import { useTranslation } from '@/hooks/useTranslation';
+import { supabase } from '@/lib/supabase';
 
 function PaymentCallbackContent() {
   const router = useRouter();
@@ -19,8 +20,35 @@ function PaymentCallbackContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'failed' | 'pending'>('loading');
   const [message, setMessage] = useState('Vérification du paiement en cours...');
   const [orderDetails, setOrderDetails] = useState<any>(null);
+  const [sessionRefreshed, setSessionRefreshed] = useState(false);
 
+  // Refresh Supabase session after cross-domain redirect from PayDunya
   useEffect(() => {
+    const refreshSession = async () => {
+      try {
+        console.log('[Payment Callback] Refreshing session after PayDunya redirect...');
+        const { data, error } = await supabase.auth.refreshSession();
+        if (error) {
+          console.warn('[Payment Callback] Session refresh failed:', error.message);
+        } else if (data.session) {
+          console.log('[Payment Callback] Session refreshed successfully for user:', data.session.user.email);
+        } else {
+          console.log('[Payment Callback] No active session (guest checkout)');
+        }
+      } catch (e) {
+        console.error('[Payment Callback] Session refresh error:', e);
+      } finally {
+        setSessionRefreshed(true);
+      }
+    };
+
+    refreshSession();
+  }, []);
+
+  // Wait for session refresh before verifying payment
+  useEffect(() => {
+    if (!sessionRefreshed) return; // Wait for session refresh first
+
     const verifyPayment = async (currentRetry = 0) => {
       try {
         const orderId = searchParams.get('orderId');
@@ -107,7 +135,7 @@ function PaymentCallbackContent() {
     };
 
     verifyPayment();
-  }, [searchParams, router, clearCart]);
+  }, [searchParams, router, clearCart, sessionRefreshed, t, locale]);
 
   return (
     <div className="min-h-screen bg-nubia-white flex flex-col">
