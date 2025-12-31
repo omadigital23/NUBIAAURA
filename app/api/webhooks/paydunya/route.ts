@@ -191,24 +191,20 @@ export async function POST(request: NextRequest) {
                         .select('*, products(*)')
                         .eq('order_id', orderId);
 
-                    const emailResult = await sendOrderConfirmationEmail({
-                        to: customerEmail,
-                        orderNumber: order.order_number,
-                        customerName: customerName || 'Client',
-                        items: (orderItems || []).map((item: { products?: { name?: string }; quantity: number; price: number }) => ({
-                            name: item.products?.name || 'Produit',
-                            quantity: item.quantity,
-                            price: item.price,
-                        })),
-                        total: order.total,
-                        shippingAddress: {
-                            address: shippingAddress?.address || '',
-                            city: shippingAddress?.city || '',
-                            country: shippingAddress?.country || 'Sénégal',
-                        },
-                        paymentMethod: 'PayDunya',
-                        locale: 'fr',
-                    });
+                    const emailResult = await sendOrderConfirmationEmail(
+                        customerEmail,
+                        {
+                            orderNumber: order.order_number,
+                            orderId: orderId,
+                            customerName: customerName || 'Client',
+                            total: order.total,
+                            items: (orderItems || []).map((item: { products?: { name?: string }; quantity: number; price: number }) => ({
+                                name: item.products?.name || 'Produit',
+                                quantity: item.quantity,
+                                price: item.price,
+                            })),
+                        }
+                    );
 
                     console.log('[PayDunya Webhook] Confirmation email sent:', emailResult);
                 }
