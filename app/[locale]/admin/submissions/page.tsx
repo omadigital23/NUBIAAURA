@@ -55,41 +55,60 @@ export default function SubmissionsPage() {
     const [newsletters, setNewsletters] = useState<NewsletterSubscription[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedItem, setSelectedItem] = useState<any>(null);
+    const [countsLoaded, setCountsLoaded] = useState(false);
 
+    // Fetch all counts on initial load
     useEffect(() => {
-        fetchData();
-    }, [activeTab]);
+        if (!countsLoaded) {
+            fetchAllCounts();
+        }
+    }, [countsLoaded]);
 
-    const fetchData = async () => {
+    // Fetch data for active tab when it changes
+    useEffect(() => {
+        if (countsLoaded) {
+            fetchTabData();
+        }
+    }, [activeTab, countsLoaded]);
+
+    const fetchAllCounts = async () => {
         setLoading(true);
         try {
-            if (activeTab === 'contact') {
-                const res = await fetch('/api/contact');
-                const data = await res.json();
-                setContacts(data.submissions || []);
-            } else if (activeTab === 'custom') {
-                // Use Basic auth with admin credentials
-                const credentials = btoa('nubiaaura:Paty2025!');
-                const res = await fetch('/api/admin/custom-orders', {
+            // Fetch all data in parallel
+            const credentials = btoa('nubiaaura:Paty2025!');
+
+            const [contactRes, customRes, newsletterRes] = await Promise.all([
+                fetch('/api/contact'),
+                fetch('/api/admin/custom-orders', {
                     headers: {
                         'Authorization': `Basic ${credentials}`,
                         'Content-Type': 'application/json'
                     },
                     credentials: 'include'
-                });
-                const data = await res.json();
-                console.log('Custom orders response:', data);
-                setCustomOrders(data.customOrders || []);
-            } else if (activeTab === 'newsletter') {
-                const res = await fetch('/api/newsletter');
-                const data = await res.json();
-                setNewsletters(data.subscriptions || []);
-            }
+                }),
+                fetch('/api/newsletter')
+            ]);
+
+            const [contactData, customData, newsletterData] = await Promise.all([
+                contactRes.json(),
+                customRes.json(),
+                newsletterRes.json()
+            ]);
+
+            setContacts(contactData.submissions || []);
+            setCustomOrders(customData.customOrders || []);
+            setNewsletters(newsletterData.subscriptions || []);
+            setCountsLoaded(true);
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
             setLoading(false);
         }
+    };
+
+    const fetchTabData = async () => {
+        // Data is already loaded from fetchAllCounts, no need to reload
+        // This function is here for potential future use if you want to refresh only active tab
     };
 
     const formatDate = (dateString: string) => {
