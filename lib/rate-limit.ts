@@ -13,10 +13,10 @@ export const authRatelimit = new Ratelimit({
   limiter: Ratelimit.slidingWindow(5, '1 m'),
 });
 
-// Stricter limit for payment endpoints (3 requests per minute)
+// Payment endpoints limit (10 requests per minute - more lenient for retries)
 export const paymentRatelimit = new Ratelimit({
   redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(3, '1 m'),
+  limiter: Ratelimit.slidingWindow(10, '1 m'),
 });
 
 // Form submission limit (2 requests per minute)
