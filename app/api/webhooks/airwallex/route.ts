@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
             const { error: updateError } = await supabase
                 .from('orders')
                 .update({
-                    payment_status: 'paid',
+                    payment_status: 'completed',
                     status: 'confirmed',
                     payment_transaction_id: result.transactionId,
                     payment_method: 'airwallex',
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
             const { error: updateError } = await supabase
                 .from('orders')
                 .update({
-                    payment_status: result.status,
+                    payment_status: 'failed',
                     status: 'cancelled',
                 })
                 .eq('id', result.orderId);

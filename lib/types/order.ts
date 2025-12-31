@@ -40,14 +40,14 @@ export type OrderStatus =
 
 export type PaymentStatus =
   | 'pending'
-  | 'paid'
+  | 'completed'
   | 'failed'
   | 'refunded';
 
 export type PaymentMethod =
   | 'cod'
   | 'paydunya'
-  | 'cmi'
+  | 'airwallex'
   | 'card'
   | 'mobile_money';
 

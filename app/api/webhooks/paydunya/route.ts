@@ -223,7 +223,7 @@ export async function POST(request: NextRequest) {
                 .from('orders')
                 .update({
                     status: 'paid',
-                    payment_status: 'paid',
+                    payment_status: 'completed',
                     payment_method: 'paydunya',
                     payment_details: {
                         gateway: 'paydunya',
@@ -336,7 +336,7 @@ export async function POST(request: NextRequest) {
                 .from('orders')
                 .update({
                     status: webhookData.status === 'cancelled' ? 'cancelled' : 'payment_failed',
-                    payment_status: webhookData.status === 'cancelled' ? 'cancelled' : 'failed',
+                    payment_status: 'failed',
                     payment_details: {
                         gateway: 'paydunya',
                         token: webhookData.invoice.token,

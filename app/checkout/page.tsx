@@ -416,9 +416,9 @@ export default function CheckoutPage() {
         console.log('[Checkout] Redirecting to payment link:', paymentData.paymentLink || paymentData.redirect_url);
         window.location.href = paymentData.paymentLink || paymentData.redirect_url;
       } else if (paymentData.formData) {
-        // CMI requires form submission
-        console.log('[Checkout] CMI form submission required');
-        // Create and submit form for CMI
+        // Airwallex or other gateways may require form submission
+        console.log('[Checkout] Gateway form submission required');
+        // Create and submit form for gateway
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = paymentData.gatewayUrl;

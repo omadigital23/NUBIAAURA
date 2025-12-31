@@ -66,8 +66,8 @@ export const PAYMENT_METHODS = {
     description_fr: 'Mobile Money Sénégal',
     description_en: 'Senegal Mobile Money',
   },
-  cmi: {
-    id: 'cmi',
+  airwallex: {
+    id: 'airwallex',
     name_fr: 'Carte bancaire',
     name_en: 'Credit Card',
     icon: '💳',
