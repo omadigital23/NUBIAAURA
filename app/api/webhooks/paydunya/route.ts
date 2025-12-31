@@ -252,7 +252,33 @@ export async function POST(request: NextRequest) {
                 console.warn('[PayDunya Webhook] Stock finalization warning:', stockError);
             }
 
+            // Clear the user's cart (important: do this server-side since client session may be expired)
+            if (order.user_id) {
+                try {
+                    // Get user's cart
+                    const { data: userCart } = await supabase
+                        .from('carts')
+                        .select('id')
+                        .eq('user_id', order.user_id)
+                        .single();
+
+                    if (userCart) {
+                        // Delete all cart items
+                        await supabase
+                            .from('cart_items')
+                            .delete()
+                            .eq('cart_id', userCart.id);
+
+                        console.log('[PayDunya Webhook] Cart cleared for user:', order.user_id);
+                    }
+                } catch (cartError) {
+                    console.warn('[PayDunya Webhook] Cart clearing warning:', cartError);
+                    // Don't fail the webhook if cart clearing fails
+                }
+            }
+
             console.log('[PayDunya Webhook] Order updated successfully:', orderId);
+
 
             // Send confirmation email
             try {

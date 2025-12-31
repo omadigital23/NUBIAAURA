@@ -91,20 +91,35 @@ function PaymentCallbackContent() {
             orderStatus: data.orderStatus,
           });
 
-          // Clear cart - try API first, then fallback to localStorage
+          // Clear cart - multiple strategies to ensure it's cleared
+          // Strategy 1: Try the API (may fail if session expired)
           try {
             await clearCart();
             console.log('[Payment Callback] Cart cleared via API');
           } catch (cartError) {
-            console.warn('[Payment Callback] API cart clear failed, clearing localStorage:', cartError);
-            // Fallback: clear any localStorage cart data
-            try {
-              localStorage.removeItem('cart');
-              localStorage.removeItem('cartItems');
-              localStorage.removeItem('nubia-cart');
-            } catch (e) {
-              console.error('[Payment Callback] localStorage clear failed:', e);
-            }
+            console.warn('[Payment Callback] API cart clear failed:', cartError);
+          }
+
+          // Strategy 2: Clear localStorage as fallback
+          try {
+            localStorage.removeItem('cart');
+            localStorage.removeItem('cartItems');
+            localStorage.removeItem('nubia-cart');
+            console.log('[Payment Callback] localStorage cleared');
+          } catch (e) {
+            console.error('[Payment Callback] localStorage clear failed:', e);
+          }
+
+          // Strategy 3: Request server to clear cart by orderId (most reliable)
+          try {
+            await fetch('/api/cart/clear-by-order', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ orderId: orderId || tx_ref }),
+            });
+            console.log('[Payment Callback] Cart cleared via order-based API');
+          } catch (orderClearError) {
+            console.warn('[Payment Callback] Order-based cart clear failed:', orderClearError);
           }
 
           // Redirect to thank you page after 3 seconds
