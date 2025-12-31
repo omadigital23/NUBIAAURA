@@ -63,8 +63,21 @@ function PaymentCallbackContent() {
             orderStatus: data.orderStatus,
           });
 
-          // Clear cart
-          clearCart();
+          // Clear cart - try API first, then fallback to localStorage
+          try {
+            await clearCart();
+            console.log('[Payment Callback] Cart cleared via API');
+          } catch (cartError) {
+            console.warn('[Payment Callback] API cart clear failed, clearing localStorage:', cartError);
+            // Fallback: clear any localStorage cart data
+            try {
+              localStorage.removeItem('cart');
+              localStorage.removeItem('cartItems');
+              localStorage.removeItem('nubia-cart');
+            } catch (e) {
+              console.error('[Payment Callback] localStorage clear failed:', e);
+            }
+          }
 
           // Redirect to thank you page after 3 seconds
           setTimeout(() => {

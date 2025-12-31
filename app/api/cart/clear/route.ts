@@ -3,10 +3,15 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: NextRequest) {
   try {
-    // ✅ AUTHENTIFICATION OBLIGATOIRE
-    const authHeader = request.cookies.get('sb-auth-token');
-    
-    if (!authHeader) {
+    // ✅ AUTHENTIFICATION OBLIGATOIRE - Check both cookie and header
+    const authCookie = request.cookies.get('sb-auth-token')?.value;
+    const authHeader = request.headers.get('Authorization');
+    const token = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : authCookie;
+
+    if (!token) {
+      console.log('[Clear Cart API] No auth token found');
       return NextResponse.json(
         { error: 'Authentication required', code: 'AUTH_REQUIRED' },
         { status: 401 }
@@ -18,8 +23,9 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.value);
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) {
+      console.log('[Clear Cart API] Invalid auth:', authError?.message);
       return NextResponse.json(
         { error: 'Invalid authentication', code: 'AUTH_INVALID' },
         { status: 401 }
