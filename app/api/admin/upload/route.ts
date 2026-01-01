@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
   const productId = String(form.get('productId') || '');
   const slug = String(form.get('slug') || '');
   const kind = String(form.get('kind') || 'cover');
+  const position = parseInt(String(form.get('position') || '0'), 10);
 
   if (!file || !productId || !slug) {
     return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
@@ -24,13 +25,14 @@ export async function POST(req: NextRequest) {
 
   const supabase = getSupabaseServerClient();
 
-  // Compute path
+  // Compute path - include position for unique naming
   const ext = file.name.split('.').pop() || 'jpg';
+  const positionNames = ['face', 'dos', 'detail'];
+  const positionName = positionNames[position] || `img-${position}`;
+
   let path = '';
-  if (kind === 'gallery') {
-    const ts = Date.now();
-    const safeName = file.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
-    path = `products/${slug}/gallery-${ts}-${safeName}`;
+  if (kind === 'gallery' || position > 0) {
+    path = `products/${slug}/${positionName}.${ext}`;
   } else {
     path = `products/${slug}/cover.${ext}`;
   }
@@ -49,13 +51,37 @@ export async function POST(req: NextRequest) {
 
   if (!publicUrl) return NextResponse.json({ error: 'Failed to get public URL' }, { status: 500 });
 
-  if (kind === 'gallery') {
-    const { error } = await supabase.from('product_images').insert({ product_id: productId, url: publicUrl });
+  // Check if image exists at this position
+  const { data: existing } = await supabase
+    .from('product_images')
+    .select('id')
+    .eq('product_id', productId)
+    .eq('position', position)
+    .maybeSingle();
+
+  if (existing) {
+    // Update existing image
+    const { error } = await supabase
+      .from('product_images')
+      .update({ url: publicUrl })
+      .eq('id', existing.id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   } else {
-    const { error } = await supabase.from('products').update({ image: publicUrl, image_url: publicUrl }).eq('id', productId);
+    // Insert new image
+    const { error } = await supabase
+      .from('product_images')
+      .insert({ product_id: productId, url: publicUrl, position });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, url: publicUrl });
+  // Also update main product image/image_url if position 0 (cover)
+  if (position === 0) {
+    await supabase
+      .from('products')
+      .update({ image: publicUrl, image_url: publicUrl })
+      .eq('id', productId);
+  }
+
+  return NextResponse.json({ ok: true, url: publicUrl, id: existing?.id });
 }
+
