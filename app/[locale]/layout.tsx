@@ -73,6 +73,7 @@ export default async function LocaleLayout({
     name: 'Nubia Aura',
     description: 'Boutique de mode africaine à Dakar - Robes de soirée, mariage, costumes africains',
     url: 'https://www.nubiaaura.com',
+    image: 'https://www.nubiaaura.com/images/logo.png',
     address: {
       '@type': 'PostalAddress',
       addressLocality: 'Dakar',
