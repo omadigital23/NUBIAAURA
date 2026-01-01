@@ -25,10 +25,10 @@ export async function POST(req: NextRequest) {
 
   const supabase = getSupabaseServerClient();
 
-  // Compute path - include position for unique naming
-  const ext = file.name.split('.').pop() || 'jpg';
-  const positionNames = ['face', 'dos', 'detail'];
-  const positionName = positionNames[position] || `img-${position}`;
+  // Compute path - use existing naming convention: 01-main, 02-back, 03-detail
+  const ext = file.name.split('.').pop() || 'png';
+  const positionNames = ['01-main', '02-back', '03-detail'];
+  const positionName = positionNames[position] || `0${position + 1}-img`;
 
   let path = '';
   if (kind === 'gallery' || position > 0) {
