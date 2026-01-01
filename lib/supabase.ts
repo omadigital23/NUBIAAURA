@@ -20,40 +20,7 @@ export const getSupabaseServerClient = (): SupabaseClient => {
   return createClient(supabaseUrl, serviceRoleKey);
 };
 
-// Browser-side client for OAuth
-export const getSupabaseBrowserClient = (): SupabaseClient => {
-  return createClient(supabaseUrl, supabaseAnonKey);
-};
 
-// OAuth sign in with Google
-export const signInWithGoogle = async (redirectTo?: string) => {
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: redirectTo || `${window.location.origin}/api/auth/callback`,
-      queryParams: {
-        access_type: 'offline',
-        prompt: 'consent',
-      },
-    },
-  });
-
-  if (error) throw error;
-  return data;
-};
-
-// OAuth sign in with Facebook
-export const signInWithFacebook = async (redirectTo?: string) => {
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'facebook',
-    options: {
-      redirectTo: redirectTo || `${window.location.origin}/api/auth/callback`,
-    },
-  });
-
-  if (error) throw error;
-  return data;
-};
 
 // Get current session
 export const getSession = async () => {
