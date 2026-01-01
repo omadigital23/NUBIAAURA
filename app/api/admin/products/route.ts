@@ -113,24 +113,33 @@ export async function POST(req: NextRequest) {
 
   if (action === 'stock') {
     const { id, slug, stock } = body as { id: string; slug: string; stock: number };
-    // Upsert or update a standard variant SKU for stock keeping
+
+    // Update the product's stock column directly
+    const { error: productError } = await supabase
+      .from('products')
+      .update({ stock })
+      .eq('id', id);
+
+    if (productError) {
+      console.error('[Admin Products] Stock update error:', productError);
+      return NextResponse.json({ error: productError.message }, { status: 500 });
+    }
+
+    // Also upsert a standard variant for backwards compatibility
     const sku = `${slug}-STD`;
-    // Try update first
-    const { data: existing, error: selErr } = await supabase
+    const { data: existing } = await supabase
       .from('product_variants')
       .select('id')
       .eq('product_id', id)
       .eq('sku', sku)
       .maybeSingle();
-    if (selErr) return NextResponse.json({ error: selErr.message }, { status: 500 });
 
     if (existing) {
-      const { error } = await supabase.from('product_variants').update({ stock }).eq('id', existing.id);
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      await supabase.from('product_variants').update({ stock }).eq('id', existing.id);
     } else {
-      const { error } = await supabase.from('product_variants').insert({ product_id: id, sku, stock });
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      await supabase.from('product_variants').insert({ product_id: id, sku, stock });
     }
+
     return NextResponse.json({ ok: true });
   }
 
