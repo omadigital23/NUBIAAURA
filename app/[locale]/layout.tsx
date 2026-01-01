@@ -90,47 +90,48 @@ export default async function LocaleLayout({
     priceRange: '$$',
     telephone: '+221771234567',
     openingHours: 'Mo-Sa 09:00-19:00',
-    hasOfferCatalog: {
-      '@type': 'OfferCatalog',
-      name: 'Produits Nubia Aura',
-      itemListElement: [
-        {
-          '@type': 'Offer',
-          itemOffered: {
-            '@type': 'Product',
-            name: 'Robes de soirée africaines',
-          },
+    makesOffer: [
+      {
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: 'Robes de soirée africaines',
+          description: 'Collection de robes de soirée africaines sur-mesure et prêt-à-porter',
         },
-        {
-          '@type': 'Offer',
-          itemOffered: {
-            '@type': 'Product',
-            name: 'Robes de mariage',
-          },
+      },
+      {
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: 'Robes de mariage',
+          description: 'Robes de mariage africaines traditionnelles et modernes',
         },
-        {
-          '@type': 'Offer',
-          itemOffered: {
-            '@type': 'Product',
-            name: 'Chemises en wax',
-          },
+      },
+      {
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: 'Chemises en wax',
+          description: 'Chemises en tissu wax africain pour hommes',
         },
-        {
-          '@type': 'Offer',
-          itemOffered: {
-            '@type': 'Product',
-            name: 'Costumes africains',
-          },
+      },
+      {
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: 'Costumes africains',
+          description: 'Costumes africains pour hommes sur-mesure',
         },
-        {
-          '@type': 'Offer',
-          itemOffered: {
-            '@type': 'Product',
-            name: 'Robes en wax',
-          },
+      },
+      {
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: 'Robes en wax',
+          description: 'Robes en tissu wax africain pour femmes',
         },
-      ],
-    },
+      },
+    ],
   };
 
   return (
