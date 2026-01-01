@@ -32,9 +32,9 @@ export async function POST(req: NextRequest) {
 
   let path = '';
   if (kind === 'gallery' || position > 0) {
-    path = `products/${slug}/${positionName}.${ext}`;
+    path = `images/${slug}/${positionName}.${ext}`;
   } else {
-    path = `products/${slug}/cover.${ext}`;
+    path = `images/${slug}/${positionName}.${ext}`;
   }
 
   // Upload to bucket `products`
