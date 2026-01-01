@@ -1,19 +1,34 @@
- 'use client';
+'use client';
 
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import HeroSlider from '@/components/HeroSlider';
 import AnimatedSection from '@/components/AnimatedSection';
 import AnimatedCard from '@/components/AnimatedCard';
 import { useTranslation } from '@/hooks/useTranslation';
 import WhatsAppButton from '@/components/WhatsAppButton';
-import FeaturedProducts from '@/components/FeaturedProducts';
-import WhyChooseUs from '@/components/WhyChooseUs';
-import Testimonials from '@/components/Testimonials';
-import FAQ from '@/components/FAQ';
-import NewsletterForm from '@/components/NewsletterForm';
+
+// Lazy loading des composants below-the-fold pour améliorer les performances
+const FeaturedProducts = dynamic(() => import('@/components/FeaturedProducts'), {
+  loading: () => <div className="py-16 bg-nubia-white"><div className="max-w-7xl mx-auto px-4"><div className="h-96 animate-pulse bg-nubia-cream/30 rounded-xl" /></div></div>,
+});
+const WhyChooseUs = dynamic(() => import('@/components/WhyChooseUs'), {
+  loading: () => <div className="py-16 bg-nubia-cream/20"><div className="h-64 animate-pulse" /></div>,
+});
+const Testimonials = dynamic(() => import('@/components/Testimonials'), {
+  loading: () => <div className="py-16"><div className="h-48 animate-pulse bg-nubia-cream/20 rounded-xl" /></div>,
+});
+const FAQ = dynamic(() => import('@/components/FAQ'), {
+  loading: () => <div className="py-16"><div className="h-48 animate-pulse bg-nubia-cream/20 rounded-xl" /></div>,
+});
+const NewsletterForm = dynamic(() => import('@/components/NewsletterForm'), {
+  loading: () => <div className="h-12 animate-pulse bg-nubia-gold/20 rounded-lg" />,
+});
+const Footer = dynamic(() => import('@/components/Footer'), {
+  loading: () => <div className="h-64 bg-nubia-black" />,
+});
 
 export default function Home() {
   const { t } = useTranslation();
