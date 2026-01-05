@@ -87,10 +87,15 @@ export default function ResetPasswordPage() {
 
       // Send security notification about password change
       try {
+        // Get current user info before signing out
+        const { data: { user } } = await supabase.auth.getUser();
+
         await fetch('/api/auth/notify-password-changed', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            email: user?.email,
+            userName: user?.user_metadata?.full_name || user?.user_metadata?.name,
             userAgent: navigator.userAgent,
           }),
         });
