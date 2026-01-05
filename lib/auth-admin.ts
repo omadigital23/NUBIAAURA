@@ -69,32 +69,137 @@ export function generatePasswordHash(password: string, salt?: string) {
 }
 
 /**
- * Crée un token de session admin
- * @param username - Nom d'utilisateur
- * @returns Token JWT signé
+ * Interface pour le payload JWT
  */
-export function createAdminToken(username: string): string {
-  const secret = process.env.ADMIN_TOKEN || 'default-secret';
-  const payload = {
-    username,
-    iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 heures
-  };
-
-  // Créer un simple token (en production, utiliser JWT)
-  const tokenData = JSON.stringify(payload);
-  const token = crypto
-    .createHmac('sha256', secret)
-    .update(tokenData)
-    .digest('hex');
-
-  return token;
+interface JWTPayload {
+  username: string;
+  iat: number;
+  exp: number;
+  jti: string; // JWT ID unique pour prévenir les replay attacks
 }
 
 /**
- * Vérifie un token de session admin
- * @param token - Token à vérifier
- * @returns true si le token est valide
+ * Crée un token JWT sécurisé pour l'admin
+ * @param username - Nom d'utilisateur admin
+ * @returns Token JWT signé avec HMAC-SHA256
+ */
+export function createAdminToken(username: string): string {
+  const secret = process.env.ADMIN_TOKEN_SECRET || process.env.ADMIN_TOKEN;
+
+  if (!secret || secret === 'default-secret') {
+    throw new Error('ADMIN_TOKEN_SECRET must be configured with a strong secret');
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  const payload: JWTPayload = {
+    username,
+    iat: now, // Issued at
+    exp: now + 24 * 60 * 60, // Expire dans 24 heures
+    jti: crypto.randomBytes(16).toString('hex'), // JWT ID unique
+  };
+
+  // Créer le header JWT
+  const header = {
+    alg: 'HS256',
+    typ: 'JWT',
+  };
+
+  // Encoder en Base64URL
+  const base64UrlEncode = (obj: object): string => {
+    return Buffer.from(JSON.stringify(obj))
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
+  };
+
+  const encodedHeader = base64UrlEncode(header);
+  const encodedPayload = base64UrlEncode(payload);
+  const signatureInput = `${encodedHeader}.${encodedPayload}`;
+
+  // Créer la signature HMAC-SHA256
+  const signature = crypto
+    .createHmac('sha256', secret)
+    .update(signatureInput)
+    .digest('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+
+  // Retourner le JWT complet
+  return `${encodedHeader}.${encodedPayload}.${signature}`;
+}
+
+/**
+ * Vérifie et décode un token JWT admin
+ * @param token - Token JWT à vérifier
+ * @returns Payload du token si valide, null sinon
+ */
+function verifyAndDecodeJWT(token: string): JWTPayload | null {
+  try {
+    const secret = process.env.ADMIN_TOKEN_SECRET || process.env.ADMIN_TOKEN;
+
+    if (!secret) {
+      console.error('❌ ADMIN_TOKEN_SECRET not configured');
+      return null;
+    }
+
+    // Séparer le token en ses parties
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      console.warn('⚠️  Invalid JWT format (expected 3 parts)');
+      return null;
+    }
+
+    const [encodedHeader, encodedPayload, signature] = parts;
+
+    // Vérifier la signature
+    const signatureInput = `${encodedHeader}.${encodedPayload}`;
+    const expectedSignature = crypto
+      .createHmac('sha256', secret)
+      .update(signatureInput)
+      .digest('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
+
+    if (signature !== expectedSignature) {
+      console.warn('⚠️  Invalid JWT signature');
+      return null;
+    }
+
+    // Décoder le payload
+    const base64UrlDecode = (str: string): string => {
+      const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+      return Buffer.from(base64, 'base64').toString('utf-8');
+    };
+
+    const payload: JWTPayload = JSON.parse(base64UrlDecode(encodedPayload));
+
+    // Vérifier l'expiration
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp && payload.exp < now) {
+      console.warn('⚠️  JWT token expired');
+      return null;
+    }
+
+    // Vérifier les champs requis
+    if (!payload.username || !payload.iat || !payload.exp || !payload.jti) {
+      console.warn('⚠️  JWT missing required fields');
+      return null;
+    }
+
+    return payload;
+  } catch (error) {
+    console.error('❌ JWT verification error:', error);
+    return null;
+  }
+}
+
+/**
+ * Vérifie un token de session admin avec validation JWT complète
+ * @param token - Token JWT à vérifier
+ * @returns true si le token est valide et non expiré
  */
 export function verifyAdminToken(token: string): boolean {
   try {
@@ -102,13 +207,42 @@ export function verifyAdminToken(token: string): boolean {
       return false;
     }
 
-    // Pour maintenant, accepter n'importe quel token non-vide
-    // TODO: Implémenter une vérification JWT appropriée avec expiration
-    // Le token devrait être un hash HMAC-SHA256 (64 caractères hex)
-    // mais on accepte aussi d'autres formats pour la compatibilité
-    return token.length > 0;
+    // Vérifier et décoder le JWT
+    const payload = verifyAndDecodeJWT(token);
+
+    if (!payload) {
+      return false;
+    }
+
+    // Vérifier que le username correspond à l'admin configuré
+    const adminUsername = process.env.ADMIN_USERNAME;
+    if (adminUsername && payload.username !== adminUsername) {
+      console.warn('⚠️  JWT username mismatch');
+      return false;
+    }
+
+    return true;
   } catch (error) {
-    console.error('❌ Erreur lors de la vérification du token:', error);
+    console.error('❌ Token verification error:', error);
     return false;
+  }
+}
+
+/**
+ * Extrait le username du token sans vérifier la validité
+ * Utile pour les logs avant vérification complète
+ * @param token - Token JWT
+ * @returns Username ou null
+ */
+export function extractUsernameFromToken(token: string): string | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(Buffer.from(base64, 'base64').toString('utf-8'));
+    return payload.username || null;
+  } catch {
+    return null;
   }
 }

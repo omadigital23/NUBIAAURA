@@ -24,7 +24,14 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:ci": "jest --ci --coverage --maxWorkers=2",
-    "test:integration": "jest __tests__/integration --testTimeout=30000 --runInBand"
+    "test:integration": "jest __tests__/integration --testTimeout=30000 --runInBand",
+    "security:audit": "node scripts/audit-database-security.js",
+    "security:generate-secrets": "node scripts/generate-secrets.js",
+    "security:rotate-secrets": "node scripts/rotate-secrets.js",
+    "security:verify": "node scripts/verify-security.js",
+    "generate:admin-hash": "node scripts/generate-admin-hash.js",
+    "generate:2fa-secret": "node scripts/generate-2fa-secret.js",
+    "configure:vercel": "node scripts/configure-vercel-production.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.0",
