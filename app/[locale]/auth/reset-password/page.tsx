@@ -27,11 +27,21 @@ export default function ResetPasswordPage() {
   // Check for session on mount
   useEffect(() => {
     const checkSession = async () => {
+      console.log('[Reset Password] Validating session...');
+
       // Supabase automatically handles the hash fragment (#access_token=...)
       // and sets the session. We just need to verify we have a user.
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        console.error('[Reset Password] Session error:', sessionError);
+        setError(t('auth.invalid_link', 'Lien invalide ou expiré'));
+        setValidating(false);
+        return;
+      }
 
       if (!session) {
+        console.log('[Reset Password] No session found, checking URL hash...');
         // If no session found automatically, try to parse hash manually as fallback
         const hash = window.location.hash;
         if (hash.includes('access_token')) {
@@ -40,19 +50,26 @@ export default function ResetPasswordPage() {
           const refreshToken = params.get('refresh_token');
 
           if (accessToken) {
+            console.log('[Reset Password] Setting session from URL hash...');
             const { error } = await supabase.auth.setSession({
               access_token: accessToken,
               refresh_token: refreshToken || '',
             });
 
             if (error) {
+              console.error('[Reset Password] Failed to set session:', error);
               setError(t('auth.invalid_link', 'Lien invalide ou expiré'));
+            } else {
+              console.log('[Reset Password] Session set successfully');
             }
           }
         } else {
           // No session and no token in URL
+          console.warn('[Reset Password] No session and no token in URL');
           setError(t('auth.invalid_link', 'Lien invalide ou expiré'));
         }
+      } else {
+        console.log('[Reset Password] Session validated successfully');
       }
       setValidating(false);
     };
@@ -77,16 +94,58 @@ export default function ResetPasswordPage() {
     setLoading(true);
 
     try {
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: password
-      });
+      console.log('[Reset Password] Starting password update...');
+
+      // First, verify we have a valid session
+      const { data: { session }, error: sessionCheckError } = await supabase.auth.getSession();
+
+      if (sessionCheckError || !session) {
+        console.error('[Reset Password] No valid session:', sessionCheckError);
+        throw new Error(t('auth.session_expired', 'Session expirée. Veuillez demander un nouveau lien de réinitialisation.'));
+      }
+
+      console.log('[Reset Password] Session validated, updating password...');
+
+      // Update the password with retry logic
+      let updateError = null;
+      let attempts = 0;
+      const maxAttempts = 3;
+
+      while (attempts < maxAttempts) {
+        attempts++;
+        console.log(`[Reset Password] Update attempt ${attempts}/${maxAttempts}...`);
+
+        const { error: err, data } = await supabase.auth.updateUser({
+          password: password
+        });
+
+        if (!err) {
+          console.log('[Reset Password] Password updated successfully:', data);
+          updateError = null;
+          break;
+        }
+
+        updateError = err;
+        console.warn(`[Reset Password] Update attempt ${attempts} failed:`, err);
+
+        // Wait before retry (exponential backoff)
+        if (attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 500 * attempts));
+        }
+      }
 
       if (updateError) {
+        console.error('[Reset Password] All update attempts failed:', updateError);
         throw updateError;
       }
 
+      console.log('[Reset Password] Waiting for Supabase to persist changes...');
+      // Wait a moment to ensure Supabase persists the password change
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
       // Send security notification about password change
       try {
+        console.log('[Reset Password] Sending notification...');
         // Get current user info before signing out
         const { data: { user } } = await supabase.auth.getUser();
 
@@ -99,11 +158,13 @@ export default function ResetPasswordPage() {
             userAgent: navigator.userAgent,
           }),
         });
-      } catch {
+        console.log('[Reset Password] Notification sent');
+      } catch (notifError) {
         // Don't block the flow if notification fails
-        console.warn('Failed to send password change notification');
+        console.warn('[Reset Password] Failed to send notification:', notifError);
       }
 
+      console.log('[Reset Password] Signing out and redirecting...');
       // Sign out to clear the reset session - user needs to login with new password
       await supabase.auth.signOut();
 
@@ -115,7 +176,9 @@ export default function ResetPasswordPage() {
         router.push(`/${locale}/auth/login?message=password_reset_success`);
       }, 2000);
     } catch (err: any) {
-      setError(err.message || t('auth.error_resetting', 'Erreur lors de la réinitialisation'));
+      console.error('[Reset Password] Error:', err);
+      const errorMessage = err.message || t('auth.error_resetting', 'Erreur lors de la réinitialisation');
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
