@@ -1,26 +1,26 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks/useTranslation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Mail, ArrowLeft, Loader, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 
 // Email validation regex
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Cooldown period in seconds (matches Supabase minimum interval)
+// Cooldown period in seconds
 const COOLDOWN_SECONDS = 60;
 
 export default function ForgotPasswordPage() {
   const { t, locale } = useTranslation();
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [sentEmail, setSentEmail] = useState('');
   const [cooldown, setCooldown] = useState(0);
 
   useEffect(() => {
@@ -35,17 +35,6 @@ export default function ForgotPasswordPage() {
   const isValidEmail = useCallback((emailToCheck: string) => {
     return EMAIL_REGEX.test(emailToCheck.trim());
   }, []);
-
-  // Map Supabase error codes to user-friendly messages
-  const getErrorMessage = useCallback((errorCode: string, defaultMessage: string) => {
-    const errorMap: Record<string, string> = {
-      'rate_limit_exceeded': t('auth.error_rate_limit', 'Trop de tentatives. Veuillez patienter quelques minutes.'),
-      'invalid_email': t('auth.error_invalid_email', 'Email invalide'),
-      'user_not_found': t('auth.reset_sent', 'Un email de réinitialisation a été envoyé'), // Don't reveal if user exists
-      'over_email_send_rate_limit': t('auth.error_rate_limit', 'Trop de tentatives. Veuillez patienter quelques minutes.'),
-    };
-    return errorMap[errorCode] || defaultMessage;
-  }, [t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,35 +55,32 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      // Use Supabase native password reset
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-        email.trim().toLowerCase(),
-        {
-          redirectTo: `${window.location.origin}/${locale}/auth/reset-password`,
-        }
-      );
+      // Use our OTP API instead of Supabase magic link
+      const response = await fetch('/api/auth/reset-password-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
 
-      if (resetError) {
-        // Handle specific error codes
-        const errorMessage = getErrorMessage(
-          resetError.message?.toLowerCase().replace(/\s+/g, '_') || '',
-          resetError.message || t('auth.error_sending_email', 'Erreur lors de l\'envoi de l\'email')
-        );
+      const data = await response.json();
 
-        // If it's a rate limit error, set cooldown
-        if (resetError.message?.toLowerCase().includes('rate') || resetError.message?.toLowerCase().includes('limit')) {
-          setCooldown(COOLDOWN_SECONDS);
-        }
-
-        setError(errorMessage);
+      if (!response.ok) {
+        setError(data.error || t('auth.error_sending_email', 'Erreur lors de l\'envoi'));
         return;
       }
 
-      // Success
-      setSentEmail(email);
+      // Success - redirect to reset page with email
       setSuccess(true);
       setCooldown(COOLDOWN_SECONDS);
-      setEmail('');
+
+      // Store email in sessionStorage for the reset page
+      sessionStorage.setItem('resetEmail', email.trim().toLowerCase());
+
+      // Redirect to reset page after short delay
+      setTimeout(() => {
+        router.push(`/${locale}/auth/reset-password`);
+      }, 1500);
+
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : t('auth.error_unexpected', 'Une erreur inattendue s\'est produite');
       setError(errorMessage);
@@ -103,26 +89,24 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  // Handle resend email
+  // Handle resend
   const handleResend = async () => {
-    if (cooldown > 0 || !sentEmail) return;
+    if (cooldown > 0 || !email) return;
 
     setLoading(true);
     setError('');
 
     try {
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-        sentEmail.trim().toLowerCase(),
-        {
-          redirectTo: `${window.location.origin}/${locale}/auth/reset-password`,
-        }
-      );
+      const response = await fetch('/api/auth/reset-password-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
 
-      if (resetError) {
-        setError(getErrorMessage(
-          resetError.message?.toLowerCase().replace(/\s+/g, '_') || '',
-          resetError.message || t('auth.error_sending_email', 'Erreur lors de l\'envoi de l\'email')
-        ));
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || t('auth.error_sending_email', 'Erreur lors de l\'envoi'));
         return;
       }
 
@@ -155,7 +139,7 @@ export default function ForgotPasswordPage() {
               {t('auth.forgot_password', 'Mot de passe oublié')}
             </h1>
             <p className="text-nubia-black/70">
-              {t('auth.forgot_password_desc', 'Entrez votre adresse email pour recevoir un lien de réinitialisation')}
+              {t('auth.forgot_password_otp_desc', 'Entrez votre email pour recevoir un code de réinitialisation')}
             </p>
           </div>
 
@@ -166,41 +150,15 @@ export default function ForgotPasswordPage() {
                 <CheckCircle className="text-green-600 flex-shrink-0" size={24} />
                 <div>
                   <p className="font-semibold text-green-800 mb-1">
-                    {t('auth.reset_email_sent', 'Email envoyé')}
+                    {t('auth.code_sent', 'Code envoyé !')}
                   </p>
                   <p className="text-sm text-green-700">
-                    {t('auth.reset_email_sent_to', 'Un email a été envoyé à')} <strong>{sentEmail}</strong>
+                    {t('auth.code_sent_desc', 'Un code à 6 chiffres a été envoyé à votre email.')}
                   </p>
-                  <p className="text-sm text-green-700 mt-1">
-                    {t('auth.reset_email_sent_desc', 'Vérifiez votre email pour le lien de réinitialisation. Le lien expire dans 1 heure.')}
-                  </p>
-                  <p className="text-xs text-green-600 mt-2">
-                    {t('auth.check_spam', 'Vérifiez également votre dossier spam.')}
+                  <p className="text-sm text-green-700 mt-2">
+                    {t('auth.redirecting', 'Redirection en cours...')}
                   </p>
                 </div>
-              </div>
-
-              {/* Resend button */}
-              <div className="border-t border-green-200 pt-4 mt-4">
-                <p className="text-sm text-green-700 mb-3">
-                  {t('auth.didnt_receive', "Vous n'avez pas reçu l'email ?")}
-                </p>
-                <button
-                  type="button"
-                  onClick={handleResend}
-                  disabled={loading || cooldown > 0}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-800 rounded-lg hover:bg-green-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
-                >
-                  {loading ? (
-                    <Loader size={16} className="animate-spin" />
-                  ) : (
-                    <RefreshCw size={16} />
-                  )}
-                  {cooldown > 0
-                    ? `${t('auth.resend_available_in', 'Renvoyer disponible dans')} ${cooldown}s`
-                    : t('auth.resend_email', "Renvoyer l'email")
-                  }
-                </button>
               </div>
             </div>
           )}
@@ -247,21 +205,31 @@ export default function ForgotPasswordPage() {
                 ) : cooldown > 0 ? (
                   `${t('auth.resend_available_in', 'Renvoyer disponible dans')} ${cooldown}s`
                 ) : (
-                  t('auth.send_reset_link', 'Envoyer le lien')
+                  t('auth.send_code', 'Envoyer le code')
                 )}
               </button>
             </form>
           )}
 
-          {/* Back Link */}
+          {/* Resend Button (when success) */}
           {success && (
             <div className="text-center">
-              <Link
-                href={`/${locale}/auth/login`}
-                className="text-nubia-gold hover:underline font-semibold"
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={loading || cooldown > 0}
+                className="inline-flex items-center gap-2 px-4 py-2 text-nubia-gold hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {t('auth.back_to_login', 'Retour à la connexion')}
-              </Link>
+                {loading ? (
+                  <Loader size={16} className="animate-spin" />
+                ) : (
+                  <RefreshCw size={16} />
+                )}
+                {cooldown > 0
+                  ? `${t('auth.resend_available_in', 'Renvoyer disponible dans')} ${cooldown}s`
+                  : t('auth.resend_code', 'Renvoyer le code')
+                }
+              </button>
             </div>
           )}
         </div>

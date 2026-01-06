@@ -1,85 +1,91 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks/useTranslation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Lock, ArrowLeft, Loader, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
-
-import { supabase } from '@/lib/supabase';
+import { Lock, ArrowLeft, Loader, AlertCircle, CheckCircle, Eye, EyeOff, Mail } from 'lucide-react';
 
 export default function ResetPasswordPage() {
   const { t, locale } = useTranslation();
   const router = useRouter();
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
+  const [email, setEmail] = useState('');
+  const [code, setCode] = useState(['', '', '', '', '', '']);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [validating, setValidating] = useState(true);
 
-  // Check for session on mount
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Get email from sessionStorage on mount
   useEffect(() => {
-    const checkSession = async () => {
-      console.log('[Reset Password] Validating session...');
+    const savedEmail = sessionStorage.getItem('resetEmail');
+    if (savedEmail) {
+      setEmail(savedEmail);
+    }
+  }, []);
 
-      // Supabase automatically handles the hash fragment (#access_token=...)
-      // and sets the session. We just need to verify we have a user.
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  // Handle code input
+  const handleCodeChange = (index: number, value: string) => {
+    // Only accept digits
+    const digit = value.replace(/\D/g, '').slice(-1);
 
-      if (sessionError) {
-        console.error('[Reset Password] Session error:', sessionError);
-        setError(t('auth.invalid_link', 'Lien invalide ou expiré'));
-        setValidating(false);
-        return;
-      }
+    const newCode = [...code];
+    newCode[index] = digit;
+    setCode(newCode);
 
-      if (!session) {
-        console.log('[Reset Password] No session found, checking URL hash...');
-        // If no session found automatically, try to parse hash manually as fallback
-        const hash = window.location.hash;
-        if (hash.includes('access_token')) {
-          const params = new URLSearchParams(hash.substring(1));
-          const accessToken = params.get('access_token');
-          const refreshToken = params.get('refresh_token');
+    // Auto-focus next input
+    if (digit && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
 
-          if (accessToken) {
-            console.log('[Reset Password] Setting session from URL hash...');
-            const { error } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken || '',
-            });
+  // Handle backspace
+  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !code[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
 
-            if (error) {
-              console.error('[Reset Password] Failed to set session:', error);
-              setError(t('auth.invalid_link', 'Lien invalide ou expiré'));
-            } else {
-              console.log('[Reset Password] Session set successfully');
-            }
-          }
-        } else {
-          // No session and no token in URL
-          console.warn('[Reset Password] No session and no token in URL');
-          setError(t('auth.invalid_link', 'Lien invalide ou expiré'));
-        }
-      } else {
-        console.log('[Reset Password] Session validated successfully');
-      }
-      setValidating(false);
-    };
+  // Handle paste
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    const newCode = [...code];
 
-    checkSession();
-  }, [t]);
+    for (let i = 0; i < pastedData.length; i++) {
+      newCode[i] = pastedData[i];
+    }
+
+    setCode(newCode);
+
+    // Focus last filled input or next empty
+    const lastIndex = Math.min(pastedData.length, 5);
+    inputRefs.current[lastIndex]?.focus();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    const fullCode = code.join('');
+
+    if (!email) {
+      setError(t('auth.email_required', 'Email requis'));
+      return;
+    }
+
+    if (fullCode.length !== 6) {
+      setError(t('auth.code_required', 'Veuillez entrer le code à 6 chiffres'));
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError(t('auth.passwords_mismatch', 'Les mots de passe ne correspondent pas'));
@@ -94,110 +100,40 @@ export default function ResetPasswordPage() {
     setLoading(true);
 
     try {
-      console.log('[Reset Password] Starting password update...');
+      const response = await fetch('/api/auth/verify-reset-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          code: fullCode,
+          newPassword: password,
+        }),
+      });
 
-      // First, verify we have a valid session
-      const { data: { session }, error: sessionCheckError } = await supabase.auth.getSession();
+      const data = await response.json();
 
-      if (sessionCheckError || !session) {
-        console.error('[Reset Password] No valid session:', sessionCheckError);
-        throw new Error(t('auth.session_expired', 'Session expirée. Veuillez demander un nouveau lien de réinitialisation.'));
+      if (!response.ok) {
+        setError(data.error || t('auth.error_resetting', 'Erreur lors de la réinitialisation'));
+        return;
       }
 
-      console.log('[Reset Password] Session validated, updating password...');
-
-      // Update the password with retry logic
-      let updateError = null;
-      let attempts = 0;
-      const maxAttempts = 3;
-
-      while (attempts < maxAttempts) {
-        attempts++;
-        console.log(`[Reset Password] Update attempt ${attempts}/${maxAttempts}...`);
-
-        const { error: err, data } = await supabase.auth.updateUser({
-          password: password
-        });
-
-        if (!err) {
-          console.log('[Reset Password] Password updated successfully:', data);
-          updateError = null;
-          break;
-        }
-
-        updateError = err;
-        console.warn(`[Reset Password] Update attempt ${attempts} failed:`, err);
-
-        // Wait before retry (exponential backoff)
-        if (attempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 500 * attempts));
-        }
-      }
-
-      if (updateError) {
-        console.error('[Reset Password] All update attempts failed:', updateError);
-        throw updateError;
-      }
-
-      console.log('[Reset Password] Waiting for Supabase to persist changes...');
-      // Wait a moment to ensure Supabase persists the password change
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Send security notification about password change
-      try {
-        console.log('[Reset Password] Sending notification...');
-        // Get current user info before signing out
-        const { data: { user } } = await supabase.auth.getUser();
-
-        await fetch('/api/auth/notify-password-changed', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: user?.email,
-            userName: user?.user_metadata?.full_name || user?.user_metadata?.name,
-            userAgent: navigator.userAgent,
-          }),
-        });
-        console.log('[Reset Password] Notification sent');
-      } catch (notifError) {
-        // Don't block the flow if notification fails
-        console.warn('[Reset Password] Failed to send notification:', notifError);
-      }
-
-      console.log('[Reset Password] Signing out and redirecting...');
-      // Sign out to clear the reset session - user needs to login with new password
-      await supabase.auth.signOut();
-
+      // Success!
       setSuccess(true);
-      setPassword('');
-      setConfirmPassword('');
 
+      // Clear sessionStorage
+      sessionStorage.removeItem('resetEmail');
+
+      // Redirect to login
       setTimeout(() => {
         router.push(`/${locale}/auth/login?message=password_reset_success`);
       }, 2000);
+
     } catch (err: any) {
-      console.error('[Reset Password] Error:', err);
-      const errorMessage = err.message || t('auth.error_resetting', 'Erreur lors de la réinitialisation');
-      setError(errorMessage);
+      setError(err.message || t('auth.error_resetting', 'Erreur lors de la réinitialisation'));
     } finally {
       setLoading(false);
     }
   };
-
-  if (validating) {
-    return (
-      <div className="min-h-screen bg-nubia-white flex flex-col">
-        <Header />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <Loader className="animate-spin text-nubia-gold mx-auto mb-4" size={40} />
-            <p className="text-nubia-black/70">{t('common.loading', 'Chargement...')}</p>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-nubia-white flex flex-col">
@@ -208,16 +144,19 @@ export default function ResetPasswordPage() {
           {/* Header */}
           <div className="mb-8">
             <Link
-              href={`/${locale}/auth/login`}
+              href={`/${locale}/auth/forgot-password`}
               className="inline-flex items-center gap-2 text-nubia-gold hover:underline mb-6"
             >
               <ArrowLeft size={20} />
-              {t('auth.back_to_login', 'Retour à la connexion')}
+              {t('auth.back', 'Retour')}
             </Link>
 
             <h1 className="font-playfair text-3xl font-bold text-nubia-black mb-2">
               {t('auth.reset_password', 'Réinitialiser le mot de passe')}
             </h1>
+            <p className="text-nubia-black/70">
+              {t('auth.enter_code_desc', 'Entrez le code reçu par email et votre nouveau mot de passe')}
+            </p>
           </div>
 
           {/* Success Message */}
@@ -226,7 +165,7 @@ export default function ResetPasswordPage() {
               <CheckCircle className="text-green-600 flex-shrink-0" size={20} />
               <div>
                 <p className="font-semibold text-green-800">
-                  {t('auth.password_reset_success', 'Mot de passe réinitialisé')}
+                  {t('auth.password_reset_success', 'Mot de passe réinitialisé !')}
                 </p>
                 <p className="text-sm text-green-700 mt-1">
                   {t('auth.redirecting_login', 'Redirection vers la connexion...')}
@@ -244,8 +183,53 @@ export default function ResetPasswordPage() {
           )}
 
           {/* Form */}
-          {!success && !error && (
+          {!success && (
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Email */}
+              <div>
+                <label htmlFor="email" className="block text-sm font-semibold text-nubia-black mb-2">
+                  {t('auth.email', 'Email')}
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3.5 text-nubia-gold/50" size={20} />
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={t('auth.email_placeholder', 'votre@email.com')}
+                    className="w-full pl-10 pr-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"
+                  />
+                </div>
+              </div>
+
+              {/* OTP Code */}
+              <div>
+                <label className="block text-sm font-semibold text-nubia-black mb-2">
+                  {t('auth.verification_code', 'Code de vérification')}
+                </label>
+                <div className="flex gap-2 justify-center" onPaste={handlePaste}>
+                  {code.map((digit, index) => (
+                    <input
+                      key={index}
+                      ref={(el) => { inputRefs.current[index] = el; }}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleCodeChange(index, e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(index, e)}
+                      className="w-12 h-14 text-center text-2xl font-bold border-2 border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"
+                    />
+                  ))}
+                </div>
+                <p className="text-xs text-nubia-black/50 text-center mt-2">
+                  {t('auth.code_hint', 'Entrez le code à 6 chiffres reçu par email')}
+                </p>
+              </div>
+
+              {/* New Password */}
               <div>
                 <label htmlFor="password" className="block text-sm font-semibold text-nubia-black mb-2">
                   {t('auth.new_password', 'Nouveau mot de passe')}
@@ -271,6 +255,7 @@ export default function ResetPasswordPage() {
                 </div>
               </div>
 
+              {/* Confirm Password */}
               <div>
                 <label htmlFor="confirmPassword" className="block text-sm font-semibold text-nubia-black mb-2">
                   {t('auth.confirm_password', 'Confirmer le mot de passe')}
@@ -296,9 +281,10 @@ export default function ResetPasswordPage() {
                 </div>
               </div>
 
+              {/* Submit Button */}
               <button
                 type="submit"
-                disabled={loading || !password || !confirmPassword}
+                disabled={loading || code.join('').length !== 6 || !password || !confirmPassword}
                 className="w-full py-3 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-gold/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
               >
                 {loading ? (
@@ -307,25 +293,22 @@ export default function ResetPasswordPage() {
                     {t('common.loading', 'Chargement...')}
                   </>
                 ) : (
-                  t('auth.reset_password_button', 'Réinitialiser')
+                  t('auth.reset_password_button', 'Réinitialiser le mot de passe')
                 )}
               </button>
-            </form>
-          )}
 
-          {/* Invalid Token */}
-          {!success && error && (
-            <div className="text-center">
-              <p className="mb-6 text-nubia-black/70">
-                {t('auth.request_new_reset', 'Demandez un nouveau lien de réinitialisation')}
+              {/* Link to request new code */}
+              <p className="text-center text-sm text-nubia-black/70">
+                {t('auth.no_code', "Vous n'avez pas reçu le code ?")}
+                {' '}
+                <Link
+                  href={`/${locale}/auth/forgot-password`}
+                  className="text-nubia-gold hover:underline font-medium"
+                >
+                  {t('auth.request_new_code', 'Demander un nouveau code')}
+                </Link>
               </p>
-              <Link
-                href={`/${locale}/auth/forgot-password`}
-                className="inline-block px-6 py-3 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-gold/90 transition-colors"
-              >
-                {t('auth.forgot_password', 'Mot de passe oublié')}
-              </Link>
-            </div>
+            </form>
           )}
         </div>
       </main>
