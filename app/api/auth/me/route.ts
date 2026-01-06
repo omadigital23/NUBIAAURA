@@ -19,7 +19,10 @@ export async function GET(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
-    const token = request.cookies.get('sb-auth-token')?.value;
+    // Check Authorization header first (magic link flow), then cookie (regular login)
+    const authHeader = request.headers.get('Authorization');
+    const token = authHeader?.replace('Bearer ', '') ||
+      request.cookies.get('sb-auth-token')?.value;
 
     if (!token) {
       return NextResponse.json(

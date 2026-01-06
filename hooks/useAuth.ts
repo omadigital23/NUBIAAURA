@@ -29,10 +29,15 @@ export function useAuth(): UseAuthResult {
   const fetchUser = useCallback(async () => {
     try {
       setIsLoading(true);
+
+      // Get token from localStorage (used by magic link flow)
+      const token = typeof window !== 'undefined' ? localStorage.getItem('sb-auth-token') : null;
+
       const response = await fetch('/api/auth/me', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         },
         credentials: 'include',
       });
