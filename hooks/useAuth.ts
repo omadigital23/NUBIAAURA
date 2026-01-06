@@ -101,20 +101,22 @@ export function useAuth(): UseAuthResult {
         credentials: 'include',
       });
 
+      // Clear localStorage token
+      localStorage.removeItem('sb-auth-token');
+      // Dispatch event to notify other hooks (useCart, etc.)
+      window.dispatchEvent(new CustomEvent('token-changed', { detail: null }));
+
       setUser(null);
       setIsAuthenticated(false);
-      // Ne pas rediriger ici — laisser le composant UserMenu gérer la redirection
-      // après avoir fermé le dropdown
-
-      // Forcer un refetch pour s'assurer que l'état est à jour
-      await fetchUser();
     } catch (error) {
       console.error('Error logging out:', error);
-      // Même en cas d'erreur, vider l'état local
+      // Even on error, clear local state
+      localStorage.removeItem('sb-auth-token');
+      window.dispatchEvent(new CustomEvent('token-changed', { detail: null }));
       setUser(null);
       setIsAuthenticated(false);
     }
-  }, [fetchUser]);
+  }, []);
 
   return {
     user,
