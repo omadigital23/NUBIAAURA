@@ -41,13 +41,45 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user profile
-    const { data: profile, error: profileError } = await supabase
+    let { data: profile, error: profileError } = await supabase
       .from('users')
       .select('*')
       .eq('id', user.id)
       .single();
 
-    if (profileError) {
+    // If profile doesn't exist, create it automatically
+    // This handles cases where auth user exists but profile wasn't created (e.g., after password reset)
+    if (profileError && profileError.code === 'PGRST116') {
+      console.log('[Auth/me] Profile not found, creating one for user:', user.id);
+
+      const newProfile = {
+        id: user.id,
+        email: user.email,
+        full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
+        first_name: user.user_metadata?.first_name || '',
+        last_name: user.user_metadata?.last_name || '',
+        phone: user.user_metadata?.phone || '',
+        role: 'customer',
+      };
+
+      const { data: createdProfile, error: createError } = await supabase
+        .from('users')
+        .insert(newProfile)
+        .select()
+        .single();
+
+      if (createError) {
+        console.error('[Auth/me] Failed to create profile:', createError);
+        return NextResponse.json(
+          { error: 'Failed to create user profile' },
+          { status: 500 }
+        );
+      }
+
+      profile = createdProfile;
+      console.log('[Auth/me] Profile created successfully for user:', user.id);
+    } else if (profileError) {
+      console.error('[Auth/me] Profile error:', profileError);
       return NextResponse.json(
         { error: 'Profile not found' },
         { status: 404 }
