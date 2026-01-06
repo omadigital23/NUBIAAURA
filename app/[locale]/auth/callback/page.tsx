@@ -53,6 +53,15 @@ export default function AuthCallbackPage() {
                         // Trigger token-changed event so useAuth and useCart pick it up
                         window.dispatchEvent(new CustomEvent('token-changed', { detail: accessToken }));
                         console.log('[Auth Callback] Token saved to localStorage and event dispatched');
+
+                        // CRITICAL: Also set the cookie via API for middleware auth check
+                        await fetch('/api/auth/set-cookie', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ token: accessToken }),
+                            credentials: 'include',
+                        });
+                        console.log('[Auth Callback] Cookie set via API');
                     } catch (e) {
                         console.error('[Auth Callback] Failed to save token:', e);
                     }
@@ -87,6 +96,14 @@ export default function AuthCallbackPage() {
                             localStorage.setItem('sb-auth-token', exchangeData.session.access_token);
                             window.dispatchEvent(new CustomEvent('token-changed', { detail: exchangeData.session.access_token }));
                             console.log('[Auth Callback] Token saved after code exchange');
+
+                            // Set cookie via API for middleware auth check
+                            await fetch('/api/auth/set-cookie', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ token: exchangeData.session.access_token }),
+                                credentials: 'include',
+                            });
                         } catch (e) {
                             console.error('[Auth Callback] Failed to save token:', e);
                         }
