@@ -1,16 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Create Supabase admin client
+// Create Supabase admin client with service role
 function getSupabaseAdmin() {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !serviceRoleKey) {
+        console.error('[Supabase Admin] Missing configuration:', {
+            hasUrl: !!supabaseUrl,
+            hasKey: !!serviceRoleKey
+        });
         throw new Error('Missing Supabase configuration');
     }
 
-    return createClient(supabaseUrl, serviceRoleKey);
+    // Important: Create client with service role key and proper auth options
+    return createClient(supabaseUrl, serviceRoleKey, {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+        },
+    });
 }
 
 export async function POST(request: NextRequest) {
