@@ -100,35 +100,52 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        console.log('[Verify Reset] Code verified, updating password...');
+        console.log('[Verify Reset] Code verified, looking up user...');
 
         // Find the user by email
-        const { data: authData } = await supabase.auth.admin.listUsers();
+        const { data: authData, error: listError } = await supabase.auth.admin.listUsers();
+
+        if (listError) {
+            console.error('[Verify Reset] Failed to list users:', listError);
+            return NextResponse.json(
+                { error: 'Erreur serveur: impossible de trouver l\'utilisateur' },
+                { status: 500 }
+            );
+        }
+
         const authUser = authData?.users?.find(u => u.email?.toLowerCase() === normalizedEmail);
 
         if (!authUser) {
-            console.error('[Verify Reset] User not found in auth');
+            console.error('[Verify Reset] User not found in auth for email:', normalizedEmail);
             return NextResponse.json(
                 { error: 'Utilisateur non trouvé' },
                 { status: 404 }
             );
         }
 
+        console.log('[Verify Reset] Found user:', authUser.id);
+        console.log('[Verify Reset] User email:', authUser.email);
+        console.log('[Verify Reset] Updating password...');
+
         // Update password using admin API
-        const { error: updateError } = await supabase.auth.admin.updateUserById(
+        const { data: updateData, error: updateError } = await supabase.auth.admin.updateUserById(
             authUser.id,
             { password: newPassword }
         );
 
+        console.log('[Verify Reset] Update response - data received:', !!updateData);
+        console.log('[Verify Reset] Update response - user id:', updateData?.user?.id);
+
         if (updateError) {
             console.error('[Verify Reset] Failed to update password:', updateError);
             return NextResponse.json(
-                { error: 'Erreur lors de la mise à jour du mot de passe' },
+                { error: 'Erreur lors de la mise à jour du mot de passe: ' + updateError.message },
                 { status: 500 }
             );
         }
 
-        console.log('[Verify Reset] Password updated successfully');
+        // Verify the update was actually applied
+        console.log('[Verify Reset] Password updated successfully for user:', authUser.id);
 
         // Delete the used OTP
         await supabase
