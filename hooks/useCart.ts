@@ -17,17 +17,22 @@ export function useCart(): UseCartResult {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { token, getAuthHeaders } = useAuthToken();
+  const { token } = useAuthToken();
 
   // Load initial cart from Supabase on mount
   useEffect(() => {
     let mounted = true;
     const loadCartFromDB = async () => {
+      // Skip if no token
+      if (!token) {
+        return;
+      }
+
       try {
         setLoading(true);
-        const headers: any = { 'Content-Type': 'application/json' };
-        if (getAuthHeaders.Authorization) {
-          headers.Authorization = getAuthHeaders.Authorization;
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
         }
 
         const response = await fetch('/api/cart', {
@@ -54,9 +59,7 @@ export function useCart(): UseCartResult {
       }
     };
 
-    if (token) {
-      loadCartFromDB();
-    }
+    loadCartFromDB();
 
     // Listen for token changes (e.g., after login)
     const handleTokenChange = (e: CustomEvent) => {
@@ -76,7 +79,7 @@ export function useCart(): UseCartResult {
       mounted = false;
       window.removeEventListener('token-changed', handleTokenChange as EventListener);
     };
-  }, [token, getAuthHeaders]);
+  }, [token]); // Only depend on token, not getAuthHeaders
 
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -85,9 +88,9 @@ export function useCart(): UseCartResult {
       setLoading(true);
       console.log('[useCart] Adding item:', item);
 
-      const headers: any = { 'Content-Type': 'application/json' };
-      if (getAuthHeaders.Authorization) {
-        headers.Authorization = getAuthHeaders.Authorization;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
       }
 
       const response = await fetch('/api/cart', {
@@ -132,15 +135,15 @@ export function useCart(): UseCartResult {
     } finally {
       setLoading(false);
     }
-  }, [getAuthHeaders]);
+  }, [token]);
 
   const removeItem = useCallback(async (id: string) => {
     try {
       setLoading(true);
 
-      const headers: any = { 'Content-Type': 'application/json' };
-      if (getAuthHeaders.Authorization) {
-        headers.Authorization = getAuthHeaders.Authorization;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
       }
 
       const response = await fetch('/api/cart', {
@@ -157,9 +160,9 @@ export function useCart(): UseCartResult {
       }
 
       // Recharger le panier depuis la DB après suppression
-      const cartHeaders: any = { 'Content-Type': 'application/json' };
-      if (getAuthHeaders.Authorization) {
-        cartHeaders.Authorization = getAuthHeaders.Authorization;
+      const cartHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) {
+        cartHeaders.Authorization = `Bearer ${token}`;
       }
 
       const cartResponse = await fetch('/api/cart', {
@@ -183,15 +186,15 @@ export function useCart(): UseCartResult {
     } finally {
       setLoading(false);
     }
-  }, [getAuthHeaders]);
+  }, [token]);
 
   const updateQuantity = useCallback(async (id: string, quantity: number) => {
     try {
       setLoading(true);
 
-      const headers: any = { 'Content-Type': 'application/json' };
-      if (getAuthHeaders.Authorization) {
-        headers.Authorization = getAuthHeaders.Authorization;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
       }
 
       const response = await fetch('/api/cart', {
@@ -208,9 +211,9 @@ export function useCart(): UseCartResult {
       }
 
       // Recharger le panier depuis la DB après mise à jour
-      const cartHeaders: any = { 'Content-Type': 'application/json' };
-      if (getAuthHeaders.Authorization) {
-        cartHeaders.Authorization = getAuthHeaders.Authorization;
+      const cartHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) {
+        cartHeaders.Authorization = `Bearer ${token}`;
       }
 
       const cartResponse = await fetch('/api/cart', {
@@ -234,15 +237,15 @@ export function useCart(): UseCartResult {
     } finally {
       setLoading(false);
     }
-  }, [getAuthHeaders]);
+  }, [token]);
 
   const clearCart = useCallback(async () => {
     try {
       setLoading(true);
 
-      const headers: any = { 'Content-Type': 'application/json' };
-      if (getAuthHeaders.Authorization) {
-        headers.Authorization = getAuthHeaders.Authorization;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
       }
 
       const response = await fetch('/api/cart/clear', {
@@ -266,14 +269,14 @@ export function useCart(): UseCartResult {
     } finally {
       setLoading(false);
     }
-  }, [getAuthHeaders]);
+  }, [token]);
 
   const refetchCart = useCallback(async () => {
     try {
       setLoading(true);
-      const headers: any = { 'Content-Type': 'application/json' };
-      if (getAuthHeaders.Authorization) {
-        headers.Authorization = getAuthHeaders.Authorization;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
       }
 
       const response = await fetch('/api/cart', {
@@ -298,7 +301,7 @@ export function useCart(): UseCartResult {
     } finally {
       setLoading(false);
     }
-  }, [getAuthHeaders]);
+  }, [token]);
 
   return {
     items,
