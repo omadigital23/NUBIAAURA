@@ -47,6 +47,16 @@ export default function AuthCallbackPage() {
                         return;
                     }
 
+                    // IMPORTANT: Save token to localStorage for the custom auth system
+                    try {
+                        localStorage.setItem('sb-auth-token', accessToken);
+                        // Trigger token-changed event so useAuth and useCart pick it up
+                        window.dispatchEvent(new CustomEvent('token-changed', { detail: accessToken }));
+                        console.log('[Auth Callback] Token saved to localStorage and event dispatched');
+                    } catch (e) {
+                        console.error('[Auth Callback] Failed to save token:', e);
+                    }
+
                     // Success - redirect to dashboard
                     console.log('[Auth Callback] Success, redirecting to dashboard');
                     router.push(`/${locale}/client/dashboard`);
@@ -60,7 +70,7 @@ export default function AuthCallbackPage() {
 
                 if (code) {
                     console.log('[Auth Callback] Exchanging code for session');
-                    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+                    const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
                     if (exchangeError) {
                         console.error('[Auth Callback] Exchange error:', exchangeError);
@@ -69,6 +79,17 @@ export default function AuthCallbackPage() {
                             router.push(`/${locale}/auth/login?error=${encodeURIComponent(exchangeError.message)}`);
                         }, 2000);
                         return;
+                    }
+
+                    // Save token to localStorage for the custom auth system
+                    if (exchangeData?.session?.access_token) {
+                        try {
+                            localStorage.setItem('sb-auth-token', exchangeData.session.access_token);
+                            window.dispatchEvent(new CustomEvent('token-changed', { detail: exchangeData.session.access_token }));
+                            console.log('[Auth Callback] Token saved after code exchange');
+                        } catch (e) {
+                            console.error('[Auth Callback] Failed to save token:', e);
+                        }
                     }
 
                     // Success - redirect
