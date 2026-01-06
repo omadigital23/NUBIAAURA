@@ -103,36 +103,29 @@ export async function GET(request: NextRequest) {
 // POST: Soumettre un avis
 export async function POST(request: NextRequest) {
     try {
-        // Récupérer le token d'authentification
-        const authHeader = request.headers.get('cookie');
-        const accessToken = authHeader?.match(/sb-[^=]+-auth-token=([^;]+)/)?.[1];
+        // Get token from Authorization header first (magic link flow), then cookie
+        const authHeader = request.headers.get('Authorization');
+        const token = authHeader?.replace('Bearer ', '') ||
+            request.cookies.get('sb-auth-token')?.value;
 
-        if (!accessToken) {
+        if (!token) {
             return NextResponse.json(
                 { error: 'Authentification requise' },
                 { status: 401 }
             );
         }
 
-        // Décoder le token pour obtenir l'utilisateur
-        let tokenData;
-        try {
-            const decoded = JSON.parse(decodeURIComponent(accessToken));
-            tokenData = decoded;
-        } catch {
+        // Verify token and get user using Supabase admin
+        const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+
+        if (userError || !user) {
             return NextResponse.json(
-                { error: 'Token invalide' },
+                { error: 'Token invalide ou expiré' },
                 { status: 401 }
             );
         }
 
-        const userId = tokenData?.user?.id;
-        if (!userId) {
-            return NextResponse.json(
-                { error: 'Utilisateur non trouvé' },
-                { status: 401 }
-            );
-        }
+        const userId = user.id;
 
         const body = await request.json();
         const parsed = ReviewSchema.safeParse(body);
@@ -226,28 +219,29 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        // Récupérer le token
-        const authHeader = request.headers.get('cookie');
-        const accessToken = authHeader?.match(/sb-[^=]+-auth-token=([^;]+)/)?.[1];
+        // Get token from Authorization header first, then cookie
+        const authHeader = request.headers.get('Authorization');
+        const token = authHeader?.replace('Bearer ', '') ||
+            request.cookies.get('sb-auth-token')?.value;
 
-        if (!accessToken) {
+        if (!token) {
             return NextResponse.json(
                 { error: 'Authentification requise' },
                 { status: 401 }
             );
         }
 
-        let tokenData;
-        try {
-            tokenData = JSON.parse(decodeURIComponent(accessToken));
-        } catch {
+        // Verify token and get user using Supabase admin
+        const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+
+        if (userError || !user) {
             return NextResponse.json(
-                { error: 'Token invalide' },
+                { error: 'Token invalide ou expiré' },
                 { status: 401 }
             );
         }
 
-        const userId = tokenData?.user?.id;
+        const userId = user.id;
 
         // Vérifier que l'avis appartient à l'utilisateur
         const { data: review } = await supabase

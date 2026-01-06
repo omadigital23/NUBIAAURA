@@ -87,9 +87,13 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
         setSubmitError(null);
 
         try {
+            const token = localStorage.getItem('sb-auth-token');
             const res = await fetch('/api/reviews', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                },
                 credentials: 'include',
                 body: JSON.stringify({
                     productId,
