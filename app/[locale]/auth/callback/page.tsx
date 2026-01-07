@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Loader } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function AuthCallbackPage() {
     const router = useRouter();
     const { locale } = useParams();
+    const { t } = useTranslation();
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -123,14 +125,14 @@ export default function AuthCallbackPage() {
 
                 // Nothing found - redirect to login
                 console.log('[Auth Callback] No auth data found');
-                setError('Aucune information d\'authentification trouvée');
+                setError(t('auth.no_auth_data', 'Aucune information d\'authentification trouvée'));
                 setTimeout(() => {
                     router.push(`/${locale}/auth/login`);
                 }, 2000);
 
             } catch (err: any) {
                 console.error('[Auth Callback] Exception:', err);
-                setError(err.message || 'Erreur inattendue');
+                setError(err.message || t('auth.unexpected_error', 'Erreur inattendue'));
                 setTimeout(() => {
                     router.push(`/${locale}/auth/login?error=unexpected`);
                 }, 2000);
@@ -150,15 +152,15 @@ export default function AuthCallbackPage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </div>
-                        <h2 className="text-xl font-bold text-nubia-black mb-2">Erreur d'authentification</h2>
+                        <h2 className="text-xl font-bold text-nubia-black mb-2">{t('auth.auth_error_title', 'Erreur d\'authentification')}</h2>
                         <p className="text-nubia-black/70 mb-4">{error}</p>
-                        <p className="text-sm text-nubia-black/50">Redirection vers la page de connexion...</p>
+                        <p className="text-sm text-nubia-black/50">{t('auth.redirecting_login', 'Redirection vers la page de connexion...')}</p>
                     </>
                 ) : (
                     <>
                         <Loader className="animate-spin text-nubia-gold mx-auto mb-4" size={48} />
-                        <h2 className="text-xl font-bold text-nubia-black mb-2">Connexion en cours...</h2>
-                        <p className="text-nubia-black/70">Veuillez patienter</p>
+                        <h2 className="text-xl font-bold text-nubia-black mb-2">{t('auth.logging_in', 'Connexion en cours...')}</h2>
+                        <p className="text-nubia-black/70">{t('auth.please_wait', 'Veuillez patienter')}</p>
                     </>
                 )}
             </div>

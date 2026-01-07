@@ -56,7 +56,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur de connexion');
+        throw new Error(data.error || t('auth.login_error', 'Erreur de connexion'));
       }
 
       // Save token to localStorage
@@ -80,7 +80,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
     setError('');
 
     if (signupData.password !== signupData.confirmPassword) {
-      setError('Les mots de passe ne correspondent pas');
+      setError(t('auth.passwords_mismatch', 'Les mots de passe ne correspondent pas'));
       setLoading(false);
       return;
     }
@@ -101,7 +101,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors de l\'inscription');
+        throw new Error(data.error || t('auth.signup_error', 'Erreur lors de l\'inscription'));
       }
 
       // Après inscription, se connecter automatiquement
@@ -137,7 +137,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
         {/* Header */}
         <div className="sticky top-0 bg-nubia-white border-b border-nubia-gold/20 p-6 flex items-center justify-between">
           <h2 className="font-playfair text-2xl font-bold text-nubia-black">
-            {mode === 'login' ? 'Connexion' : 'Inscription'}
+            {mode === 'login' ? t('auth.login_title', 'Connexion') : t('auth.signup_title', 'Inscription')}
           </h2>
           <button
             onClick={onClose}
@@ -162,7 +162,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
             <form onSubmit={handleLoginSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-nubia-black mb-2">
-                  Email
+                  {t('auth.email_label', 'Email')}
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-3.5 text-nubia-gold/60" size={20} />
@@ -179,7 +179,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
 
               <div>
                 <label className="block text-sm font-semibold text-nubia-black mb-2">
-                  Mot de passe
+                  {t('auth.password_label', 'Mot de passe')}
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-3.5 text-nubia-gold/60" size={20} />
@@ -271,7 +271,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
 
               <div>
                 <label className="block text-sm font-semibold text-nubia-black mb-2">
-                  Email
+                  {t('auth.email_label', 'Email')}
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-3.5 text-nubia-gold/60" size={20} />
@@ -304,7 +304,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
 
               <div>
                 <label className="block text-sm font-semibold text-nubia-black mb-2">
-                  Mot de passe
+                  {t('auth.password_label', 'Mot de passe')}
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-3.5 text-nubia-gold/60" size={20} />

@@ -12,6 +12,7 @@
 
 import { useState, useMemo } from 'react';
 import { ChevronDown, Phone, Globe, Search } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 // Country data with phone codes and formats
 export interface CountryData {
@@ -101,10 +102,12 @@ export function CountrySelect({
     value,
     onChange,
     label,
-    placeholder = 'Sélectionnez un pays',
+    placeholder,
     className = '',
     disabled = false,
 }: CountrySelectProps) {
+    const { t } = useTranslation();
+    const defaultPlaceholder = placeholder || t('checkout.select_country', 'Sélectionnez un pays');
     const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState('');
 
@@ -154,7 +157,7 @@ export function CountrySelect({
                 ) : (
                     <span className="flex items-center gap-2 text-gray-400">
                         <Globe className="w-5 h-5" />
-                        {placeholder}
+                        {defaultPlaceholder}
                     </span>
                 )}
                 <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -171,7 +174,7 @@ export function CountrySelect({
                                 type="text"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Rechercher un pays..."
+                                placeholder={t('checkout.search_country', 'Rechercher un pays...')}
                                 className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-nubia-gold"
                                 autoFocus
                             />
@@ -181,7 +184,7 @@ export function CountrySelect({
                     {/* Country list */}
                     <div className="overflow-y-auto max-h-60">
                         {filteredCountries.length === 0 ? (
-                            <div className="px-4 py-3 text-gray-500 text-center">Aucun pays trouvé</div>
+                            <div className="px-4 py-3 text-gray-500 text-center">{t('checkout.no_country_found', 'Aucun pays trouvé')}</div>
                         ) : (
                             filteredCountries.map((country) => (
                                 <button

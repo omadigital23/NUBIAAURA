@@ -14,6 +14,7 @@
 
 import { useEffect, useState } from 'react';
 import { Lock, CreditCard, Smartphone, Truck, Globe, Wallet } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 // Payment method type
 export type PaymentMethod = 'paydunya' | 'cod';
@@ -328,6 +329,7 @@ export function PaymentMethodsSelector({
     onMethodChange,
     disabled = false,
 }: PaymentMethodsSelectorProps) {
+    const { t } = useTranslation();
     const [config, setConfig] = useState(PAYMENT_OPTIONS.OTHER);
 
     // Update options when country changes
@@ -355,7 +357,7 @@ export function PaymentMethodsSelector({
             {/* Header with country context */}
             <div className="flex items-center justify-between">
                 <h3 className="font-playfair text-xl font-bold text-nubia-black">
-                    Mode de paiement
+                    {t('checkout.payment_method', 'Mode de paiement')}
                 </h3>
                 <span className="text-2xl">{config.flag}</span>
             </div>
@@ -374,7 +376,7 @@ export function PaymentMethodsSelector({
             {/* Security badge */}
             <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
                 <Lock className="w-4 h-4 text-green-600" />
-                <span className="text-sm text-green-700">Paiement 100% sécurisé et crypté</span>
+                <span className="text-sm text-green-700">{t('checkout.secure_payment', 'Paiement 100% sécurisé et crypté')}</span>
             </div>
 
             {/* Payment options */}
@@ -439,14 +441,14 @@ export function PaymentMethodsSelector({
             {!selectedMethod && (
                 <p className="text-sm text-amber-600 flex items-center gap-2">
                     <span>⚠️</span>
-                    Veuillez sélectionner un mode de paiement
+                    {t('checkout.select_payment', 'Veuillez sélectionner un mode de paiement')}
                 </p>
             )}
 
             {/* Payment providers info */}
             <div className="mt-6 pt-4 border-t border-gray-200">
                 <p className="text-xs text-gray-400 text-center">
-                    Paiements sécurisés par PayDunya
+                    {t('checkout.secured_by_paydunya', 'Paiements sécurisés par PayDunya')}
                 </p>
                 <div className="flex justify-center gap-4 mt-3 opacity-50">
                     <img src="/images/payments/visa.svg" alt="Visa" className="h-6" onError={(e) => e.currentTarget.style.display = 'none'} />
