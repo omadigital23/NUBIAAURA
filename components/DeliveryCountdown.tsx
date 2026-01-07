@@ -2,6 +2,7 @@
 
 import { Clock, CheckCircle, AlertCircle, Truck } from 'lucide-react';
 import { useDeliveryCountdown, formatCountdown, getCountdownColor, getCountdownBgColor } from '@/hooks/useDeliveryCountdown';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface DeliveryCountdownProps {
   estimatedDeliveryDate: string | null | undefined;
@@ -28,6 +29,7 @@ export default function DeliveryCountdown({
     shippedAt
   );
 
+  const { t } = useTranslation();
   const countdownText = formatCountdown(info);
   const textColor = getCountdownColor(info);
   const bgColor = getCountdownBgColor(info);
@@ -46,7 +48,7 @@ export default function DeliveryCountdown({
           <Truck className="text-blue-600" size={24} />
         )}
         <div>
-          <p className="text-sm text-nubia-black/70">Livraison estimée</p>
+          <p className="text-sm text-nubia-black/70">{t('delivery.estimated', 'Livraison estimée')}</p>
           {estimatedDeliveryDate && (
             <p className="text-xs text-nubia-black/50">
               {new Date(estimatedDeliveryDate).toLocaleDateString('fr-FR', {
@@ -70,19 +72,19 @@ export default function DeliveryCountdown({
         <div className="grid grid-cols-4 gap-2 mb-4">
           <div className="text-center">
             <p className="text-2xl font-bold text-nubia-black">{info.daysRemaining}</p>
-            <p className="text-xs text-nubia-black/70">Jours</p>
+            <p className="text-xs text-nubia-black/70">{t('delivery.days', 'Jours')}</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-nubia-black">{info.hoursRemaining}</p>
-            <p className="text-xs text-nubia-black/70">Heures</p>
+            <p className="text-xs text-nubia-black/70">{t('delivery.hours', 'Heures')}</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-nubia-black">{info.minutesRemaining}</p>
-            <p className="text-xs text-nubia-black/70">Minutes</p>
+            <p className="text-xs text-nubia-black/70">{t('delivery.minutes', 'Minutes')}</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-nubia-black">{info.secondsRemaining}</p>
-            <p className="text-xs text-nubia-black/70">Secondes</p>
+            <p className="text-xs text-nubia-black/70">{t('delivery.seconds', 'Secondes')}</p>
           </div>
         </div>
       )}
@@ -100,19 +102,19 @@ export default function DeliveryCountdown({
       {/* Status message */}
       {info.isDelivered && (
         <p className="text-sm text-green-700 font-semibold">
-          ✓ Commande livrée avec succès
+          ✓ {t('delivery.delivered_success', 'Commande livrée avec succès')}
         </p>
       )}
 
       {info.isOverdue && (
         <p className="text-sm text-red-700 font-semibold">
-          ⚠ Retard de livraison - Veuillez nous contacter
+          {t('delivery.delay_warning', '⚠ Retard de livraison - Veuillez nous contacter')}
         </p>
       )}
 
       {info.daysRemaining === null && (
         <p className="text-sm text-yellow-700 font-semibold">
-          ⏳ En attente d'expédition
+          ⏳ {t('delivery.awaiting_shipment', 'En attente d\'expédition')}
         </p>
       )}
     </div>

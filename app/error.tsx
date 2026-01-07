@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, Home, RefreshCw } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function Error({
   error,
@@ -11,6 +12,8 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useTranslation();
+
   useEffect(() => {
     // Log error to error reporting service
     console.error('Application error:', error);
@@ -24,8 +27,8 @@ export default function Error({
           <div className="inline-flex items-center justify-center w-20 h-20 bg-red-100 rounded-full mb-4">
             <AlertTriangle className="text-red-600" size={40} />
           </div>
-          <h1 className="text-3xl font-playfair font-bold text-nubia-black mb-2">Erreur</h1>
-          <p className="text-gray-600">Une erreur inattendue s'est produite. Veuillez réessayer.</p>
+          <h1 className="text-3xl font-playfair font-bold text-nubia-black mb-2">{t('error.title', 'Erreur')}</h1>
+          <p className="text-gray-600">{t('error.unexpected', 'Une erreur inattendue s\'est produite. Veuillez réessayer.')}</p>
         </div>
 
         {/* Error Details (Development only) */}
@@ -45,25 +48,25 @@ export default function Error({
             className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-gold/90 transition-colors"
           >
             <RefreshCw size={20} />
-            Réessayer
+            {t('error.retry', 'Réessayer')}
           </button>
           <Link
             href="/"
             className="inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-nubia-gold text-nubia-gold font-semibold rounded-lg hover:bg-nubia-gold/10 transition-colors"
           >
             <Home size={20} />
-            Accueil
+            {t('nav.home', 'Accueil')}
           </Link>
         </div>
 
         {/* Support */}
         <div className="mt-12 pt-8 border-t border-nubia-gold/20">
-          <p className="text-sm text-gray-600 mb-4">Besoin d'aide?</p>
+          <p className="text-sm text-gray-600 mb-4">{t('error.need_help', 'Besoin d\'aide?')}</p>
           <Link
             href="/contact"
             className="text-nubia-gold hover:text-nubia-gold/80 transition-colors font-medium"
           >
-            Contactez-nous →
+            {t('error.contact_us', 'Contactez-nous')} →
           </Link>
         </div>
       </div>

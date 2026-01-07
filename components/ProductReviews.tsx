@@ -280,7 +280,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
             {/* Reviews List */}
             {loading && reviews.length === 0 ? (
                 <div className="text-center py-8 text-nubia-black/50">
-                    Chargement des avis...
+                    {t('reviews.loading', 'Chargement des avis...')}
                 </div>
             ) : reviews.length === 0 ? (
                 <div className="text-center py-8 text-nubia-black/50">

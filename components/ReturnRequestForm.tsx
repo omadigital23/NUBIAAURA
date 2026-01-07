@@ -45,13 +45,13 @@ export default function ReturnRequestForm({
 
     try {
       if (selectedItems.length === 0) {
-        setError('Veuillez sélectionner au moins un article');
+        setError(t('returns.select_item', 'Veuillez sélectionner au moins un article'));
         setLoading(false);
         return;
       }
 
       if (reason.length < 10) {
-        setError('La raison doit contenir au moins 10 caractères');
+        setError(t('returns.reason_too_short', 'La raison doit contenir au moins 10 caractères'));
         setLoading(false);
         return;
       }
@@ -77,7 +77,7 @@ export default function ReturnRequestForm({
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || 'Erreur lors de la création de la demande');
+        setError(data.error || t('returns.request_error', 'Erreur lors de la création de la demande'));
         setLoading(false);
         return;
       }
@@ -91,7 +91,7 @@ export default function ReturnRequestForm({
         onSuccess?.();
       }, 2000);
     } catch (err) {
-      setError('Erreur lors de la création de la demande');
+      setError(t('returns.request_error', 'Erreur lors de la création de la demande'));
       console.error(err);
     } finally {
       setLoading(false);
@@ -104,11 +104,11 @@ export default function ReturnRequestForm({
         <div className="flex items-center gap-3 mb-2">
           <CheckCircle className="w-6 h-6 text-green-600" />
           <h3 className="text-lg font-semibold text-green-900">
-            Demande créée avec succès
+            {t('returns.success_title', 'Demande créée avec succès')}
           </h3>
         </div>
         <p className="text-green-700">
-          Votre demande de retour a été reçue. Vous recevrez une confirmation par email et WhatsApp.
+          {t('returns.success_message', 'Votre demande de retour a été reçue. Vous recevrez une confirmation par email et WhatsApp.')}
         </p>
       </div>
     );
@@ -127,7 +127,7 @@ export default function ReturnRequestForm({
       {/* Select Items */}
       <div>
         <label className="block text-sm font-semibold text-gray-900 mb-3">
-          Articles à retourner *
+          {t('returns.items_to_return', 'Articles à retourner')} *
         </label>
         <div className="space-y-2">
           {orderItems.map((item) => (
@@ -143,7 +143,7 @@ export default function ReturnRequestForm({
               />
               <div className="flex-1">
                 <p className="font-medium text-gray-900">{item.product_name}</p>
-                <p className="text-sm text-gray-600">Quantité: {item.quantity}</p>
+                <p className="text-sm text-gray-600">{t('common.quantity', 'Quantité')}: {item.quantity}</p>
               </div>
             </label>
           ))}
@@ -153,7 +153,7 @@ export default function ReturnRequestForm({
       {/* Reason */}
       <div>
         <label htmlFor="reason" className="block text-sm font-semibold text-gray-900 mb-2">
-          Raison du retour *
+          {t('returns.return_reason', 'Raison du retour')} *
         </label>
         <select
           id="reason"
@@ -161,24 +161,20 @@ export default function ReturnRequestForm({
           onChange={(e) => setReason(e.target.value)}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent"
         >
-          <option value="">Sélectionnez une raison</option>
-          <option value="Produit défectueux">Produit défectueux</option>
-          <option value="Produit non conforme à la description">
-            Produit non conforme à la description
-          </option>
-          <option value="Mauvaise taille">Mauvaise taille</option>
-          <option value="Couleur différente">Couleur différente</option>
-          <option value="Produit endommagé à la livraison">
-            Produit endommagé à la livraison
-          </option>
-          <option value="Autre">Autre</option>
+          <option value="">{t('returns.select_reason', 'Sélectionnez une raison')}</option>
+          <option value="defective">{t('returns.defective_product', 'Produit défectueux')}</option>
+          <option value="not_as_described">{t('returns.not_as_described', 'Produit non conforme à la description')}</option>
+          <option value="wrong_size">{t('returns.wrong_size', 'Mauvaise taille')}</option>
+          <option value="different_color">{t('returns.different_color', 'Couleur différente')}</option>
+          <option value="damaged">{t('returns.damaged_delivery', 'Produit endommagé à la livraison')}</option>
+          <option value="other">{t('returns.other', 'Autre')}</option>
         </select>
       </div>
 
       {/* Comments */}
       <div>
         <label htmlFor="comments" className="block text-sm font-semibold text-gray-900 mb-2">
-          Commentaires supplémentaires
+          {t('returns.additional_comments', 'Commentaires supplémentaires')}
         </label>
         <textarea
           id="comments"
@@ -197,11 +193,11 @@ export default function ReturnRequestForm({
         className="w-full bg-gold-600 hover:bg-gold-700 disabled:bg-gray-400 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2"
       >
         {loading && <Loader className="w-4 h-4 animate-spin" />}
-        {loading ? 'Création en cours...' : 'Créer la demande de retour'}
+        {loading ? t('returns.creating', 'Création en cours...') : t('returns.create_request', 'Créer la demande de retour')}
       </button>
 
       <p className="text-xs text-gray-600 text-center">
-        * Champs obligatoires
+        * {t('common.required_fields', 'Champs obligatoires')}
       </p>
     </form>
   );
