@@ -496,5 +496,17 @@
   "admin.revenue_failed": "Failed Revenue",
   "admin.customers_with_orders": "Customers with Orders",
   "admin.products_out_of_stock": "Out of Stock Products",
-  "admin.products_low_stock": "Low Stock Products"
+  "admin.products_low_stock": "Low Stock Products",
+  "reviews.title": "Customer Reviews",
+  "reviews.write_review": "Write a Review",
+  "reviews.rating": "Rating",
+  "reviews.review_title": "Title",
+  "reviews.comment": "Your Review",
+  "reviews.submit": "Submit",
+  "reviews.login_required": "Sign in to leave a review",
+  "reviews.already_reviewed": "You have already reviewed this product",
+  "reviews.thank_you": "Thank you for your review!",
+  "reviews.no_reviews": "No reviews yet. Be the first to review!",
+  "reviews.average": "Average rating",
+  "common.load_more": "Load More"
 }
