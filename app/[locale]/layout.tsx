@@ -138,14 +138,6 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} className={`${inter.variable} ${playfair.variable}`}>
       <head>
-        {/* Canonical URL for the current locale */}
-        <link rel="canonical" href={`https://www.nubiaaura.com/${locale}`} />
-
-        {/* hreflang for multilingual SEO */}
-        <link rel="alternate" hrefLang="fr" href={`https://www.nubiaaura.com/fr`} />
-        <link rel="alternate" hrefLang="en" href={`https://www.nubiaaura.com/en`} />
-        <link rel="alternate" hrefLang="x-default" href="https://www.nubiaaura.com/fr" />
-
         {supabaseUrl && (
           <>
             <link rel="dns-prefetch" href={supabaseUrl} />

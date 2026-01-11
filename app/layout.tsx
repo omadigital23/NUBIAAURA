@@ -57,13 +57,7 @@ export const metadata: Metadata = {
     address: false,
   },
   alternates: {
-    canonical: 'https://www.nubiaaura.com',
-    languages: {
-      'fr-SN': 'https://www.nubiaaura.com/fr',
-      'fr-MA': 'https://www.nubiaaura.com/fr',
-      'fr': 'https://www.nubiaaura.com/fr',
-      'en': 'https://www.nubiaaura.com/en',
-    },
+    canonical: './',
   },
   openGraph: {
     type: 'website',
