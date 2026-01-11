@@ -98,6 +98,28 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      // Redirect root to French locale (permanent for SEO)
+      {
+        source: '/',
+        destination: '/fr',
+        permanent: true,
+      },
+      // Handle checkout without login - redirect to locale version
+      {
+        source: '/checkout',
+        destination: '/fr/checkout',
+        permanent: true,
+      },
+      // Old category redirect (already in middleware, but adding here for SEO)
+      {
+        source: '/:locale/catalogue/robes-soiree',
+        destination: '/:locale/catalogue/robes-ceremonie',
+        permanent: true,
+      },
+    ];
+  },
   generateBuildId: async () => {
     return 'nubia-build-' + Date.now();
   },

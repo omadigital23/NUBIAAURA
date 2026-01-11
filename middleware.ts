@@ -18,10 +18,15 @@ export function middleware(request: NextRequest) {
     (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
   );
 
-  // If no locale, redirect to default locale
+  // If no locale, redirect to default locale with PERMANENT redirect for SEO
   if (!pathnameHasLocale) {
-    // Redirect to /fr by default
-    return NextResponse.redirect(new URL(`/${defaultLocale}${pathname}`, request.url));
+    // Skip redirect for root - handled by next.config.js redirects
+    if (pathname === '/') {
+      return NextResponse.next();
+    }
+    // 308 Permanent Redirect for SEO (tells Google this is permanent)
+    const url = new URL(`/${defaultLocale}${pathname}`, request.url);
+    return NextResponse.redirect(url, { status: 308 });
   }
 
   // Redirect old category URLs to new ones
