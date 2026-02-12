@@ -5,11 +5,19 @@
 
 import { Redis } from '@upstash/redis';
 
-// Initialize Redis client with environment variables
-const redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL!,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
+// Check if Redis is configured
+const isRedisConfigured = !!(
+    process.env.UPSTASH_REDIS_REST_URL &&
+    process.env.UPSTASH_REDIS_REST_TOKEN
+);
+
+// Initialize Redis client with environment variables (only if configured)
+const redis = isRedisConfigured
+    ? new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL!,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+    })
+    : null;
 
 /**
  * Check if a notification has already been sent for an order
@@ -17,6 +25,10 @@ const redis = new Redis({
  * @returns true if notification was already sent, false otherwise
  */
 export async function hasNotificationBeenSent(orderId: string): Promise<boolean> {
+    if (!redis) {
+        console.warn('[Redis] Redis not configured, skipping notification check');
+        return false;
+    }
     try {
         const key = `notification:order:${orderId}`;
         const exists = await redis.exists(key);
@@ -37,6 +49,10 @@ export async function markNotificationAsSent(
     orderId: string,
     ttl: number = 604800 // 7 days
 ): Promise<void> {
+    if (!redis) {
+        console.warn('[Redis] Redis not configured, skipping notification mark');
+        return;
+    }
     try {
         const key = `notification:order:${orderId}`;
         await redis.set(key, {
@@ -64,6 +80,10 @@ export async function cacheOrderData(
     orderData: any,
     ttl: number = 3600
 ): Promise<void> {
+    if (!redis) {
+        console.warn('[Redis] Redis not configured, skipping order cache');
+        return;
+    }
     try {
         const key = `order:${orderId}`;
         await redis.set(key, orderData, { ex: ttl });
@@ -79,6 +99,9 @@ export async function cacheOrderData(
  * @returns Cached order data or null
  */
 export async function getCachedOrderData(orderId: string): Promise<any | null> {
+    if (!redis) {
+        return null;
+    }
     try {
         const key = `order:${orderId}`;
         const data = await redis.get(key);
@@ -94,6 +117,9 @@ export async function getCachedOrderData(orderId: string): Promise<any | null> {
  * @param orderId - The order ID
  */
 export async function clearCachedOrderData(orderId: string): Promise<void> {
+    if (!redis) {
+        return;
+    }
     try {
         const key = `order:${orderId}`;
         await redis.del(key);
@@ -107,6 +133,10 @@ export async function clearCachedOrderData(orderId: string): Promise<void> {
  * Health check for Redis connection
  */
 export async function checkRedisHealth(): Promise<boolean> {
+    if (!redis) {
+        console.warn('[Redis] Redis not configured');
+        return false;
+    }
     try {
         await redis.ping();
         return true;
@@ -115,3 +145,11 @@ export async function checkRedisHealth(): Promise<boolean> {
         return false;
     }
 }
+
+/**
+ * Check if Redis is available
+ */
+export function isRedisAvailable(): boolean {
+    return isRedisConfigured && redis !== null;
+}
+

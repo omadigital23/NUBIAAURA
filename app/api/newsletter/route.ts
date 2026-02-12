@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { checkRateLimit, formRatelimit } from '@/lib/rate-limit';
 import { Resend } from 'resend';
+import { sanitizeEmail, sanitizeText } from '@/lib/sanitize';
 
 // Initialize Resend
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -19,9 +20,13 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const email = (body?.email || '').toString().trim().toLowerCase();
-    const name = (body?.name || '').toString().trim() || null;
+    const rawEmail = (body?.email || '').toString().trim().toLowerCase();
+    const rawName = (body?.name || '').toString().trim() || null;
     const locale = (body?.locale || 'fr').toString().trim();
+
+    // Sanitize inputs
+    const email = sanitizeEmail(rawEmail);
+    const name = rawName ? sanitizeText(rawName) : null;
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: 'Invalid email' }, { status: 400 });

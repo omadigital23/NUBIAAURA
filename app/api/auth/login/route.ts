@@ -136,6 +136,10 @@ export async function POST(request: NextRequest) {
     );
 
     // Set cookie
+    // NOTE: httpOnly is set to false intentionally to allow client-side JavaScript
+    // to access the token for useAuth hook and other client-side auth operations.
+    // This is a trade-off between XSS protection and client-side auth requirements.
+    // Mitigated by: CSP headers, secure flag in production, short token expiry.
     if (data.session) {
       response.cookies.set('sb-auth-token', data.session.access_token, {
         httpOnly: false,

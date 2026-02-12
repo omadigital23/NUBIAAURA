@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import { apiRateLimit, getClientIdentifier, addRateLimitHeaders } from '@/lib/rate-limit-upstash';
+import { sanitizeText } from '@/lib/sanitize';
+import * as Sentry from '@sentry/nextjs';
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -103,6 +106,20 @@ export async function GET(request: NextRequest) {
 // POST: Soumettre un avis
 export async function POST(request: NextRequest) {
     try {
+        // Rate limiting
+        if (apiRateLimit) {
+            const identifier = getClientIdentifier(request);
+            const { success, limit, remaining, reset } = await apiRateLimit.limit(identifier);
+            if (!success) {
+                const response = NextResponse.json(
+                    { error: 'Trop de requêtes. Veuillez réessayer dans quelques instants.' },
+                    { status: 429 }
+                );
+                addRateLimitHeaders(response.headers, { limit, remaining, reset });
+                return response;
+            }
+        }
+
         // Get token from Authorization header first (magic link flow), then cookie
         const authHeader = request.headers.get('Authorization');
         const token = authHeader?.replace('Bearer ', '') ||
@@ -139,6 +156,10 @@ export async function POST(request: NextRequest) {
 
         const { productId, rating, title, comment } = parsed.data;
 
+        // Sanitize text inputs
+        const sanitizedTitle = title ? sanitizeText(title) : null;
+        const sanitizedComment = comment ? sanitizeText(comment) : null;
+
         // Vérifier si l'utilisateur a déjà laissé un avis
         const { data: existing } = await supabase
             .from('product_reviews')
@@ -161,8 +182,8 @@ export async function POST(request: NextRequest) {
                 product_id: productId,
                 user_id: userId,
                 rating,
-                title: title || null,
-                comment: comment || null,
+                title: sanitizedTitle,
+                comment: sanitizedComment,
             })
             .select()
             .single();
@@ -199,6 +220,7 @@ export async function POST(request: NextRequest) {
 
     } catch (error) {
         console.error('Reviews POST error:', error);
+        Sentry.captureException(error, { tags: { route: 'reviews/POST' } });
         return NextResponse.json(
             { error: 'Erreur serveur' },
             { status: 500 }

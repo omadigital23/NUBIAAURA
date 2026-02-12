@@ -298,8 +298,6 @@ describeIfSupabase('🧪 Database Integration Tests', () => {
     });
 
     describe('Promo Code Operations', () => {
-        let _testPromoId: string;
-
         afterAll(async () => {
             if (supabaseAdmin) {
                 await supabaseAdmin
@@ -323,7 +321,6 @@ describeIfSupabase('🧪 Database Integration Tests', () => {
 
             expect(error).toBeNull();
             expect(promo.discount_value).toBe(15);
-            _testPromoId = promo.id;
         });
 
         it('should validate unique code constraint', async () => {

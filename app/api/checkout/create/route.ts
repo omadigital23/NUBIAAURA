@@ -3,9 +3,26 @@ import { getSupabaseServerClient } from '@/lib/supabase';
 import { CheckoutSchema } from '@/lib/checkout-validation';
 import { createOrder, verifyStock } from '@/lib/order-service';
 import { getTranslations, getTranslationKey } from '@/lib/i18n';
+import { paymentRateLimit, getClientIdentifier, addRateLimitHeaders } from '@/lib/rate-limit-upstash';
+import { sanitizeText, sanitizeEmail, sanitizePhone } from '@/lib/sanitize';
+import * as Sentry from '@sentry/nextjs';
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting (payment-level: strict)
+    if (paymentRateLimit) {
+      const identifier = getClientIdentifier(request);
+      const { success, limit, remaining, reset } = await paymentRateLimit.limit(identifier);
+      if (!success) {
+        const response = NextResponse.json(
+          { error: 'Trop de requêtes. Veuillez réessayer dans quelques instants.' },
+          { status: 429 }
+        );
+        addRateLimitHeaders(response.headers, { limit, remaining, reset });
+        return response;
+      }
+    }
+
     // Récupérer la locale
     const referer = request.headers.get('referer') || '';
     const path = (() => {
@@ -38,8 +55,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Valider les données
+    // 2. Valider et sanitiser les données
     const body = await request.json();
+
+    // Sanitize shipping address fields
+    if (body.shippingAddress) {
+      body.shippingAddress.firstName = sanitizeText(body.shippingAddress.firstName || '');
+      body.shippingAddress.lastName = sanitizeText(body.shippingAddress.lastName || '');
+      body.shippingAddress.address = sanitizeText(body.shippingAddress.address || '');
+      body.shippingAddress.city = sanitizeText(body.shippingAddress.city || '');
+      body.shippingAddress.phone = sanitizePhone(body.shippingAddress.phone || '');
+      if (body.shippingAddress.email) {
+        body.shippingAddress.email = sanitizeEmail(body.shippingAddress.email);
+      }
+    }
+
     const validated = CheckoutSchema.safeParse(body);
 
     if (!validated.success) {
@@ -78,6 +108,7 @@ export async function POST(request: NextRequest) {
     );
   } catch (error: any) {
     console.error('Checkout error:', error);
+    Sentry.captureException(error, { tags: { route: 'checkout/create' } });
 
     if (error.name === 'ZodError') {
       return NextResponse.json(

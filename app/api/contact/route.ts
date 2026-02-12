@@ -5,6 +5,7 @@ import { sendEmail } from '@/lib/smtp-email';
 import { getContactConfirmationEmail, getContactManagerNotification } from '@/lib/email-templates';
 import { notifyManagerNewContact } from '@/lib/whatsapp-notifications';
 import { checkRateLimit, formRatelimit } from '@/lib/rate-limit';
+import { sanitizeText, sanitizeEmail, sanitizePhone } from '@/lib/sanitize';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -37,15 +38,24 @@ export async function POST(request: NextRequest) {
     // Validate input
     const validated = ContactSchema.parse(body);
 
+    // Sanitize validated inputs
+    const sanitizedData = {
+      name: sanitizeText(validated.name),
+      email: sanitizeEmail(validated.email),
+      phone: validated.phone ? sanitizePhone(validated.phone) : null,
+      subject: sanitizeText(validated.subject),
+      message: sanitizeText(validated.message),
+    };
+
     // Save to database
     const { data: submission, error } = await supabase
       .from('contact_submissions')
       .insert({
-        name: validated.name,
-        email: validated.email,
-        phone: validated.phone || null,
-        subject: validated.subject,
-        message: validated.message,
+        name: sanitizedData.name,
+        email: sanitizedData.email,
+        phone: sanitizedData.phone,
+        subject: sanitizedData.subject,
+        message: sanitizedData.message,
         status: 'new',
       })
       .select()

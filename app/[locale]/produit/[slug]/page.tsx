@@ -12,7 +12,7 @@ type Params = { params: Promise<{ locale: string; slug: string }> };
 
 async function fetchProduct(slug: string) {
   const supabase = getSupabaseServerClient();
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from('products')
     .select(`
       id, slug, name, name_fr, name_en, image, image_url, price, rating, reviews, inStock, stock,
@@ -21,18 +21,6 @@ async function fetchProduct(slug: string) {
     `)
     .eq('slug', slug)
     .single();
-
-  // 🔍 DEBUG: Log pour diagnostiquer le problème de description
-  console.log('🔍 [ServerSide] Product fetched from Supabase:', {
-    slug,
-    hasData: !!data,
-    error,
-    descriptions: data ? {
-      description: data.description,
-      description_fr: data.description_fr,
-      description_en: data.description_en
-    } : null
-  });
 
   return data as any | null;
 }

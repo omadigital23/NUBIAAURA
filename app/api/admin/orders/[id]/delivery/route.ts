@@ -62,7 +62,22 @@ export async function PUT(
         );
       }
       console.log('[delivery] Supabase auth successful');
-      // TODO: Check if user has admin role in database
+
+      // Check if user has admin role in database
+      const { data: userData, error: roleError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (roleError || !userData || userData.role !== 'admin') {
+        console.error('[delivery] User is not admin:', roleError || 'role=' + userData?.role);
+        return NextResponse.json(
+          { error: 'Unauthorized - Admin access required' },
+          { status: 403 }
+        );
+      }
+      console.log('[delivery] User verified as admin');
       isAdmin = true;
     }
 
@@ -230,7 +245,20 @@ export async function GET(
           { status: 401 }
         );
       }
-      // TODO: Check if user has admin role in database
+
+      // Check if user has admin role in database
+      const { data: userData, error: roleError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (roleError || !userData || userData.role !== 'admin') {
+        return NextResponse.json(
+          { error: 'Unauthorized - Admin access required' },
+          { status: 403 }
+        );
+      }
       isAdmin = true;
     }
 

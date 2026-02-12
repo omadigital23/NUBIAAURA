@@ -7,12 +7,16 @@ const inter = Inter({
   variable: '--font-inter',
   display: 'swap',
   preload: true,
+  fallback: ['system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+  adjustFontFallback: true,
 });
 const playfair = Playfair_Display({
   subsets: ['latin'],
   variable: '--font-playfair',
   display: 'swap',
   preload: true,
+  fallback: ['Georgia', 'Times New Roman', 'Times', 'serif'],
+  adjustFontFallback: true,
 });
 
 // Generate static params for locales

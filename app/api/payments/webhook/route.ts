@@ -31,6 +31,16 @@ export async function POST(request: NextRequest) {
   try {
     const locale: 'fr' | 'en' = 'fr';
     const commonNs = await getTranslations(locale, 'common');
+
+    // Check if Flutterwave is configured
+    if (!process.env.FLUTTERWAVE_SECRET_KEY) {
+      console.error('[Flutterwave Webhook] FLUTTERWAVE_SECRET_KEY not configured');
+      return NextResponse.json(
+        { error: 'Flutterwave not configured' },
+        { status: 503 }
+      );
+    }
+
     // Get signature from header
     const signature = request.headers.get('verif-hash');
     if (!signature) {

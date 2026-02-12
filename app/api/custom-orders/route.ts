@@ -6,6 +6,9 @@ import { getCustomOrderConfirmationEmail, getCustomOrderManagerNotification } fr
 import { notifyManagerNewCustomOrder } from '@/lib/whatsapp-notifications';
 import { generateValidationToken, storeValidationToken } from '@/lib/order-validation-tokens';
 import { calculateDeliveryDuration } from '@/lib/delivery-calculator';
+import { apiRateLimit, getClientIdentifier, addRateLimitHeaders } from '@/lib/rate-limit-upstash';
+import { sanitizeText, sanitizeEmail, sanitizePhone } from '@/lib/sanitize';
+import * as Sentry from '@sentry/nextjs';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,7 +17,29 @@ const supabase = createClient(
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting
+    if (apiRateLimit) {
+      const identifier = getClientIdentifier(request);
+      const { success, limit, remaining, reset } = await apiRateLimit.limit(identifier);
+      if (!success) {
+        const response = NextResponse.json(
+          { error: 'Trop de requêtes. Veuillez réessayer dans quelques instants.' },
+          { status: 429 }
+        );
+        addRateLimitHeaders(response.headers, { limit, remaining, reset });
+        return response;
+      }
+    }
+
     const body = await request.json();
+
+    // Sanitize inputs before validation
+    if (body.name) body.name = sanitizeText(body.name);
+    if (body.email) body.email = sanitizeEmail(body.email);
+    if (body.phone) body.phone = sanitizePhone(body.phone);
+    if (body.type) body.type = sanitizeText(body.type);
+    if (body.measurements) body.measurements = sanitizeText(body.measurements);
+    if (body.preferences) body.preferences = sanitizeText(body.preferences);
 
     // Validate input
     const validated = CustomOrderSchema.parse(body);
@@ -125,6 +150,7 @@ export async function POST(request: NextRequest) {
     );
   } catch (error: any) {
     console.error('Custom order error:', error);
+    Sentry.captureException(error, { tags: { route: 'custom-orders/POST' } });
 
     if (error.name === 'ZodError') {
       return NextResponse.json(
