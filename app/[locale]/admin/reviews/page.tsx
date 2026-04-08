@@ -14,6 +14,7 @@ interface Review {
     rating: number;
     title: string | null;
     comment: string | null;
+    status: 'pending' | 'approved' | 'rejected';
     created_at: string;
     updated_at: string;
     products: {
@@ -32,38 +33,74 @@ interface Review {
 
 export default function AdminReviewsPage() {
     const router = useRouter();
-    const { locale } = useTranslation();
+    const { t, locale } = useTranslation();
     const [reviews, setReviews] = useState<Review[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [filterRating, setFilterRating] = useState<number | null>(null);
+    const [filterStatus, setFilterStatus] = useState<string>('all');
+    
+    // Pagination state
+    const [page, setPage] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const limit = 10;
 
     const getAuthHeaders = () => {
-        const credentials = btoa('nubiaaura:Paty2025!');
+        const token = localStorage.getItem('admin_token');
         return {
-            'Authorization': `Basic ${credentials}`,
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
         };
     };
 
     useEffect(() => {
-        loadReviews();
-    }, []);
+        loadReviews(page);
+    }, [filterStatus, filterRating]);
 
-    const loadReviews = async () => {
+    const loadReviews = async (pageNum: number = page) => {
         setLoading(true);
         try {
-            const res = await fetch('/api/admin/reviews', {
+            let url = `/api/admin/reviews?page=${pageNum}&limit=${limit}&t=${Date.now()}`;
+            if (filterStatus !== 'all') {
+                url += `&status=${filterStatus}`;
+            }
+
+            const res = await fetch(url, {
                 headers: getAuthHeaders()
             });
             const data = await res.json();
+            
+            // Si on a un filterRating local, on le gère côté client
+            // Le backend ne filtre pas encore par note
             setReviews(data.reviews || []);
+            setTotalCount(data.count || 0);
         } catch (error) {
             console.error('Error loading reviews:', error);
-            setError('Erreur lors du chargement des avis');
+            setError(t('admin.reviews.error_loading', 'Erreur lors du chargement des avis'));
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleUpdateStatus = async (id: string, newStatus: 'approved' | 'rejected') => {
+        try {
+            const res = await fetch('/api/admin/reviews', {
+                method: 'PATCH',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ id, status: newStatus })
+            });
+
+            if (res.ok) {
+                setReviews(reviews.map(r => r.id === id ? { ...r, status: newStatus } : r));
+                setSuccess(t('admin.reviews.status_updated', 'Statut mis à jour'));
+                setTimeout(() => setSuccess(null), 3000);
+            } else {
+                setError(t('admin.reviews.error_update', 'Erreur lors de la mise à jour'));
+            }
+        } catch (error) {
+            console.error('Error updating review status:', error);
+            setError(t('admin.reviews.error_update', 'Erreur lors de la mise à jour'));
         }
     };
 
@@ -78,12 +115,13 @@ export default function AdminReviewsPage() {
 
             if (res.ok) {
                 setReviews(reviews.filter(r => r.id !== id));
-                setSuccess('Avis supprimé avec succès');
+                setSuccess(t('admin.reviews.deleted', 'Avis supprimé avec succès'));
                 setTimeout(() => setSuccess(null), 3000);
+                setTotalCount(prev => prev - 1);
             }
         } catch (error) {
             console.error('Error deleting review:', error);
-            setError('Erreur lors de la suppression');
+            setError(t('admin.reviews.error_delete', 'Erreur lors de la suppression'));
         }
     };
 
@@ -142,9 +180,32 @@ export default function AdminReviewsPage() {
                             <ArrowLeft size={24} />
                         </button>
                         <div>
-                            <h1 className="text-3xl font-bold text-nubia-black">Modération des Avis</h1>
-                            <p className="text-gray-600 mt-1">Gérez les avis clients sur vos produits</p>
+                            <h1 className="text-3xl font-bold text-nubia-black">{t('admin.reviews.title', 'Gestion des Avis')}</h1>
+                            <p className="text-gray-600 mt-1">{t('admin.reviews.subtitle', 'Modérez les avis clients sur vos produits')}</p>
                         </div>
+                    </div>
+
+                    {/* Filters */}
+                    <div className="flex gap-2 mb-6">
+                        {['all', 'pending', 'approved', 'rejected'].map(status => (
+                            <button
+                                key={status}
+                                onClick={() => {
+                                    setFilterStatus(status);
+                                    setPage(1);
+                                }}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                    filterStatus === status 
+                                    ? 'bg-nubia-gold text-black' 
+                                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                                }`}
+                            >
+                                {status === 'all' && t('admin.reviews.status_all', 'Tous')}
+                                {status === 'pending' && t('admin.reviews.status_pending', 'En attente')}
+                                {status === 'approved' && t('admin.reviews.status_approved', 'Approuvés')}
+                                {status === 'rejected' && t('admin.reviews.status_rejected', 'Rejetés')}
+                            </button>
+                        ))}
                     </div>
 
                     {/* Messages */}
@@ -247,17 +308,66 @@ export default function AdminReviewsPage() {
                                             </div>
                                         </div>
 
-                                        {/* Actions */}
-                                        <button
-                                            onClick={() => handleDelete(review.id)}
-                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                            title="Supprimer cet avis"
-                                        >
-                                            <Trash2 size={20} />
-                                        </button>
+                                            {/* Actions */}
+                                            <div className="flex items-center gap-2">
+                                                {review.status !== 'approved' && (
+                                                    <button
+                                                        onClick={() => handleUpdateStatus(review.id, 'approved')}
+                                                        className="px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-sm font-medium transition-colors"
+                                                    >
+                                                        {t('admin.reviews.approve', 'Approuver')}
+                                                    </button>
+                                                )}
+                                                {review.status !== 'rejected' && (
+                                                    <button
+                                                        onClick={() => handleUpdateStatus(review.id, 'rejected')}
+                                                        className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors"
+                                                    >
+                                                        {t('admin.reviews.reject', 'Rejeter')}
+                                                    </button>
+                                                )}
+                                                <button
+                                                    onClick={() => handleDelete(review.id)}
+                                                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title={t('admin.reviews.delete', 'Supprimer')}
+                                                >
+                                                    <Trash2 size={20} />
+                                                </button>
+                                            </div>
                                     </div>
                                 </div>
                             ))}
+                        </div>
+                    )}
+
+                    {/* Pagination Controls */}
+                    {!loading && totalCount > limit && (
+                        <div className="mt-8 flex items-center justify-between border-t border-gray-200 pt-4">
+                            <div className="text-sm text-gray-500">
+                                {t('admin.orders.showing', 'Affichage')} {((page - 1) * limit) + 1} - {Math.min(page * limit, totalCount)} {t('admin.orders.of', 'sur')} {totalCount} {t('admin.orders.results', 'résultats')}
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    disabled={page === 1}
+                                    onClick={() => {
+                                        setPage(p => p - 1);
+                                        loadReviews(page - 1);
+                                    }}
+                                    className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {t('admin.orders.prev', 'Précédent')}
+                                </button>
+                                <button
+                                    disabled={page * limit >= totalCount}
+                                    onClick={() => {
+                                        setPage(p => p + 1);
+                                        loadReviews(page + 1);
+                                    }}
+                                    className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {t('admin.orders.next', 'Suivant')}
+                                </button>
+                            </div>
                         </div>
                     )}
 

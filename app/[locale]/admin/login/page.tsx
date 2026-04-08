@@ -12,6 +12,8 @@ export default function AdminLoginPage() {
   const { t, locale } = useTranslation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [totpCode, setTotpCode] = useState('');
+  const [require2FA, setRequire2FA] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -24,13 +26,23 @@ export default function AdminLoginPage() {
       const response = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ 
+          username, 
+          password,
+          ...(require2FA && { totpCode })
+        }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
         setError(data.error || t('admin.login_error'));
+        setLoading(false);
+        return;
+      }
+
+      if (data.require2FA) {
+        setRequire2FA(true);
         setLoading(false);
         return;
       }
@@ -77,37 +89,65 @@ export default function AdminLoginPage() {
               </div>
             )}
 
-            {/* Username Field */}
-            <div>
-              <label className="block text-sm font-semibold text-nubia-black mb-2">
-                {t('admin.username')}
-              </label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder={t('admin.usernamePlaceholder') || 'Username'}
-                className="w-full px-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20"
-                required
-                disabled={loading}
-              />
-            </div>
+            {/* Conditional Fields */}
+            {require2FA ? (
+              <div className="animate-fade-in">
+                <label className="block text-sm font-semibold text-nubia-black mb-2 text-center">
+                  {t('admin.2fa_code', 'Code d\'authentification (2FA)')}
+                </label>
+                <input
+                  type="text"
+                  value={totpCode}
+                  onChange={(e) => setTotpCode(e.target.value.replace(/[^0-9]/g, ''))}
+                  placeholder="123456"
+                  maxLength={6}
+                  className="w-full px-4 py-3 text-center tracking-[0.5em] text-2xl font-bold border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20"
+                  required
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  onClick={() => { setRequire2FA(false); setTotpCode(''); setError(''); }}
+                  className="mt-4 text-sm text-nubia-black/60 hover:text-nubia-black underline w-full text-center"
+                >
+                  {t('admin.back', 'Retour')}
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* Username Field */}
+                <div>
+                  <label className="block text-sm font-semibold text-nubia-black mb-2">
+                    {t('admin.username')}
+                  </label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder={t('admin.usernamePlaceholder') || 'Username'}
+                    className="w-full px-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20"
+                    required
+                    disabled={loading}
+                  />
+                </div>
 
-            {/* Password Field */}
-            <div>
-              <label className="block text-sm font-semibold text-nubia-black mb-2">
-                {t('admin.password')}
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={t('admin.password_placeholder', '••••••••')}
-                className="w-full px-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20"
-                required
-                disabled={loading}
-              />
-            </div>
+                {/* Password Field */}
+                <div>
+                  <label className="block text-sm font-semibold text-nubia-black mb-2">
+                    {t('admin.password')}
+                  </label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={t('admin.password_placeholder', '••••••••')}
+                    className="w-full px-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+              </>
+            )}
 
             {/* Submit Button */}
             <button

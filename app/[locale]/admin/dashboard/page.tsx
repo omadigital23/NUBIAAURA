@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { LogOut, ShoppingCart, Users, Package, BarChart3, RotateCcw, Boxes, Palette, MessageSquare, Percent, Star } from 'lucide-react';
+import { LogOut, ShoppingCart, Users, Package, BarChart3, RotateCcw, Boxes, Palette, MessageSquare, Percent, Star, Shield } from 'lucide-react';
 
 interface DashboardStats {
   totalOrders: number;
@@ -113,6 +113,7 @@ export default function AdminDashboardPage() {
     { icon: MessageSquare, label: t('admin.contacts', 'Messages & Newsletter'), href: `/${locale}/admin/submissions` },
     { icon: Percent, label: 'Codes Promo', href: `/${locale}/admin/promos` },
     { icon: Star, label: 'Modération Avis', href: `/${locale}/admin/reviews` },
+    { icon: Shield, label: t('admin.security_2fa', 'Sécurité 2FA'), href: `/${locale}/admin/settings/2fa` },
   ];
 
   const statCards = [

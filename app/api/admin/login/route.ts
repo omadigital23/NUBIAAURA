@@ -3,12 +3,14 @@ import { verifyAdminCredentials, createAdminToken } from '@/lib/auth-admin';
 import { z } from 'zod';
 import { adminRateLimit, getClientIdentifier, addRateLimitHeaders } from '@/lib/rate-limit-upstash';
 import { sanitizeText } from '@/lib/sanitize';
+import { verifyTOTPCode } from '@/lib/totp';
 import * as Sentry from '@sentry/nextjs';
 
 // Schéma de validation
 const loginSchema = z.object({
   username: z.string().min(1, 'Username requis'),
   password: z.string().min(1, 'Password requis'),
+  totpCode: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -69,7 +71,7 @@ async function handleAdminLogin(request: NextRequest) {
   };
 
   // Valider les données
-  const { username, password } = loginSchema.parse(sanitizedBody);
+  const { username, password, totpCode } = loginSchema.parse(sanitizedBody);
 
   // Vérifier les identifiants
   if (!verifyAdminCredentials(username, password)) {
@@ -78,6 +80,24 @@ async function handleAdminLogin(request: NextRequest) {
       { error: 'Identifiants invalides' },
       { status: 401 }
     );
+  }
+
+  // Vérifier le 2FA si activé
+  if (process.env.ADMIN_2FA_ENABLED === 'true') {
+    if (!totpCode) {
+      return NextResponse.json(
+        { require2FA: true, message: 'Double authentification requise' },
+        { status: 200 }
+      );
+    }
+    
+    const secret = process.env.ADMIN_2FA_SECRET;
+    if (secret && !verifyTOTPCode(totpCode, secret)) {
+       return NextResponse.json(
+         { error: 'Code 2FA invalide ou expiré' },
+         { status: 401 }
+       );
+    }
   }
 
   // Créer un token

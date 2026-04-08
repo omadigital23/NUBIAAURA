@@ -3,9 +3,17 @@ import { getSupabaseServerClient } from '@/lib/supabase';
 import { checkRateLimit, formRatelimit } from '@/lib/rate-limit';
 import { Resend } from 'resend';
 import { sanitizeEmail, sanitizeText } from '@/lib/sanitize';
+import { z } from 'zod';
 
 // Initialize Resend
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+// Zod schema for newsletter subscription
+const NewsletterSchema = z.object({
+  email: z.string().email('Email invalide'),
+  name: z.string().max(100).optional().nullable(),
+  locale: z.enum(['fr', 'en']).default('fr'),
+});
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,17 +28,19 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const rawEmail = (body?.email || '').toString().trim().toLowerCase();
-    const rawName = (body?.name || '').toString().trim() || null;
-    const locale = (body?.locale || 'fr').toString().trim();
+    const parsed = NewsletterSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.errors[0]?.message || 'Données invalides' },
+        { status: 400 }
+      );
+    }
 
     // Sanitize inputs
-    const email = sanitizeEmail(rawEmail);
-    const name = rawName ? sanitizeText(rawName) : null;
-
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return NextResponse.json({ error: 'Invalid email' }, { status: 400 });
-    }
+    const email = sanitizeEmail(parsed.data.email);
+    const name = parsed.data.name ? sanitizeText(parsed.data.name) : null;
+    const locale = parsed.data.locale;
 
     const supabase = getSupabaseServerClient();
 

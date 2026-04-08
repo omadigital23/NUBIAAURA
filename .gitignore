@@ -97,3 +97,7 @@ scripts/SECURITY_AUDIT.md
 
 # Images (stored externally)
 public/images/
+
+# Playwright
+playwright-report/
+test-results/

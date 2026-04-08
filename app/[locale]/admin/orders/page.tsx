@@ -63,6 +63,11 @@ export default function AdminOrdersPage() {
   const [forceUpdate, setForceUpdate] = useState(0);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [isExporting, setIsExporting] = useState(false);
+  const limit = 10;
+  
   const subscriptionRef = useRef<any>(null);
   const selectedOrderRef = useRef<string | null>(null);
 
@@ -104,7 +109,9 @@ export default function AdminOrdersPage() {
       return;
     }
 
-    loadOrders();
+    // Reset à la page 1 si on change de filtre
+    setPage(1);
+    loadOrders(1);
 
     // Set up Supabase Realtime subscription to listen for order updates
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -135,7 +142,7 @@ export default function AdminOrdersPage() {
               if (orderIndex === -1) {
                 console.log('[Realtime] Order not found in local state, reloading...');
                 // Order not in local state, reload all orders
-                setTimeout(() => loadOrders(), 100);
+                setTimeout(() => loadOrders(page), 100);
                 return prevOrders;
               }
 
@@ -230,7 +237,7 @@ export default function AdminOrdersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale, router]);
 
-  const loadOrders = async () => {
+  const loadOrders = async (pageNum: number = page) => {
     try {
       setLoading(true);
       setError(null);
@@ -241,14 +248,14 @@ export default function AdminOrdersPage() {
 
       // Force no cache - multiple cache busting techniques
       const cacheBuster = Date.now();
-      let url = `/api/admin/orders/list?t=${cacheBuster}&_=${cacheBuster}`;
+      let url = `/api/admin/orders/list?page=${pageNum}&limit=${limit}&t=${cacheBuster}&_=${cacheBuster}`;
 
       if (filterStatus !== 'all') {
         url += `&status=${filterStatus}`;
       }
 
       if (searchQuery) {
-        url += `&q=${encodeURIComponent(searchQuery)}`;
+        url += `&search=${encodeURIComponent(searchQuery)}`;
       }
 
       const response = await fetch(url, {
@@ -270,7 +277,10 @@ export default function AdminOrdersPage() {
       console.log('[loadOrders] Raw response from API:', {
         success: data.success,
         ordersCount: data.orders?.length,
+        totalCount: data.count,
       });
+
+      setTotalCount(data.count || 0);
 
       // Log specific order to debug
       const debugOrder = data.orders?.find((o: any) => o.id === 'aa86dcc2-f684-4fe6-a205-46a3f21edcaa');
@@ -348,6 +358,44 @@ export default function AdminOrdersPage() {
       console.error('Error loading orders:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleExportCSV = async () => {
+    try {
+      setIsExporting(true);
+      setError(null);
+      const token = localStorage.getItem('admin_token');
+      
+      let url = `/api/admin/orders/export?t=${Date.now()}`;
+      if (filterStatus !== 'all') {
+        url += `&status=${filterStatus}`;
+      }
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Erreur lors de l\'export CSV');
+      }
+      
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `commandes_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (err: any) {
+      setError(err.message);
+      console.error('Error exporting CSV:', err);
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -507,7 +555,7 @@ export default function AdminOrdersPage() {
                 const dbUpdatedAt = updatedOrderInReload.updated_at;
                 if (stateUpdatedAt !== dbUpdatedAt) {
                   console.warn('[handleSave] State mismatch detected, forcing complete reload');
-                  setTimeout(() => loadOrders(), 100);
+                  setTimeout(() => loadOrders(page), 100);
                 }
               }
 
@@ -632,30 +680,42 @@ export default function AdminOrdersPage() {
                   placeholder={t('admin.orders.search_placeholder', 'Rechercher une commande...')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && loadOrders()}
+                  onKeyDown={(e) => e.key === 'Enter' && loadOrders(1)}
                   className="w-full pl-4 pr-10 py-2 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold text-sm"
                 />
                 <button
-                  onClick={() => loadOrders()}
+                  onClick={() => loadOrders(1)}
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-nubia-gold hover:text-nubia-black"
                 >
                   <Eye size={18} />
                 </button>
               </div>
 
-              <button
-                onClick={() => loadOrders()}
-                className="text-sm text-nubia-gold hover:underline flex items-center gap-1 justify-center sm:justify-start whitespace-nowrap"
-              >
-                <Edit2 size={14} /> {t('admin.orders.apply_filters', 'Appliquer les filtres / Rafraîchir')}
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => loadOrders(1)}
+                  className="px-4 py-2 border border-nubia-gold text-nubia-black rounded-lg hover:bg-nubia-gold/10 transition-colors text-sm font-medium whitespace-nowrap"
+                >
+                  {t('admin.orders.apply_filters', 'Filtrer')}
+                </button>
+                <button
+                  onClick={handleExportCSV}
+                  disabled={isExporting}
+                  className="px-4 py-2 bg-nubia-black text-nubia-gold rounded-lg hover:bg-nubia-black/90 transition-colors text-sm font-medium whitespace-nowrap disabled:opacity-50"
+                >
+                  {isExporting ? t('admin.orders.exporting', 'Export...') : t('admin.orders.export', 'Exporter CSV')}
+                </button>
+              </div>
             </div>
 
             <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0">
               {['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((status) => (
                 <button
                   key={status}
-                  onClick={() => setFilterStatus(status)}
+                  onClick={() => {
+                    setFilterStatus(status);
+                    setPage(1);
+                  }}
                   className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-colors ${filterStatus === status
                     ? 'bg-nubia-gold text-nubia-black'
                     : 'bg-nubia-gold/5 text-nubia-black/60 hover:bg-nubia-gold/10'
@@ -1132,6 +1192,37 @@ export default function AdminOrdersPage() {
                   )}
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          {!loading && totalCount > limit && (
+            <div className="mt-8 flex items-center justify-between border-t border-gray-200 pt-4">
+              <div className="text-sm text-gray-500">
+                {t('admin.orders.showing', 'Affichage')} {((page - 1) * limit) + 1} - {Math.min(page * limit, totalCount)} {t('admin.orders.of', 'sur')} {totalCount} {t('admin.orders.results', 'résultats')}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  disabled={page === 1}
+                  onClick={() => {
+                    setPage(p => p - 1);
+                    loadOrders(page - 1);
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {t('admin.orders.prev', 'Précédent')}
+                </button>
+                <button
+                  disabled={page * limit >= totalCount}
+                  onClick={() => {
+                    setPage(p => p + 1);
+                    loadOrders(page + 1);
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {t('admin.orders.next', 'Suivant')}
+                </button>
+              </div>
             </div>
           )}
         </div>

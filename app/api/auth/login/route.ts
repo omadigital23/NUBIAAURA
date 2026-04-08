@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-
-// Simple email sanitization
-function sanitizeEmail(email: string): string {
-  return email.trim().toLowerCase();
-}
+import { authRateLimit, getClientIdentifier, addRateLimitHeaders } from '@/lib/rate-limit-upstash';
+import { sanitizeEmail } from '@/lib/sanitize';
+import * as Sentry from '@sentry/nextjs';
 
 // Simple validation
 function validateLoginInput(email: string, password: string): { valid: boolean; error?: string } {
@@ -17,60 +15,29 @@ function validateLoginInput(email: string, password: string): { valid: boolean; 
   return { valid: true };
 }
 
-// Simple in-memory rate limiting (5 attempts per minute per IP)
-const loginAttempts = new Map<string, { count: number; resetTime: number }>();
-
-function checkRateLimit(identifier: string): { allowed: boolean; retryAfter?: number } {
-  const now = Date.now();
-  const attempt = loginAttempts.get(identifier);
-
-  // Clean up old entries
-  if (attempt && now > attempt.resetTime) {
-    loginAttempts.delete(identifier);
-  }
-
-  const current = loginAttempts.get(identifier);
-
-  if (!current) {
-    // First attempt
-    loginAttempts.set(identifier, { count: 1, resetTime: now + 60000 }); // 1 minute
-    return { allowed: true };
-  }
-
-  if (current.count >= 5) {
-    // Too many attempts
-    const retryAfter = Math.ceil((current.resetTime - now) / 1000);
-    return { allowed: false, retryAfter };
-  }
-
-  // Increment counter
-  current.count++;
-  return { allowed: true };
-}
-
-function getClientIP(request: NextRequest): string {
-  const forwarded = request.headers.get('x-forwarded-for');
-  const realIp = request.headers.get('x-real-ip');
-  return forwarded?.split(',')[0] || realIp || 'unknown';
-}
-
 export async function POST(request: NextRequest) {
   try {
-    console.log('[Auth] Login request received');
+    // Rate limiting check (Upstash Redis - distributed)
+    let rateLimitHeaders: { limit: number; remaining: number; reset: number } | null = null;
 
-    // Rate limiting check
-    const clientIP = getClientIP(request);
-    const rateLimit = checkRateLimit(clientIP);
+    if (authRateLimit) {
+      const identifier = getClientIdentifier(request);
+      const { success, limit, remaining, reset } = await authRateLimit.limit(identifier);
 
-    if (!rateLimit.allowed) {
-      console.warn('[Auth] Rate limit exceeded for IP:', clientIP);
-      return NextResponse.json(
-        {
-          error: 'Trop de tentatives. Veuillez réessayer dans quelques instants.',
-          retryAfter: rateLimit.retryAfter
-        },
-        { status: 429 }
-      );
+      if (!success) {
+        console.warn(`[Auth] Rate limit exceeded for ${identifier}`);
+        const response = NextResponse.json(
+          {
+            error: 'Trop de tentatives. Veuillez réessayer dans quelques instants.',
+            retryAfter: Math.ceil((reset - Date.now()) / 1000),
+          },
+          { status: 429 }
+        );
+        addRateLimitHeaders(response.headers, { limit, remaining, reset });
+        return response;
+      }
+
+      rateLimitHeaders = { limit, remaining, reset };
     }
 
     // Parse request body
@@ -87,8 +54,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    console.log('[Auth] Input validated:', { email });
 
     // Get Supabase credentials
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -107,8 +72,8 @@ export async function POST(request: NextRequest) {
 
     // Attempt login
     const { data, error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
+      email,
+      password,
     });
 
     if (error) {
@@ -118,9 +83,6 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
-
-    // Success - reset rate limit for this IP
-    loginAttempts.delete(clientIP);
 
     const response = NextResponse.json(
       {
@@ -135,11 +97,12 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
 
+    // Add rate limit headers
+    if (rateLimitHeaders) {
+      addRateLimitHeaders(response.headers, rateLimitHeaders);
+    }
+
     // Set cookie
-    // NOTE: httpOnly is set to false intentionally to allow client-side JavaScript
-    // to access the token for useAuth hook and other client-side auth operations.
-    // This is a trade-off between XSS protection and client-side auth requirements.
-    // Mitigated by: CSP headers, secure flag in production, short token expiry.
     if (data.session) {
       response.cookies.set('sb-auth-token', data.session.access_token, {
         httpOnly: false,
@@ -148,18 +111,19 @@ export async function POST(request: NextRequest) {
         maxAge: 60 * 60 * 24 * 7, // 7 days
         path: '/',
       });
-      console.log('[Auth] Login successful for:', data.user.email);
     }
 
     return response;
 
-  } catch (error: any) {
-    console.error('[Auth] Error:', error.message);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[Auth] Error:', errorMessage);
+    Sentry.captureException(error, { tags: { route: 'auth/login' } });
 
     return NextResponse.json(
       {
         error: 'Erreur serveur',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
       },
       { status: 500 }
     );
