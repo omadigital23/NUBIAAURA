@@ -1,26 +1,15 @@
 /**
- * Service d'envoi d'emails via SMTP (Namecheap Private Email)
- * Configuration dans les variables d'environnement
+ * Service d'envoi d'emails via Resend
+ * Remplacement du transport SMTP Nodemailer (authentification échouée)
+ * L'interface publique reste identique pour compatibilité avec tout le codebase
  */
 
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-// Configuration SMTP depuis les variables d'environnement
-const smtpConfig = {
-  host: process.env.SMTP_HOST || 'mail.privateemail.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: false, // true pour 465, false pour autres ports
-  auth: {
-    user: process.env.SMTP_USER || 'supports@nubiaaura.com',
-    pass: process.env.SMTP_PASSWORD || '',
-  },
-};
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-const fromEmail = process.env.SMTP_FROM_EMAIL || 'supports@nubiaaura.com';
+const fromEmail = process.env.SMTP_FROM_EMAIL || 'noreply@nubiaaura.com';
 const fromName = process.env.SMTP_FROM_NAME || 'Nubia Aura';
-
-// Créer le transporteur
-const transporter = nodemailer.createTransport(smtpConfig);
 
 export interface EmailOptions {
   to: string;
@@ -30,29 +19,32 @@ export interface EmailOptions {
 }
 
 /**
- * Envoie un email via SMTP
+ * Envoie un email via Resend (anciennement SMTP)
  */
 export async function sendEmailSMTP(options: EmailOptions): Promise<string> {
   try {
-    // Vérifier si le mot de passe SMTP est configuré
-    if (!smtpConfig.auth.pass) {
-      console.warn('⚠️ SMTP password not configured - Email not sent:', options.subject);
+    if (!process.env.RESEND_API_KEY) {
+      console.warn('⚠️ RESEND_API_KEY not configured - Email not sent:', options.subject);
       return 'skipped';
     }
 
-    const mailOptions = {
-      from: `"${fromName}" <${fromEmail}>`,
+    const { data, error } = await resend.emails.send({
+      from: `${fromName} <${fromEmail}>`,
       to: options.to,
       subject: options.subject,
       html: options.html,
-      text: options.text || options.html.replace(/<[^>]*>/g, ''), // Fallback texte brut
-    };
+      text: options.text || options.html.replace(/<[^>]*>/g, ''),
+    });
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Email envoyé via SMTP:', info.messageId);
-    return info.messageId || 'sent';
+    if (error) {
+      console.error('❌ Erreur envoi email Resend:', error);
+      throw new Error(`Erreur lors de l'envoi de l'email: ${error.message}`);
+    }
+
+    console.log('✅ Email envoyé via Resend:', data?.id);
+    return data?.id || 'sent';
   } catch (error: any) {
-    console.error('❌ Erreur envoi email SMTP:', error);
+    console.error('❌ Erreur envoi email:', error);
     throw new Error(`Erreur lors de l'envoi de l'email: ${error.message}`);
   }
 }
@@ -80,9 +72,7 @@ export async function sendOrderConfirmationEmail(
         `<tr>
           <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${item.price.toLocaleString(
-          'fr-FR'
-        )} FCFA</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${item.price.toLocaleString('fr-FR')} FCFA</td>
         </tr>`
     )
     .join('');
@@ -109,12 +99,9 @@ export async function sendOrderConfirmationEmail(
             <h1>Nubia Aura</h1>
             <p>Confirmation de Commande</p>
           </div>
-
           <div class="content">
             <p>Bonjour ${orderData.customerName},</p>
-
             <p>Merci pour votre commande! Nous avons reçu votre paiement et votre commande est en cours de traitement.</p>
-
             <div class="order-details">
               <h3 style="color: #D4AF37; margin-top: 0;">Détails de la Commande</h3>
               <p><strong>Numéro de commande:</strong> ${orderData.orderId}</p>
@@ -122,7 +109,6 @@ export async function sendOrderConfirmationEmail(
               <p><strong>Adresse de livraison:</strong><br>${orderData.shippingAddress}</p>
               <p><strong>Livraison estimée:</strong> ${orderData.estimatedDelivery}</p>
             </div>
-
             <div class="order-details">
               <h3 style="color: #D4AF37; margin-top: 0;">Articles</h3>
               <table class="items-table">
@@ -137,30 +123,21 @@ export async function sendOrderConfirmationEmail(
                   ${itemsHtml}
                   <tr style="font-weight: bold; background: #f9f9f9;">
                     <td colspan="2" style="padding: 10px; text-align: right;">Total:</td>
-                    <td style="padding: 10px; text-align: right; color: #D4AF37;">${orderData.total.toLocaleString(
-    'fr-FR'
-  )} FCFA</td>
+                    <td style="padding: 10px; text-align: right; color: #D4AF37;">${orderData.total.toLocaleString('fr-FR')} FCFA</td>
                   </tr>
                 </tbody>
               </table>
             </div>
-
             <p>Vous recevrez un email de suivi dès que votre commande sera expédiée.</p>
-
             <center>
-              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://nubiaaura.com'}/fr/client/orders/${orderData.orderId}" class="button">
+              <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://nubiaaura.com'}/fr/client/orders/${orderData.orderId}" class="button">
                 Suivre ma Commande
               </a>
             </center>
-
-            <p>Si vous avez des questions, n'hésitez pas à nous contacter.</p>
-
             <p>Cordialement,<br>L'équipe Nubia Aura</p>
           </div>
-
           <div class="footer">
-            <p>© 2025 Nubia Aura. Tous droits réservés.</p>
-            <p>Dakar, Sénégal</p>
+            <p>© ${new Date().getFullYear()} Nubia Aura. Tous droits réservés.</p>
           </div>
         </div>
       </body>
@@ -208,12 +185,9 @@ export async function sendOrderShippedEmail(
             <h1>Nubia Aura</h1>
             <p>Votre Commande a été Expédiée! 📦</p>
           </div>
-
           <div class="content">
             <p>Bonjour ${orderData.customerName},</p>
-
             <p>Bonne nouvelle! Votre commande a été expédiée et est en route vers vous.</p>
-
             <div class="info-box">
               <h3 style="color: #D4AF37; margin-top: 0;">Informations de Suivi</h3>
               <p><strong>Numéro de commande:</strong> ${orderData.orderId}</p>
@@ -221,23 +195,15 @@ export async function sendOrderShippedEmail(
               ${orderData.carrier ? `<p><strong>Transporteur:</strong> ${orderData.carrier}</p>` : ''}
               <p><strong>Livraison estimée:</strong> ${orderData.estimatedDelivery}</p>
             </div>
-
             <center>
-              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://nubiaaura.com'}/fr/client/orders/${orderData.orderId}" class="button">
+              <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://nubiaaura.com'}/fr/client/orders/${orderData.orderId}" class="button">
                 Suivre mon Colis
               </a>
             </center>
-
-            <p>Vous pouvez suivre votre colis en temps réel en cliquant sur le bouton ci-dessus.</p>
-
-            <p>Merci de votre confiance!</p>
-
             <p>Cordialement,<br>L'équipe Nubia Aura</p>
           </div>
-
           <div class="footer">
-            <p>© 2025 Nubia Aura. Tous droits réservés.</p>
-            <p>Dakar, Sénégal</p>
+            <p>© ${new Date().getFullYear()} Nubia Aura. Tous droits réservés.</p>
           </div>
         </div>
       </body>
@@ -282,31 +248,23 @@ export async function sendOrderDeliveredEmail(
             <h1>Nubia Aura</h1>
             <p>Votre Commande a été Livrée! ✅</p>
           </div>
-
           <div class="content">
             <p>Bonjour ${orderData.customerName},</p>
-
             <div class="success-box">
               <h2 style="color: #4CAF50; margin: 0;">Commande Livrée avec Succès!</h2>
               <p style="margin: 10px 0;">Numéro de commande: <strong>${orderData.orderId}</strong></p>
             </div>
-
-            <p>Nous espérons que vous êtes satisfait de votre achat. Si vous avez des questions ou des préoccupations, n'hésitez pas à nous contacter.</p>
-
+            <p>Nous espérons que vous êtes satisfait de votre achat.</p>
             <center>
-              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://nubiaaura.com'}/fr/client/orders/${orderData.orderId}" class="button">
+              <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://nubiaaura.com'}/fr/client/orders/${orderData.orderId}" class="button">
                 Voir les Détails
               </a>
             </center>
-
-            <p>Merci d'avoir choisi Nubia Aura. Nous vous remercions de votre confiance et espérons vous revoir bientôt!</p>
-
+            <p>Merci d'avoir choisi Nubia Aura!</p>
             <p>Cordialement,<br>L'équipe Nubia Aura</p>
           </div>
-
           <div class="footer">
-            <p>© 2025 Nubia Aura. Tous droits réservés.</p>
-            <p>Dakar, Sénégal</p>
+            <p>© ${new Date().getFullYear()} Nubia Aura. Tous droits réservés.</p>
           </div>
         </div>
       </body>
@@ -353,35 +311,24 @@ export async function sendCustomOrderConfirmationEmail(
             <h1>Nubia Aura</h1>
             <p>Commande Personnalisée Reçue</p>
           </div>
-
           <div class="content">
             <p>Bonjour ${orderData.customerName},</p>
-
-            <p>Merci pour votre demande de commande personnalisée! Nous avons bien reçu votre demande et notre équipe est enthousiaste à l'idée de créer quelque chose d'unique pour vous.</p>
-
+            <p>Merci pour votre demande de commande personnalisée!</p>
             <div class="info-box">
               <h3 style="color: #D4AF37; margin-top: 0;">Détails de votre Demande</h3>
               <p><strong>Référence:</strong> ${orderData.reference}</p>
               <p><strong>Description:</strong><br>${orderData.description}</p>
               <p><strong>Délai estimé:</strong> ${orderData.estimatedDelivery}</p>
             </div>
-
-            <p>Notre équipe vous contactera bientôt pour discuter des détails, des matériaux et des finitions. Nous nous engageons à créer une pièce qui dépasse vos attentes.</p>
-
             <center>
-              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://nubiaaura.com'}/fr/client/custom-orders/${orderData.reference}" class="button">
+              <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://nubiaaura.com'}/fr/client/custom-orders/${orderData.reference}" class="button">
                 Suivre ma Demande
               </a>
             </center>
-
-            <p>Si vous avez des questions avant que nous vous contactions, n'hésitez pas à nous envoyer un message.</p>
-
             <p>Cordialement,<br>L'équipe Nubia Aura</p>
           </div>
-
           <div class="footer">
-            <p>© 2025 Nubia Aura. Tous droits réservés.</p>
-            <p>Dakar, Sénégal</p>
+            <p>© ${new Date().getFullYear()} Nubia Aura. Tous droits réservés.</p>
           </div>
         </div>
       </body>
@@ -412,8 +359,8 @@ export async function notifyManagerEmail(
   const dataHtml = data
     ? `<div style="background: #f0f0f0; padding: 10px; border-radius: 5px; margin: 10px 0;">
         ${Object.entries(data)
-      .map(([key, value]) => `<p><strong>${key}:</strong> ${value}</p>`)
-      .join('')}
+          .map(([key, value]) => `<p><strong>${key}:</strong> ${value}</p>`)
+          .join('')}
       </div>`
     : '';
 
@@ -434,14 +381,10 @@ export async function notifyManagerEmail(
           <div class="header">
             <h2 style="margin: 0;">Nubia Aura - Notification Manager</h2>
           </div>
-
           <div class="content">
             <h3>${subject}</h3>
             <p>${message}</p>
             ${dataHtml}
-            <p style="color: #666; font-size: 12px; margin-top: 20px;">
-              Cet email a été envoyé automatiquement. Veuillez ne pas répondre à cet email.
-            </p>
           </div>
         </div>
       </body>
@@ -456,15 +399,18 @@ export async function notifyManagerEmail(
 }
 
 /**
- * Vérifie la connexion SMTP
+ * Vérifie la connexion email (Resend)
  */
 export async function verifySMTPConnection(): Promise<boolean> {
   try {
-    await transporter.verify();
-    console.log('✅ Connexion SMTP vérifiée');
+    if (!process.env.RESEND_API_KEY) {
+      console.error('❌ RESEND_API_KEY manquant');
+      return false;
+    }
+    console.log('✅ Resend configuré correctement');
     return true;
   } catch (error) {
-    console.error('❌ Erreur connexion SMTP:', error);
+    console.error('❌ Erreur vérification Resend:', error);
     return false;
   }
 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import nodemailer from 'nodemailer';
+import { sendEmailSMTP } from '@/lib/smtp-email';
 
 // Generate a 6-digit OTP code
 function generateOTP(): string {
@@ -20,24 +20,10 @@ function getSupabaseAdmin() {
         throw new Error('Missing Supabase configuration');
     }
 
-    // Important: Create client with service role key and proper auth options
     return createClient(supabaseUrl, serviceRoleKey, {
         auth: {
             autoRefreshToken: false,
             persistSession: false,
-        },
-    });
-}
-
-// Email transporter
-function getEmailTransporter() {
-    return nodemailer.createTransport({
-        host: process.env.SMTP_HOST || 'smtp.gmail.com',
-        port: parseInt(process.env.SMTP_PORT || '587'),
-        secure: false,
-        auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASSWORD,
         },
     });
 }
@@ -64,7 +50,6 @@ export async function POST(request: NextRequest) {
         const authUser = authData?.users?.find(u => u.email?.toLowerCase() === normalizedEmail);
 
         if (!authUser) {
-            // Don't reveal if user exists - always return success
             console.log('[Reset OTP] User not found, returning success anyway');
             return NextResponse.json({
                 success: true,
@@ -78,14 +63,12 @@ export async function POST(request: NextRequest) {
 
         console.log('[Reset OTP] Generated code for user:', authUser.id);
 
-        // Store OTP in database
-        // First, delete any existing OTP for this email
+        // Store OTP in database - delete existing first
         await supabase
             .from('password_reset_codes')
             .delete()
             .eq('email', normalizedEmail);
 
-        // Insert new OTP
         const { error: insertError } = await supabase
             .from('password_reset_codes')
             .insert({
@@ -100,12 +83,9 @@ export async function POST(request: NextRequest) {
             throw new Error('Failed to generate reset code');
         }
 
-        // Send email with code
+        // Send email via centralized email service
         try {
-            const transporter = getEmailTransporter();
-
-            await transporter.sendMail({
-                from: `"NUBIA AURA" <${process.env.SMTP_USER || 'noreply@nubiaaura.com'}>`,
+            await sendEmailSMTP({
                 to: normalizedEmail,
                 subject: 'Code de réinitialisation de mot de passe - NUBIA AURA',
                 html: `
