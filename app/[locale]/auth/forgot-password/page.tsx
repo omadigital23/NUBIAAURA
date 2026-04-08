@@ -7,16 +7,15 @@ import { useTranslation } from '@/hooks/useTranslation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Mail, ArrowLeft, Loader, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
+import { getPasswordResetConfig } from '@/lib/password-reset-config';
 
 // Email validation regex
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Cooldown period in seconds
-const COOLDOWN_SECONDS = 60;
-
 export default function ForgotPasswordPage() {
   const { t, locale } = useTranslation();
   const router = useRouter();
+  const passwordResetConfig = getPasswordResetConfig(locale === 'en' ? 'en' : 'fr');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -59,7 +58,10 @@ export default function ForgotPasswordPage() {
       const response = await fetch('/api/auth/reset-password-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          locale,
+        }),
       });
 
       const data = await response.json();
@@ -71,7 +73,7 @@ export default function ForgotPasswordPage() {
 
       // Success - redirect to reset page with email
       setSuccess(true);
-      setCooldown(COOLDOWN_SECONDS);
+      setCooldown(passwordResetConfig.resendCooldownSeconds);
 
       // Store email in sessionStorage for the reset page
       sessionStorage.setItem('resetEmail', email.trim().toLowerCase());
@@ -100,7 +102,10 @@ export default function ForgotPasswordPage() {
       const response = await fetch('/api/auth/reset-password-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          locale,
+        }),
       });
 
       const data = await response.json();
@@ -110,7 +115,7 @@ export default function ForgotPasswordPage() {
         return;
       }
 
-      setCooldown(COOLDOWN_SECONDS);
+      setCooldown(passwordResetConfig.resendCooldownSeconds);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : t('auth.error_unexpected', 'Une erreur inattendue s\'est produite');
       setError(errorMessage);

@@ -42,13 +42,8 @@ test.describe('Cart', () => {
       await addToCartBtn.click();
       await page.waitForTimeout(1000);
 
-      // Should show some confirmation (toast, counter update, etc.)
-      const toast = page.locator('[class*="toast"], [role="alert"], [class*="notification"]').first();
-      const cartCounter = page.locator('[class*="badge"], [class*="cart-count"]').first();
-
-      const hasConfirmation = (await toast.count() > 0) || (await cartCounter.count() > 0);
-      // Just verify no error occurred
-      expect(true).toBeTruthy();
+      // Just verify the page remains stable after adding to cart.
+      await expect(page.locator('body')).toBeVisible();
     }
   });
 
@@ -87,7 +82,6 @@ test.describe('Cart', () => {
       // Go to cart
       await page.goto('/fr/panier');
       await page.waitForLoadState('domcontentloaded');
-      const bodyText1 = await page.textContent('body');
 
       // Reload
       await page.reload();

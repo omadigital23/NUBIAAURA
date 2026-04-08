@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc --noEmit --incremental false",
     "setup": "node scripts/start-nubia.js",
     "seed": "node scripts/setup-supabase.js",
     "fix-apis": "node scripts/fix-checkout-apis.js",

@@ -9,7 +9,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 
 export default function Admin2FASetupPage() {
     const router = useRouter();
-    const { t, locale } = useTranslation();
+    const { locale } = useTranslation();
     const [qrCode, setQrCode] = useState<string | null>(null);
     const [secret, setSecret] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);

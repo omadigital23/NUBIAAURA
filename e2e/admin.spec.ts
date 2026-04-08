@@ -39,8 +39,7 @@ test.describe('Admin Panel', () => {
       await page.waitForTimeout(2000);
 
       // Should show error
-      const url = page.url();
-      const isStillOnLogin = url.includes('login') || url.includes('admin');
+      const isStillOnLogin = page.url().includes('login') || page.url().includes('admin');
       expect(isStillOnLogin).toBeTruthy();
     }
   });
@@ -50,7 +49,6 @@ test.describe('Admin Panel', () => {
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000);
 
-    const url = page.url();
     // Should redirect to login or show auth prompt
     const body = await page.textContent('body');
     expect(body).toBeTruthy();

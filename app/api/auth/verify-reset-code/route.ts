@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { notifyPasswordChanged } from '@/lib/services/security-notifications';
+import { getPasswordResetConfig } from '@/lib/password-reset-config';
 
 // Create Supabase admin client with service role
 function getSupabaseAdmin() {
@@ -44,6 +46,7 @@ export async function POST(request: NextRequest) {
 
         const normalizedEmail = email.trim().toLowerCase();
         const normalizedCode = code.trim();
+        const passwordResetConfig = getPasswordResetConfig();
 
         console.log('[Verify Reset] Processing request for:', normalizedEmail);
 
@@ -79,8 +82,8 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Check attempts (max 5)
-        if (otpData.attempts >= 5) {
+        // Check attempts
+        if (otpData.attempts >= passwordResetConfig.maxAttempts) {
             console.log('[Verify Reset] Too many attempts');
             // Delete code after too many attempts
             await supabase
@@ -103,7 +106,7 @@ export async function POST(request: NextRequest) {
                 .update({ attempts: otpData.attempts + 1 })
                 .eq('email', normalizedEmail);
 
-            const remainingAttempts = 5 - (otpData.attempts + 1);
+            const remainingAttempts = passwordResetConfig.maxAttempts - (otpData.attempts + 1);
             return NextResponse.json(
                 { error: `Code incorrect. ${remainingAttempts} tentative(s) restante(s).` },
                 { status: 400 }
@@ -165,14 +168,14 @@ export async function POST(request: NextRequest) {
 
         // Send notification email about password change (optional)
         try {
-            await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'https://nubiaaura.com'}/api/auth/notify-password-changed`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    email: normalizedEmail,
-                    userName: authUser.user_metadata?.full_name || authUser.user_metadata?.name,
-                }),
-            });
+            await notifyPasswordChanged(
+                normalizedEmail,
+                authUser.user_metadata?.full_name || authUser.user_metadata?.name,
+                {
+                    ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || undefined,
+                    userAgent: request.headers.get('user-agent') || undefined,
+                }
+            );
         } catch (notifError) {
             console.warn('[Verify Reset] Failed to send notification:', notifError);
         }

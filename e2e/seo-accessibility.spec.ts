@@ -148,8 +148,12 @@ test.describe('SEO & Accessibility', () => {
     const ogDesc = page.locator('meta[property="og:description"]');
 
     if (await ogTitle.count() > 0) {
-      const content = await ogTitle.getAttribute('content');
-      expect(content?.length).toBeGreaterThan(0);
+      const [titleContent, descContent] = await Promise.all([
+        ogTitle.getAttribute('content'),
+        ogDesc.count().then((count) => count > 0 ? ogDesc.getAttribute('content') : Promise.resolve(null)),
+      ]);
+      expect(titleContent?.length).toBeGreaterThan(0);
+      expect(descContent?.length ?? 0).toBeGreaterThan(0);
     }
   });
 
@@ -175,8 +179,9 @@ test.describe('SEO & Accessibility', () => {
     const nav = await page.locator('nav').count();
     const sections = await page.locator('section').count();
 
-    // At minimum header and footer should exist
+    // At minimum the core semantic structure should exist.
     expect(header).toBeGreaterThan(0);
     expect(footer).toBeGreaterThan(0);
+    expect(main + nav + sections).toBeGreaterThan(0);
   });
 });
