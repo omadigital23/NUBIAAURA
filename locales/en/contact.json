@@ -44,5 +44,21 @@
     "a4": "Yes, we ship throughout West Africa and beyond. Shipping fees vary depending on the destination.",
     "q5": "How do I take my measurements?",
     "a5": "Check out our complete measurement guide on the custom order page. You can also send us your measurements via WhatsApp."
-  }
+  },
+  "hero_kicker": "Atelier support",
+  "write_us": "Write to us",
+  "email_detail": "For orders, styling questions and support.",
+  "phone_detail": "Best for urgent delivery or fitting questions.",
+  "location_detail": "Appointments and atelier coordination by request.",
+  "response_title": "24-48h response",
+  "response_text": "We review every request before replying.",
+  "secure_title": "Private details",
+  "secure_text": "Measurements and contact information stay confidential.",
+  "whatsapp_title": "WhatsApp available",
+  "whatsapp_text": "Send references, measurements or delivery questions directly.",
+  "hero_image_alt": "Nubia Aura atelier collection",
+  "hero_image_caption": "Questions about sizing, delivery, custom orders or availability are handled directly by the team.",
+  "form_kicker": "Message",
+  "form_intro": "Tell us what you need. A precise message helps us answer faster.",
+  "service_kicker": "Service"
 }

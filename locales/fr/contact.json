@@ -44,5 +44,21 @@
     "a4": "Oui, nous livrons dans toute l'Afrique de l'Ouest et au-delà. Les frais de port varient selon la destination.",
     "q5": "Comment prendre mes mensurations ?",
     "a5": "Consultez notre guide complet de mensurations sur la page sur-mesure. Vous pouvez également nous envoyer vos mesures par WhatsApp."
-  }
+  },
+  "hero_kicker": "Support atelier",
+  "write_us": "Nous écrire",
+  "email_detail": "Pour les commandes, questions de style et demandes de support.",
+  "phone_detail": "Idéal pour les questions urgentes de livraison ou d'essayage.",
+  "location_detail": "Rendez-vous et coordination atelier sur demande.",
+  "response_title": "Réponse sous 24-48h",
+  "response_text": "Nous examinons chaque demande avant de répondre.",
+  "secure_title": "Détails privés",
+  "secure_text": "Mensurations et informations de contact restent confidentielles.",
+  "whatsapp_title": "WhatsApp disponible",
+  "whatsapp_text": "Envoyez références, mensurations ou questions de livraison directement.",
+  "hero_image_alt": "Collection atelier Nubia Aura",
+  "hero_image_caption": "Les questions de taille, livraison, sur-mesure ou disponibilité sont traitées directement par l'équipe.",
+  "form_kicker": "Message",
+  "form_intro": "Dites-nous ce dont vous avez besoin. Un message précis nous aide à répondre plus vite.",
+  "service_kicker": "Service"
 }

@@ -4,9 +4,44 @@ import Link from 'next/link';
 import { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { CheckCircle, AlertCircle } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCircle,
+  Clock3,
+  FileText,
+  MessageCircle,
+  Ruler,
+  Scissors,
+  Send,
+  ShieldCheck,
+  Sparkles,
+  Truck,
+} from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getProductImageUrl } from '@/lib/media';
+
+type ProductAsset = {
+  src: string;
+  fallback: string;
+};
+
+const productAsset = (path: string): ProductAsset => {
+  const cleanPath = path.replace(/^\/+/, '');
+  return {
+    src: `/${cleanPath}`,
+    fallback: getProductImageUrl(cleanPath),
+  };
+};
+
+const handleImageError = (
+  event: React.SyntheticEvent<HTMLImageElement>,
+  fallback: string,
+) => {
+  const image = event.currentTarget;
+  if (image.dataset.fallbackApplied === 'true') return;
+  image.dataset.fallbackApplied = 'true';
+  image.src = fallback;
+};
 
 export default function CustomOrderPage() {
   const { t, locale } = useTranslation();
@@ -23,6 +58,92 @@ export default function CustomOrderPage() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
+  const heroImages = [
+    {
+      asset: productAsset('images/robes/ceremonie/longues/robe-ceremonie-longue-doree/grande/01-main.png'),
+      alt: t('custom.hero_image_ceremony', 'Custom ceremony dress'),
+      className: 'col-span-3 row-span-6',
+    },
+    {
+      asset: productAsset('images/costumes/africains/costume-vert/grande/01-main.png'),
+      alt: t('custom.hero_image_suit', 'Custom African suit'),
+      className: 'col-span-2 row-span-3',
+    },
+    {
+      asset: productAsset('images/chemises/wax/chemise-wax-grande/01-main.png'),
+      alt: t('custom.hero_image_wax', 'Wax shirt detail'),
+      className: 'col-span-2 row-span-3',
+    },
+  ];
+
+  const proofPoints = [
+    {
+      icon: Ruler,
+      value: t('custom.proof_fit_value', 'Fit checked'),
+      label: t('custom.proof_fit_label', 'Guided measurements'),
+    },
+    {
+      icon: Scissors,
+      value: t('custom.proof_make_value', 'Made to order'),
+      label: t('custom.proof_make_label', 'One piece at a time'),
+    },
+    {
+      icon: ShieldCheck,
+      value: t('custom.proof_quality_value', 'Premium finish'),
+      label: t('custom.proof_quality_label', 'Final quality control'),
+    },
+  ];
+
+  const categories = [
+    {
+      title: t('custom.category_wedding', 'Wedding Dresses'),
+      desc: t('custom.wedding_desc', 'A unique piece for your special day'),
+      href: `/${locale}/catalogue/robes-mariage?inspiration=true`,
+      asset: productAsset('images/banners/category/robes-mariage.png'),
+      price: '100 000',
+      offer: t('custom.wedding_offer', 'Veil offered with every custom order.'),
+    },
+    {
+      title: t('custom.category_ceremony', 'Ceremony Dresses'),
+      desc: t('custom.ceremony_desc', 'Elegance and refinement for every occasion'),
+      href: `/${locale}/catalogue/robes-ceremonie?inspiration=true`,
+      asset: productAsset('images/banners/category/robes-ceremonie.png'),
+      price: '20 000',
+      offer: t('custom.ceremony_offer', 'Custom order.'),
+    },
+    {
+      title: t('custom.category_suit', 'African Suits'),
+      desc: t('custom.suit_desc', 'Modern traditional style personalized'),
+      href: `/${locale}/catalogue/costumes-africains?inspiration=true`,
+      asset: productAsset('images/banners/category/costumes-africains.png'),
+      price: '20 000',
+      offer: t('custom.suit_offer', 'Prices vary based on model chosen.'),
+    },
+  ];
+
+  const steps = [
+    {
+      icon: FileText,
+      title: t('custom.step1_title', 'Fill Out the Form'),
+      desc: t('custom.step1_desc', 'Share your details and preferences'),
+    },
+    {
+      icon: MessageCircle,
+      title: t('custom.step2_title', 'We Contact You'),
+      desc: t('custom.step2_desc', 'Let us discuss your vision and details'),
+    },
+    {
+      icon: Scissors,
+      title: t('custom.step3_title', 'Creation'),
+      desc: t('custom.step3_desc', 'We create your unique piece'),
+    },
+    {
+      icon: Truck,
+      title: t('custom.step4_title', 'Delivery'),
+      desc: t('custom.step4_desc', 'Satisfaction guaranteed'),
+    },
+  ];
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -37,7 +158,6 @@ export default function CustomOrderPage() {
     setStatus('idle');
 
     try {
-      // Convertir le budget en nombre
       const payload = {
         ...formData,
         budget: parseFloat(formData.budget) || 0,
@@ -77,231 +197,175 @@ export default function CustomOrderPage() {
     }
   };
 
-  const steps = [
-    {
-      step: '1',
-      title: t('custom.step1_title', 'Fill Out the Form'),
-      desc: t('custom.step1_desc', 'Share your details and preferences'),
-    },
-    {
-      step: '2',
-      title: t('custom.step2_title', 'We Contact You'),
-      desc: t('custom.step2_desc', 'Let\'s discuss your vision and details'),
-    },
-    {
-      step: '3',
-      title: t('custom.step3_title', 'Creation'),
-      desc: t('custom.step3_desc', 'We create your unique piece'),
-    },
-    {
-      step: '4',
-      title: t('custom.step4_title', 'Delivery'),
-      desc: t('custom.step4_desc', 'Satisfaction guaranteed'),
-    },
-  ];
+  const labelClass = 'block text-xs font-bold uppercase tracking-wide text-nubia-black/80 mb-3';
+  const fieldClass = 'w-full rounded-lg border-2 border-nubia-gold/25 bg-nubia-white px-5 py-3 text-nubia-black placeholder:text-nubia-black/40 transition-all duration-200 focus:border-nubia-gold focus:bg-nubia-gold/5 focus:outline-none focus:ring-4 focus:ring-nubia-gold/10';
 
   return (
     <div className="min-h-screen bg-nubia-white flex flex-col">
       <Header />
 
-      {/* Hero Section - Premium */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-nubia-black via-nubia-dark to-nubia-black text-nubia-white py-20 md:py-28">
-        {/* Décoration subtile */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-nubia-gold/30 rounded-full blur-3xl"></div>
-          <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-nubia-gold/20 rounded-full blur-3xl"></div>
-        </div>
+      <section className="relative overflow-hidden bg-gradient-to-br from-nubia-black via-nubia-dark to-nubia-black text-nubia-white">
+        <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(212,175,55,0.18),transparent_34%,rgba(255,255,255,0.08)_74%,transparent)]" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_0.92fr] gap-12 lg:gap-16 items-center">
+            <div className="max-w-2xl">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-nubia-gold/45 bg-nubia-gold/15 px-4 py-2 text-sm font-semibold text-nubia-gold">
+                <Sparkles size={16} aria-hidden="true" />
+                <span>{t('custom.badge', 'Custom')}</span>
+              </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-center text-center">
-            {/* Mini badge */}
-            <div className="mb-6 inline-flex items-center gap-2 px-4 py-2 bg-nubia-gold/20 border border-nubia-gold/40 rounded-full">
-              <span className="text-nubia-gold text-sm font-semibold">✨ Premium</span>
-              <span className="text-nubia-white/70 text-sm">{t('custom.badge', 'Sur-Mesure')}</span>
+              <h1 className="font-playfair text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-nubia-white">
+                {t('custom.title', 'Create Your Custom Outfit')}
+              </h1>
+
+              <p className="mt-6 text-lg md:text-xl leading-8 text-nubia-white/82">
+                {t('custom.subtitle', 'Let us create your unique piece based on your personality')}
+              </p>
+
+              <p className="mt-4 text-base md:text-lg font-medium text-nubia-gold/95">
+                {t('custom.hero_cta', 'Your vision, our expertise. Custom design made just for you.')}
+              </p>
+
+              <div className="mt-8 flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const element = document.getElementById('custom-form');
+                    if (element) element.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-nubia-gold px-6 py-4 font-bold text-nubia-black transition-all duration-300 hover:bg-nubia-white hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-nubia-gold/30"
+                >
+                  <Scissors size={19} aria-hidden="true" />
+                  {t('custom.start_now', 'Start Now')}
+                </button>
+
+                <Link
+                  href={`/${locale}/catalogue`}
+                  className="inline-flex items-center justify-center rounded-lg border border-nubia-white/25 px-6 py-4 font-semibold text-nubia-white transition-all duration-300 hover:border-nubia-gold hover:bg-nubia-white/10"
+                >
+                  {t('custom.view_inspirations', 'View inspirations')}
+                </Link>
+              </div>
+
+              <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {proofPoints.map((point) => {
+                  const Icon = point.icon;
+                  return (
+                    <div key={point.value} className="rounded-lg border border-nubia-white/12 bg-nubia-white/7 p-4 backdrop-blur">
+                      <Icon className="mb-3 text-nubia-gold" size={22} aria-hidden="true" />
+                      <p className="text-sm font-bold text-nubia-white">{point.value}</p>
+                      <p className="mt-1 text-xs leading-5 text-nubia-white/65">{point.label}</p>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            <h1 className="font-playfair text-5xl md:text-6xl lg:text-7xl font-bold mb-6 text-nubia-white leading-tight">
-              {t('custom.title', 'Create Your Custom Outfit')}
-            </h1>
-            
-            <p className="text-lg md:text-xl text-nubia-white/80 mb-8 max-w-2xl">
-              {t('custom.subtitle', 'Let us create your unique piece based on your personality')}
-            </p>
-
-            <p className="text-base md:text-lg text-nubia-gold/90 mb-8 max-w-2xl font-medium">
-              {t('custom.hero_cta', 'Your vision, our expertise. Custom design made just for you.')}
-            </p>
-
-            {/* CTA Button */}
-            <button 
-              onClick={() => {
-                const element = document.getElementById('custom-form');
-                if (element) element.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="px-8 py-4 bg-nubia-gold text-nubia-black font-bold rounded-xl hover:bg-nubia-white hover:shadow-2xl transition-all duration-300 text-lg"
-            >
-              {t('custom.start_now', 'Start Now')}
-            </button>
+            <div className="min-h-[420px]">
+              <div className="grid h-[420px] grid-cols-5 grid-rows-6 gap-3 md:h-[520px]">
+                {heroImages.map((image) => (
+                  <div key={image.alt} className={`${image.className} overflow-hidden rounded-lg border border-nubia-white/15 bg-nubia-white/5 shadow-2xl`}>
+                    <img
+                      src={image.asset.src}
+                      alt={image.alt}
+                      onError={(event) => handleImageError(event, image.asset.fallback)}
+                      className="h-full w-full object-cover transition-transform duration-700 motion-safe:hover:scale-105"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Categories Section with Thumbnails */}
       <section className="py-16 md:py-20 bg-nubia-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Introduction */}
-          <div className="mb-16 text-center">
-            <h2 className="font-playfair text-3xl md:text-4xl font-bold text-nubia-black mb-4">
+          <div className="mb-12 max-w-3xl">
+            <p className="mb-3 text-sm font-bold uppercase tracking-[0.16em] text-nubia-gold">
+              {t('custom.inspiration_kicker', 'Inspiration')}
+            </p>
+            <h2 className="font-playfair text-3xl md:text-5xl font-bold text-nubia-black">
               {t('custom.intro_title', 'Which creation interests you?')}
             </h2>
-            <p className="text-lg text-nubia-black/70 max-w-2xl mx-auto">
+            <p className="mt-4 text-lg leading-8 text-nubia-black/70">
               {t('custom.intro_desc', 'Explore our main categories. Each can be customized according to your wishes and budget.')}
             </p>
           </div>
 
-          {/* Categories Grid - 3 Thumbnails - Same as Catalog */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {/* Thumbnail 1 : Wedding Dresses */}
-            <Link
-              href={`/${locale}/catalogue/robes-mariage?inspiration=true`}
-              className="group relative overflow-hidden rounded-2xl h-64 sm:h-72 md:h-80 cursor-pointer hover:shadow-2xl transition-all duration-300 block border-2 border-nubia-gold/20 hover:border-nubia-gold/60"
-            >
-              {/* Banner Image - Using Same as Catalog */}
-              <img
-                src={getProductImageUrl('images/banners/category/robes-mariage.png')}
-                alt={t('custom.category_wedding', 'Wedding Dresses')}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-              />
-              
-              {/* Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-nubia-black/80 via-nubia-black/40 to-transparent group-hover:from-nubia-black/90 transition-colors duration-300" />
-              
-              {/* Label */}
-              <div className="absolute inset-0 flex flex-col items-center justify-end pb-6">
-                <h3 className="font-playfair text-2xl md:text-3xl font-bold text-white text-center px-4 mb-3">
-                  {t('custom.category_wedding', 'Wedding Dresses')}
-                </h3>
-                <div className="text-center px-4">
-                  <p className="text-nubia-gold font-bold mb-1">
-                    {t('custom.starting_from', 'From')} <span className="text-xl">100 000</span> FCFA
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {categories.map((category) => (
+              <Link
+                key={category.title}
+                href={category.href}
+                className="group relative block min-h-[340px] overflow-hidden rounded-lg border border-nubia-gold/25 bg-nubia-black shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-nubia-gold/70 hover:shadow-2xl"
+              >
+                <img
+                  src={category.asset.src}
+                  alt={category.title}
+                  onError={(event) => handleImageError(event, category.asset.fallback)}
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-nubia-black via-nubia-black/42 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 p-6">
+                  <p className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-nubia-gold">
+                    {t('custom.starting_from', 'From')} {category.price} FCFA
                   </p>
-                  <p className="text-xs md:text-sm text-nubia-white/90">
-                    {t('custom.wedding_offer', 'Veil offered with every custom order.')}
+                  <h3 className="font-playfair text-3xl font-bold leading-tight text-white">
+                    {category.title}
+                  </h3>
+                  <p className="mt-3 text-sm leading-6 text-white/82">
+                    {category.desc}
+                  </p>
+                  <p className="mt-4 border-t border-white/15 pt-4 text-sm font-semibold text-nubia-gold">
+                    {category.offer}
                   </p>
                 </div>
-              </div>
-            </Link>
-
-            {/* Thumbnail 2 : Ceremony Dresses */}
-            <Link
-              href={`/${locale}/catalogue/robes-ceremonie?inspiration=true`}
-              className="group relative overflow-hidden rounded-2xl h-64 sm:h-72 md:h-80 cursor-pointer hover:shadow-2xl transition-all duration-300 block border-2 border-nubia-gold/20 hover:border-nubia-gold/60"
-            >
-              {/* Banner Image - Using Same as Catalog */}
-              <img
-                src={getProductImageUrl('images/banners/category/robes-ceremonie.png')}
-                alt={t('custom.category_ceremony', 'Ceremony Dresses')}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-              />
-              
-              {/* Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-nubia-black/80 via-nubia-black/40 to-transparent group-hover:from-nubia-black/90 transition-colors duration-300" />
-              
-              {/* Label */}
-              <div className="absolute inset-0 flex flex-col items-center justify-end pb-6">
-                <h3 className="font-playfair text-2xl md:text-3xl font-bold text-white text-center px-4 mb-3">
-                  {t('custom.category_ceremony', 'Ceremony Dresses')}
-                </h3>
-                <div className="text-center px-4">
-                  <p className="text-nubia-gold font-bold mb-1">
-                    {t('custom.starting_from', 'From')} <span className="text-xl">20 000</span> FCFA
-                  </p>
-                  <p className="text-xs md:text-sm text-nubia-white/90">
-                    {t('custom.ceremony_offer', 'Custom order.')}
-                  </p>
-                </div>
-              </div>
-            </Link>
-
-            {/* Thumbnail 3 : African Suits */}
-            <Link
-              href={`/${locale}/catalogue/costumes-africains?inspiration=true`}
-              className="group relative overflow-hidden rounded-2xl h-64 sm:h-72 md:h-80 cursor-pointer hover:shadow-2xl transition-all duration-300 block border-2 border-nubia-gold/20 hover:border-nubia-gold/60"
-            >
-              {/* Banner Image - Using Same as Catalog */}
-              <img
-                src={getProductImageUrl('images/banners/category/costumes-africains.png')}
-                alt={t('custom.category_suit', 'African Suits')}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-              />
-              
-              {/* Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-nubia-black/80 via-nubia-black/40 to-transparent group-hover:from-nubia-black/90 transition-colors duration-300" />
-              
-              {/* Label */}
-              <div className="absolute inset-0 flex flex-col items-center justify-end pb-6">
-                <h3 className="font-playfair text-2xl md:text-3xl font-bold text-white text-center px-4 mb-3">
-                  {t('custom.category_suit', 'African Suits')}
-                </h3>
-                <div className="text-center px-4">
-                  <p className="text-nubia-gold font-bold mb-1">
-                    {t('custom.starting_from', 'From')} <span className="text-xl">20 000</span> FCFA
-                  </p>
-                  <p className="text-xs md:text-sm text-nubia-white/90">
-                    {t('custom.suit_offer', 'Prices vary based on model chosen.')}
-                  </p>
-                </div>
-              </div>
-            </Link>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Main Content - Form + Process */}
-      <section className="flex-1 py-16 md:py-20 bg-nubia-white">
+      <section className="flex-1 py-16 md:py-20 bg-nubia-cream/35">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          {/* Grid 2-1 Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
-            
-            {/* ========== FORMULAIRE : 2/3 ========== */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
             <div className="lg:col-span-2">
-              {/* Section Title */}
               <div className="mb-8">
-                <h2 className="font-playfair text-3xl md:text-4xl font-bold text-nubia-black mb-2">
-                  {t('custom.form_title', 'Fill Your Request')}
+                <p className="mb-3 text-sm font-bold uppercase tracking-[0.16em] text-nubia-gold">
+                  {t('custom.form_kicker', 'Your brief')}
+                </p>
+                <h2 className="font-playfair text-3xl md:text-5xl font-bold text-nubia-black">
+                  {t('custom.form_title', 'Submit Your Request')}
                 </h2>
-                <div className="w-16 h-1 bg-nubia-gold rounded-full"></div>
-                <p className="text-nubia-black/70 mt-4">
+                <p className="mt-4 text-nubia-black/70">
                   {t('custom.form_desc', 'The more details you provide, the better we understand your vision.')}
                 </p>
               </div>
 
-              <div className="bg-nubia-white border-2 border-nubia-gold/20 rounded-2xl p-8 md:p-10 hover:border-nubia-gold/40 transition-all duration-300">
-                {/* Success Alert */}
+              <div className="rounded-lg border border-nubia-gold/25 bg-nubia-white p-6 shadow-sm md:p-9">
                 {status === 'success' && (
-                  <div className="mb-6 p-5 bg-green-50 border-l-4 border-green-500 rounded-r-lg flex items-start gap-3">
-                    <CheckCircle className="text-green-600 flex-shrink-0 mt-0.5" size={24} />
+                  <div className="mb-6 flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 p-5">
+                    <CheckCircle className="mt-0.5 flex-shrink-0 text-green-600" size={24} />
                     <div>
-                      <h3 className="font-bold text-green-900 text-lg">
-                        {t('custom.success_title', '✨ Request sent!')}
+                      <h3 className="text-lg font-bold text-green-900">
+                        {t('custom.success_heading', 'Request sent')}
                       </h3>
-                      <p className="text-green-700 text-sm mt-1">
+                      <p className="mt-1 text-sm text-green-700">
                         {t('custom.success_message', 'Thank you! Our team will contact you within 24-48h to refine your order.')}
                       </p>
                     </div>
                   </div>
                 )}
 
-                {/* Error Alert */}
                 {status === 'error' && (
-                  <div className="mb-6 p-5 bg-red-50 border-l-4 border-red-500 rounded-r-lg flex items-start gap-3">
-                    <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={24} />
+                  <div className="mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-5">
+                    <AlertCircle className="mt-0.5 flex-shrink-0 text-red-600" size={24} />
                     <div>
-                      <h3 className="font-bold text-red-900 text-lg">
+                      <h3 className="text-lg font-bold text-red-900">
                         {t('custom.error_title', 'An error occurred')}
                       </h3>
-                      <p className="text-red-700 text-sm mt-1">
+                      <p className="mt-1 text-sm text-red-700">
                         {t('custom.error_message', 'Please try again or contact us directly.')}
                       </p>
                     </div>
@@ -309,72 +373,58 @@ export default function CustomOrderPage() {
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-6" id="custom-form">
-                  {/* 2 cols : Name + Email */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Name */}
                     <div>
-                      <label className="block text-sm font-bold text-nubia-black mb-3 uppercase tracking-wide">
-                        {t('custom.name_label', 'Full Name')}
-                      </label>
+                      <label className={labelClass}>{t('custom.name_label', 'Full Name')}</label>
                       <input
                         type="text"
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
                         required
-                        className="w-full px-5 py-3 border-2 border-nubia-gold/30 rounded-xl focus:outline-none focus:border-nubia-gold focus:bg-nubia-gold/5 transition-all duration-200 text-nubia-black placeholder:text-nubia-black/40"
+                        className={fieldClass}
                         placeholder={t('custom.name_placeholder', 'Ex: Fatima Diallo')}
                       />
                     </div>
 
-                    {/* Email */}
                     <div>
-                      <label className="block text-sm font-bold text-nubia-black mb-3 uppercase tracking-wide">
-                        {t('custom.email_label', 'Email Address')}
-                      </label>
+                      <label className={labelClass}>{t('custom.email_label', 'Email Address')}</label>
                       <input
                         type="email"
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
                         required
-                        className="w-full px-5 py-3 border-2 border-nubia-gold/30 rounded-xl focus:outline-none focus:border-nubia-gold focus:bg-nubia-gold/5 transition-all duration-200 text-nubia-black placeholder:text-nubia-black/40"
+                        className={fieldClass}
                         placeholder={t('custom.email_placeholder', 'you@email.com')}
                       />
                     </div>
                   </div>
 
-                  {/* 2 cols : Phone + Type */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Phone */}
                     <div>
-                      <label className="block text-sm font-bold text-nubia-black mb-3 uppercase tracking-wide">
-                        {t('custom.phone_label', 'Phone Number')}
-                      </label>
+                      <label className={labelClass}>{t('custom.phone_label', 'Phone Number')}</label>
                       <input
                         type="tel"
                         name="phone"
                         value={formData.phone}
                         onChange={handleChange}
                         required
-                        className="w-full px-5 py-3 border-2 border-nubia-gold/30 rounded-xl focus:outline-none focus:border-nubia-gold focus:bg-nubia-gold/5 transition-all duration-200 text-nubia-black placeholder:text-nubia-black/40"
+                        className={fieldClass}
                         placeholder={t('custom.phone_placeholder', '+221 77 123 45 67')}
                       />
                     </div>
 
-                    {/* Type */}
                     <div>
-                      <label className="block text-sm font-bold text-nubia-black mb-3 uppercase tracking-wide">
-                        {t('custom.type_label', 'Type of Outfit')}
-                      </label>
+                      <label className={labelClass}>{t('custom.type_label', 'Type of Outfit')}</label>
                       <select
                         name="type"
                         value={formData.type || ''}
                         onChange={handleChange}
                         required
-                        className="w-full px-5 py-3 border-2 border-nubia-gold/30 rounded-xl focus:outline-none focus:border-nubia-gold focus:bg-nubia-gold/5 transition-all duration-200 text-nubia-black"
+                        className={fieldClass}
                       >
-                        <option value="">{t('custom.type_placeholder', '— Choose an option —')}</option>
+                        <option value="">{t('custom.type_placeholder_clean', 'Choose an option')}</option>
                         <option value={locale === 'fr' ? 'robe' : 'dress'}>{t('custom.type_dress', 'Dress')}</option>
                         <option value={locale === 'fr' ? 'costume' : 'suit'}>{t('custom.type_suit', 'Suit')}</option>
                         <option value={locale === 'fr' ? 'chemise' : 'shirt'}>{t('custom.type_shirt', 'Shirt')}</option>
@@ -385,105 +435,114 @@ export default function CustomOrderPage() {
                     </div>
                   </div>
 
-                  {/* Measurements - Full width */}
                   <div>
-                    <label className="block text-sm font-bold text-nubia-black mb-3 uppercase tracking-wide">
-                      {t('custom.measurements_label', 'Your Measurements')}
-                    </label>
+                    <label className={labelClass}>{t('custom.measurements_label', 'Your Measurements')}</label>
                     <textarea
                       name="measurements"
                       value={formData.measurements}
                       onChange={handleChange}
                       required
                       rows={4}
-                      className="w-full px-5 py-3 border-2 border-nubia-gold/30 rounded-xl focus:outline-none focus:border-nubia-gold focus:bg-nubia-gold/5 transition-all duration-200 text-nubia-black placeholder:text-nubia-black/40 resize-none"
+                      className={`${fieldClass} resize-none`}
                       placeholder={t('custom.measurements_placeholder', 'Chest, waist, hips, desired length, etc.')}
                     />
-                    <p className="text-xs text-nubia-black/50 mt-2 italic">
-                      {t('custom.measurements_help', 'Don\'t know your measurements? Our experts will guide you after submission.')}
+                    <p className="mt-2 text-xs italic text-nubia-black/50">
+                      {t('custom.measurements_help', 'Do not know your measurements? Our experts will guide you after submission.')}
                     </p>
                   </div>
 
-                  {/* Preferences - Full width */}
                   <div>
-                    <label className="block text-sm font-bold text-nubia-black mb-3 uppercase tracking-wide">
-                      {t('custom.preferences_label', 'Your Preferences')}
-                    </label>
+                    <label className={labelClass}>{t('custom.preferences_label', 'Your Preferences')}</label>
                     <textarea
                       name="preferences"
                       value={formData.preferences}
                       onChange={handleChange}
                       required
                       rows={4}
-                      className="w-full px-5 py-3 border-2 border-nubia-gold/30 rounded-xl focus:outline-none focus:border-nubia-gold focus:bg-nubia-gold/5 transition-all duration-200 text-nubia-black placeholder:text-nubia-black/40 resize-none"
+                      className={`${fieldClass} resize-none`}
                       placeholder={t('custom.preferences_placeholder', 'Style, favorite colors, material, special details, inspirations...')}
                     />
                   </div>
 
-                  {/* Budget */}
                   <div>
-                    <label className="block text-sm font-bold text-nubia-black mb-3 uppercase tracking-wide">
-                      {t('custom.budget_label', 'Estimated Budget (FCFA)')}
-                    </label>
+                    <label className={labelClass}>{t('custom.budget_label', 'Estimated Budget (FCFA)')}</label>
                     <input
                       type="number"
                       name="budget"
                       value={formData.budget}
                       onChange={handleChange}
                       required
-                      className="w-full px-5 py-3 border-2 border-nubia-gold/30 rounded-xl focus:outline-none focus:border-nubia-gold focus:bg-nubia-gold/5 transition-all duration-200 text-nubia-black placeholder:text-nubia-black/40"
+                      className={fieldClass}
                       placeholder={t('custom.budget_placeholder', 'Ex: 100000')}
                     />
-                    <p className="text-xs text-nubia-black/50 mt-2">
+                    <p className="mt-2 text-xs text-nubia-black/50">
                       {t('custom.budget_help', 'This helps us tailor proposals to your budget.')}
                     </p>
                   </div>
 
-                  {/* Submit Button */}
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-4 md:py-5 bg-gradient-to-r from-nubia-gold to-nubia-gold/90 text-nubia-black font-bold text-lg rounded-xl hover:shadow-2xl hover:scale-105 border-2 border-nubia-gold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg border-2 border-nubia-gold bg-nubia-gold px-6 py-4 text-lg font-bold uppercase tracking-wide text-nubia-black transition-all duration-300 hover:bg-nubia-white hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-nubia-gold/20 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {loading 
-                      ? t('custom.submit_loading', 'Sending...') 
-                      : t('custom.submit_button', '✨ Send My Request')}
+                    <Send size={19} aria-hidden="true" />
+                    {loading
+                      ? t('custom.submit_loading', 'Sending...')
+                      : t('custom.submit_label', 'Send My Request')}
                   </button>
                 </form>
               </div>
             </div>
 
-            {/* ========== PROCESSUS : 1/3 ========== */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-24 bg-gradient-to-br from-nubia-black to-nubia-dark text-nubia-white rounded-2xl p-8 md:p-10 shadow-2xl">
-                <h3 className="font-playfair text-2xl md:text-3xl font-bold mb-8 text-nubia-gold flex items-center gap-2">
-                  <span>🎯</span> {t('custom.how_it_works', 'How It Works')}
-                </h3>
+            <aside className="lg:col-span-1">
+              <div className="sticky top-24 overflow-hidden rounded-lg bg-gradient-to-br from-nubia-black to-nubia-dark text-nubia-white shadow-2xl">
+                <div className="border-b border-nubia-gold/25 p-7">
+                  <p className="mb-3 inline-flex items-center gap-2 text-sm font-bold uppercase tracking-[0.14em] text-nubia-gold">
+                    <Clock3 size={16} aria-hidden="true" />
+                    {t('custom.timeline_label', 'Process')}
+                  </p>
+                  <h3 className="font-playfair text-3xl font-bold text-nubia-white">
+                    {t('custom.how_it_works', 'How It Works')}
+                  </h3>
+                </div>
 
-                <div className="space-y-6">
-                  {steps.map((item) => (
-                    <div key={item.step} className="flex gap-4">
-                      <div className="flex-shrink-0">
-                        <div className="w-10 h-10 bg-nubia-gold text-nubia-black rounded-full flex items-center justify-center font-bold text-lg shadow-lg">
-                          {item.step}
+                <div className="space-y-1 p-5">
+                  {steps.map((item, index) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={item.title} className="flex gap-4 rounded-lg p-3 transition-colors duration-200 hover:bg-nubia-white/8">
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-nubia-gold text-nubia-black">
+                          <Icon size={18} aria-hidden="true" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-[0.12em] text-nubia-gold/80">
+                            {String(index + 1).padStart(2, '0')}
+                          </p>
+                          <h4 className="mt-1 font-semibold text-nubia-white">{item.title}</h4>
+                          <p className="mt-1 text-sm leading-6 text-nubia-white/68">{item.desc}</p>
                         </div>
                       </div>
-                      <div>
-                        <h4 className="font-semibold text-nubia-white mb-2">{item.title}</h4>
-                        <p className="text-xs md:text-sm text-nubia-white/70 leading-relaxed">{item.desc}</p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
-                {/* Trust Element */}
-                <div className="mt-8 pt-8 border-t border-nubia-gold/30">
-                  <p className="text-xs md:text-sm text-nubia-white/80 leading-relaxed">
-                    {t('custom.trust_message', '⭐ Our creators have 15+ years of experience in premium African tailoring.')}
+                <div className="border-t border-nubia-gold/25 p-7">
+                  <p className="text-sm leading-6 text-nubia-white/78">
+                    {t('custom.trust_plain', 'Our creators have 15+ years of experience in premium African tailoring.')}
                   </p>
+                  <div className="mt-5 grid grid-cols-2 gap-3 text-xs text-nubia-white/72">
+                    <div className="rounded-lg border border-nubia-white/12 p-3">
+                      <p className="font-bold text-nubia-gold">{t('custom.guarantee_fit', 'Fit support')}</p>
+                      <p className="mt-1">{t('custom.guarantee_fit_desc', 'Measurements reviewed')}</p>
+                    </div>
+                    <div className="rounded-lg border border-nubia-white/12 p-3">
+                      <p className="font-bold text-nubia-gold">{t('custom.guarantee_reply', '24-48h')}</p>
+                      <p className="mt-1">{t('custom.guarantee_reply_desc', 'Team response')}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            </aside>
           </div>
         </div>
       </section>

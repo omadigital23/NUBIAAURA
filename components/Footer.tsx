@@ -10,12 +10,12 @@ export default function Footer() {
   const { t, locale } = useTranslation();
 
   const paymentMethods = [
-    { name: 'Visa' },
-    { name: 'Mastercard' },
-    { name: 'CMI' },
-    { name: 'Orange Money' },
-    { name: 'Wave' },
-    { name: 'PayPal' },
+    { name: 'Visa', logo: '/images/visa.png' },
+    { name: 'Mastercard', logo: '/images/mastercard.png' },
+    { name: 'CMI', logo: '/images/cmi.png' },
+    { name: 'Orange Money', logo: '/images/orange-money.png' },
+    { name: 'Wave', logo: '/images/wave.png' },
+    { name: 'PayPal', logo: '/images/paypal.png' },
   ];
 
   return (
@@ -130,11 +130,20 @@ export default function Footer() {
             <p className="text-sm text-nubia-black/85 mb-4">{t('footer.secure_payments', 'Paiements sécurisés via Flutterwave')}</p>
             <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
               {paymentMethods.map((method) => (
-                <div key={method.name} className="flex flex-col items-center group cursor-pointer">
-                  <div className="min-w-20 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-lg transition-all duration-300 border border-nubia-gold/20 px-3">
-                    <span className="text-xs font-bold tracking-wide text-nubia-black">{method.name}</span>
+                <div key={method.name} className="flex flex-col items-center group">
+                  <div className="h-12 w-24 bg-white rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-lg transition-all duration-300 border border-nubia-gold/20 px-3">
+                    <img
+                      src={method.logo}
+                      alt={method.name}
+                      className="max-h-7 max-w-full object-contain"
+                      loading="lazy"
+                      onError={(event) => {
+                        event.currentTarget.style.display = 'none';
+                        event.currentTarget.nextElementSibling?.classList.remove('sr-only');
+                      }}
+                    />
+                    <span className="sr-only text-xs font-bold tracking-wide text-nubia-black">{method.name}</span>
                   </div>
-                  <span className="text-xs text-nubia-black/85 mt-2 group-hover:text-nubia-gold transition-colors font-medium">{method.name}</span>
                 </div>
               ))}
             </div>
