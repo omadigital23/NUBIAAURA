@@ -14,7 +14,7 @@ interface ToastMessage {
 
 // Store global pour les toasts
 let toastStore: ToastMessage[] = [];
-let listeners: Set<(toasts: ToastMessage[]) => void> = new Set();
+const listeners: Set<(toasts: ToastMessage[]) => void> = new Set();
 
 const addToastListener = (listener: (toasts: ToastMessage[]) => void) => {
   listeners.add(listener);

@@ -61,11 +61,13 @@ test.describe('Catalogue Page', () => {
 
   test('should navigate to product detail on click', async ({ page }) => {
     await page.waitForTimeout(3000);
-    const productLink = page.locator('a[href*="produit"]').first();
+    const productLink = page.locator('a[href*="/produit/"]').first();
     if (await productLink.count() > 0) {
-      await productLink.click();
-      await page.waitForLoadState('domcontentloaded');
-      expect(page.url()).toContain('produit');
+      const href = await productLink.getAttribute('href');
+      expect(href).toContain('produit');
+
+      await page.goto(href!);
+      await expect(page).toHaveURL(/produit/);
     }
   });
 });

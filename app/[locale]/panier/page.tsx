@@ -11,6 +11,11 @@ export default function CartPage() {
   const { t, locale } = useTranslation();
   const { items, total, removeItem, updateQuantity, clearCart, loading } = useCartContext();
 
+  const getItemKey = (item: { id: string; variantId?: string | null }) =>
+    `${item.id}:${item.variantId || 'base'}`;
+
+  const getVariantLabel = (item: { size?: string | null; color?: string | null }) =>
+    [item.size, item.color].filter(Boolean).join(' / ');
 
   // Show loading state while cart is being loaded
   if (loading && items.length === 0) {
@@ -75,7 +80,7 @@ export default function CartPage() {
               <div className="space-y-4">
                 {items.map((item) => (
                   <div
-                    key={item.id}
+                    key={getItemKey(item)}
                     className="flex gap-4 p-4 bg-nubia-cream/30 rounded-lg border border-nubia-gold/20"
                   >
                     {/* Item Image */}
@@ -92,6 +97,9 @@ export default function CartPage() {
                     {/* Item Details */}
                     <div className="flex-1">
                       <h3 className="font-playfair font-bold text-nubia-black mb-2">{item.name}</h3>
+                      {getVariantLabel(item) && (
+                        <p className="text-sm text-nubia-black/60 mb-2">{getVariantLabel(item)}</p>
+                      )}
                       <p className="text-nubia-gold font-semibold mb-3">
                         {Number(item.price).toLocaleString('fr-FR')} {t('common.currency', 'FCFA')}
                       </p>
@@ -99,7 +107,7 @@ export default function CartPage() {
                       {/* Quantity Controls */}
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => item.quantity > 1 ? updateQuantity(item.id, item.quantity - 1) : removeItem(item.id)}
+                          onClick={() => item.quantity > 1 ? updateQuantity(item.id, item.quantity - 1, item.variantId) : removeItem(item.id, item.variantId)}
                           disabled={loading}
                           className="px-2 py-1 border border-nubia-gold/30 rounded hover:bg-nubia-gold/10 disabled:opacity-50"
                         >
@@ -109,7 +117,7 @@ export default function CartPage() {
                           {item.quantity}
                         </span>
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.id, item.quantity + 1, item.variantId)}
                           disabled={loading}
                           className="px-2 py-1 border border-nubia-gold/30 rounded hover:bg-nubia-gold/10 disabled:opacity-50"
                         >
@@ -124,7 +132,7 @@ export default function CartPage() {
                         {Number(item.price * item.quantity).toLocaleString('fr-FR')} {t('common.currency', 'FCFA')}
                       </p>
                       <button
-                        onClick={() => item.quantity > 1 ? updateQuantity(item.id, item.quantity - 1) : removeItem(item.id)}
+                        onClick={() => item.quantity > 1 ? updateQuantity(item.id, item.quantity - 1, item.variantId) : removeItem(item.id, item.variantId)}
                         disabled={loading}
                         className="text-red-600 hover:text-red-700 text-sm font-semibold disabled:opacity-50"
                       >

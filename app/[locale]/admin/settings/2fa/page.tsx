@@ -9,7 +9,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 
 export default function Admin2FASetupPage() {
     const router = useRouter();
-    const { locale } = useTranslation();
+    const { locale, t } = useTranslation();
     const [qrCode, setQrCode] = useState<string | null>(null);
     const [secret, setSecret] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -38,11 +38,11 @@ export default function Admin2FASetupPage() {
             });
             const data = await res.json();
             
-            if (!res.ok) throw new Error(data.error || 'Erreur de génération');
+            if (!res.ok) throw new Error(data.error || t('admin.twofa.generate_error', 'Erreur de generation'));
 
             setQrCode(data.qrCode);
             setSecret(data.secret);
-            setSuccess('QR Code généré avec succès. Veuillez le scanner.');
+            setSuccess(t('admin.twofa.generated', 'QR Code genere avec succes. Veuillez le scanner.'));
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -62,10 +62,10 @@ export default function Admin2FASetupPage() {
             });
             const data = await res.json();
             
-            if (!res.ok) throw new Error(data.error || 'Code invalide');
+            if (!res.ok) throw new Error(data.error || t('admin.twofa.invalid_code', 'Code invalide'));
 
             setIsVerified(true);
-            setSuccess('2FA configuré avec succès ! Mettez à jour ADMIN_2FA_SECRET dans votre .env');
+            setSuccess(t('admin.twofa.configured', '2FA configuree avec succes ! Mettez a jour ADMIN_2FA_SECRET dans votre .env'));
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -73,10 +73,14 @@ export default function Admin2FASetupPage() {
         }
     };
 
-    const copySecret = () => {
+    const copySecret = async () => {
         if (secret) {
-            navigator.clipboard.writeText(secret);
-            alert('Secret copié dans le presse-papiers');
+            try {
+                await navigator.clipboard.writeText(secret);
+                setSuccess(t('admin.twofa.secret_copied', 'Secret copie dans le presse-papiers'));
+            } catch {
+                setError(t('admin.twofa.copy_failed', 'Impossible de copier le secret dans le presse-papiers'));
+            }
         }
     };
 
@@ -99,8 +103,8 @@ export default function Admin2FASetupPage() {
                                 <Shield size={28} />
                             </div>
                             <div>
-                                <h1 className="text-3xl font-bold text-nubia-black">Configuration 2FA</h1>
-                                <p className="text-gray-600 mt-1">Sécurisez l\'accès à votre interface administrateur</p>
+                                <h1 className="text-3xl font-bold text-nubia-black">{t('admin.twofa.title', 'Configuration 2FA')}</h1>
+                                <p className="text-gray-600 mt-1">{t('admin.twofa.subtitle', "Securisez l'acces a votre interface administrateur")}</p>
                             </div>
                         </div>
                     </div>
@@ -123,25 +127,25 @@ export default function Admin2FASetupPage() {
                         {!qrCode ? (
                             <div className="text-center py-8">
                                 <Shield size={64} className="mx-auto text-gray-300 mb-6" />
-                                <h2 className="text-xl font-bold text-gray-900 mb-4">Activer la Double Authentification</h2>
+                                <h2 className="text-xl font-bold text-gray-900 mb-4">{t('admin.twofa.enable_title', 'Activer la double authentification')}</h2>
                                 <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                                    Générez un QR code pour configurer Google Authenticator ou Authy sur votre téléphone pour ajouter une couche de sécurité supplémentaire.
+                                    {t('admin.twofa.enable_desc', 'Generez un QR code pour configurer Google Authenticator ou Authy sur votre telephone pour ajouter une couche de securite supplementaire.')}
                                 </p>
                                 <button
                                     onClick={handleGenerate}
                                     disabled={loading}
                                     className="px-8 py-3 bg-nubia-gold text-black font-semibold rounded-xl hover:bg-amber-400 transition-colors shadow-sm disabled:opacity-50"
                                 >
-                                    {loading ? 'Génération...' : 'Commencer la configuration'}
+                                    {loading ? t('admin.twofa.generating', 'Generation...') : t('admin.twofa.start_setup', 'Commencer la configuration')}
                                 </button>
                             </div>
                         ) : (
                             <div className="grid md:grid-cols-2 gap-12">
                                 <div className="space-y-6">
                                     <div>
-                                        <h3 className="text-lg font-bold text-nubia-black mb-2">1. Scannez le QR Code</h3>
+                                        <h3 className="text-lg font-bold text-nubia-black mb-2">{t('admin.twofa.scan_title', '1. Scannez le QR Code')}</h3>
                                         <p className="text-gray-600 mb-4">
-                                            Utilisez Google Authenticator, Authy ou toute autre application TOTP pour scanner ce code.
+                                            {t('admin.twofa.scan_desc', 'Utilisez Google Authenticator, Authy ou toute autre application TOTP pour scanner ce code.')}
                                         </p>
                                         <div className="bg-gray-50 p-4 rounded-2xl flex justify-center border border-gray-200">
                                             <img src={qrCode} alt="2FA QR Code" className="w-48 h-48 rounded-lg shadow-sm" />
@@ -149,7 +153,7 @@ export default function Admin2FASetupPage() {
                                     </div>
 
                                     <div>
-                                        <p className="text-sm font-semibold text-gray-700 mb-2">Ou saisissez la clé manuellement :</p>
+                                        <p className="text-sm font-semibold text-gray-700 mb-2">{t('admin.twofa.manual_key', 'Ou saisissez la cle manuellement :')}</p>
                                         <div className="flex items-center gap-2">
                                             <code className="flex-1 bg-gray-100 p-3 rounded-lg text-sm font-mono break-all text-gray-800">
                                                 {secret}
@@ -166,9 +170,9 @@ export default function Admin2FASetupPage() {
 
                                 <div>
                                     <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-                                        <h3 className="text-lg font-bold text-nubia-black mb-2">2. Vérifiez le code</h3>
+                                        <h3 className="text-lg font-bold text-nubia-black mb-2">{t('admin.twofa.verify_title', '2. Verifiez le code')}</h3>
                                         <p className="text-gray-600 mb-6 text-sm">
-                                            Entrez le code à 6 chiffres généré par votre application pour confirmer la configuration.
+                                            {t('admin.twofa.verify_desc', 'Entrez le code a 6 chiffres genere par votre application pour confirmer la configuration.')}
                                         </p>
 
                                         <form onSubmit={handleVerify} className="space-y-4">
@@ -188,14 +192,14 @@ export default function Admin2FASetupPage() {
                                                 disabled={verifyCode.length !== 6 || isVerified || loading}
                                                 className="w-full py-3 bg-nubia-black text-white font-semibold rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
-                                                {loading ? 'Vérification...' : isVerified ? '✓ Code Validé' : 'Vérifier le code'}
+                                                {loading ? t('admin.twofa.verifying', 'Verification...') : isVerified ? t('admin.twofa.code_validated', 'Code valide') : t('admin.twofa.verify_button', 'Verifier le code')}
                                             </button>
                                         </form>
 
                                         {isVerified && (
                                             <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-yellow-800">
-                                                <strong className="block mb-1">Configuration terminée !</strong>
-                                                N'oubliez pas d'ajouter <code className="bg-yellow-100 px-1 py-0.5 rounded">ADMIN_2FA_SECRET={secret}</code> et <code className="bg-yellow-100 px-1 py-0.5 rounded">ADMIN_2FA_ENABLED=true</code> dans votre fichier .env pour activer la protection.
+                                                <strong className="block mb-1">{t('admin.twofa.finished_title', 'Configuration terminee !')}</strong>
+                                                {t('admin.twofa.finished_prefix', "N'oubliez pas d'ajouter")} <code className="bg-yellow-100 px-1 py-0.5 rounded">ADMIN_2FA_SECRET={secret}</code> {t('admin.twofa.finished_and', 'et')} <code className="bg-yellow-100 px-1 py-0.5 rounded">ADMIN_2FA_ENABLED=true</code> {t('admin.twofa.finished_suffix', 'dans votre fichier .env pour activer la protection.')}
                                             </div>
                                         )}
                                     </div>

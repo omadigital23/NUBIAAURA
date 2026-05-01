@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -21,6 +21,13 @@ export default function CheckoutPage() {
   const { items: cartItems, clearCart, loading: cartLoading } = useCartContext();
   const { t, locale } = useTranslation();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const hasTrackedBeginCheckout = useRef(false);
+
+  const getCartItemKey = (item: { id: string; variantId?: string | null }) =>
+    `${item.id}:${item.variantId || 'base'}`;
+
+  const getVariantLabel = (item: { size?: string | null; color?: string | null }) =>
+    [item.size, item.color].filter(Boolean).join(' / ');
 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -152,9 +159,10 @@ export default function CheckoutPage() {
     );
   }, [formData]);
 
-  // Track begin checkout when user reaches checkout page with items
+  // Track begin checkout once when cart/auth state is ready.
   useEffect(() => {
-    if (cartItems.length > 0 && !authLoading) {
+    if (cartItems.length > 0 && !authLoading && !hasTrackedBeginCheckout.current) {
+      hasTrackedBeginCheckout.current = true;
       try {
         const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
         trackBeginCheckout({
@@ -170,7 +178,7 @@ export default function CheckoutPage() {
         console.error('Analytics tracking error:', e);
       }
     }
-  }, []); // Only track once on mount
+  }, [authLoading, cartItems]);
 
   // Redirect to catalog if cart empty (only after cart finished loading)
   // BUT NOT if we're processing an order (to allow redirect to thank you page)
@@ -204,7 +212,13 @@ export default function CheckoutPage() {
           body: JSON.stringify({
             locale,
             shippingMethod,
-            items: cartItems.map((it) => ({ product_id: it.id, quantity: it.quantity })),
+            items: cartItems.map((it) => ({
+              product_id: it.id,
+              variant_id: it.variantId || null,
+              size: it.size || null,
+              color: it.color || null,
+              quantity: it.quantity,
+            })),
           }),
         });
 
@@ -334,6 +348,9 @@ export default function CheckoutPage() {
             phone: formData.phone,
             items: cartItems.map((item) => ({
               product_id: item.id,
+              variant_id: item.variantId || null,
+              size: item.size || null,
+              color: item.color || null,
               quantity: item.quantity,
               price: item.price,
             })),
@@ -393,6 +410,9 @@ export default function CheckoutPage() {
           paymentSubMethod, // 'wave', 'orange_money', 'card', etc.
           cartItems: cartItems.map((item) => ({
             product_id: item.id,
+            variant_id: item.variantId || null,
+            size: item.size || null,
+            color: item.color || null,
             quantity: item.quantity,
             price: item.price,
           })),
@@ -755,15 +775,18 @@ export default function CheckoutPage() {
               <h2 className="font-playfair text-2xl font-bold text-nubia-black mb-6">{t('checkout.order_summary', 'Résumé de la Commande')}</h2>
 
               {cartItems.length === 0 ? (
-                <p className="text-nubia-black/70 text-center py-8">Votre panier est vide</p>
+                <p className="text-nubia-black/70 text-center py-8">{t('checkout.empty_cart', 'Votre panier est vide')}</p>
               ) : (
                 <>
                   <div className="space-y-4 mb-6 border-b border-nubia-gold/20 pb-6">
                     {cartItems.map((item) => (
-                      <div key={item.id} className="flex justify-between">
+                      <div key={getCartItemKey(item)} className="flex justify-between">
                         <div>
                           <p className="font-semibold text-nubia-black">{item.name}</p>
-                          <p className="text-sm text-nubia-black/70">Quantité: {item.quantity}</p>
+                          {getVariantLabel(item) && (
+                            <p className="text-sm text-nubia-black/60">{getVariantLabel(item)}</p>
+                          )}
+                          <p className="text-sm text-nubia-black/70">{t('checkout.quantity', 'Quantite')}: {item.quantity}</p>
                         </div>
                         <p className="font-semibold text-nubia-black">{priceDisplay.formatPrice(item.price * item.quantity)}</p>
                       </div>
@@ -772,15 +795,15 @@ export default function CheckoutPage() {
 
                   <div className="space-y-3 mb-6 border-b border-nubia-gold/20 pb-6">
                     <div className="flex justify-between text-nubia-black/70">
-                      <span>Sous-total</span>
+                      <span>{t('checkout.summary.subtotal', 'Sous-total')}</span>
                       <span>{priceDisplay.subtotal.formatted}</span>
                     </div>
                     <div className="flex justify-between text-nubia-black/70">
-                      <span>Livraison</span>
-                      <span>{shipping === 0 ? 'Gratuit' : priceDisplay.shipping.formatted}</span>
+                      <span>{t('checkout.summary.shipping', 'Livraison')}</span>
+                      <span>{shipping === 0 ? t('checkout.summary.free', 'Gratuit') : priceDisplay.shipping.formatted}</span>
                     </div>
                     <div className="flex justify-between text-nubia-black/70">
-                      <span>Taxes</span>
+                      <span>{t('checkout.summary.tax', 'Taxes')}</span>
                       <span>{priceDisplay.tax.formatted}</span>
                     </div>
                     {promoDiscount && (
@@ -835,10 +858,10 @@ export default function CheckoutPage() {
                                   description: data.description,
                                 });
                               } else {
-                                setPromoError(data.error || 'Code invalide');
+                                setPromoError(data.error || t('checkout.promo.invalid', 'Code invalide'));
                               }
                             } catch {
-                              setPromoError('Erreur de validation');
+                              setPromoError(t('checkout.promo.validation_error', 'Erreur de validation'));
                             } finally {
                               setPromoLoading(false);
                             }
@@ -859,7 +882,7 @@ export default function CheckoutPage() {
                   </div>
 
                   <div className="flex justify-between items-center">
-                    <span className="font-playfair text-xl font-bold text-nubia-black">Total</span>
+                    <span className="font-playfair text-xl font-bold text-nubia-black">{t('checkout.summary.total', 'Total')}</span>
                     <span className="font-playfair text-2xl font-bold text-nubia-gold">
                       {priceDisplay.formatPrice(total - (promoDiscount?.amount || 0))}
                     </span>

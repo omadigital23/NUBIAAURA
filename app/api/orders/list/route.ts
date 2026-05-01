@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
     // Debug log to help trace which user requested orders and how many were found
     try {
       console.log(`[orders/list] user=${resolvedUserId} ordersCount=${(orders || []).length}`);
-    } catch (e) {
+    } catch {
       // ignore logging errors
     }
 

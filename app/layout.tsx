@@ -104,9 +104,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr" className={`${inter.variable} ${playfair.variable}`}>
+    <html lang="fr" data-scroll-behavior="smooth" suppressHydrationWarning className={`${inter.variable} ${playfair.variable}`}>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `document.documentElement.lang = location.pathname.startsWith('/en') ? 'en' : 'fr';`,
+          }}
+        />
         <meta name="theme-color" content="#D4AF37" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -114,9 +118,25 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <GoogleAnalytics />
         {/* Service Worker Registration */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
+        {process.env.NODE_ENV !== 'production' && (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+              if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                  registrations.forEach(function(registration) {
+                    registration.unregister();
+                  });
+                });
+              }
+            `,
+            }}
+          />
+        )}
+        {process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_E2E !== '1' && (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
                   navigator.serviceWorker.register('/sw.js').then(
@@ -130,8 +150,9 @@ export default function RootLayout({
                 });
               }
             `,
-          }}
-        />
+            }}
+          />
+        )}
       </head>
       <body className="font-inter bg-nubia-white text-nubia-black antialiased">
         <CartProvider>

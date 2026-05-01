@@ -2,10 +2,13 @@
 
 export interface CartItem {
   id: string; // product_id
+  variantId?: string | null;
   name: string;
   price: number;
   quantity: number;
   image: string;
+  size?: string | null;
+  color?: string | null;
 }
 
 export interface CartState {
@@ -17,15 +20,13 @@ export interface CartState {
 
 export interface CartContextType extends CartState {
   addItem: (item: CartItem) => Promise<void>;
-  removeItem: (id: string) => Promise<void>;
-  updateQuantity: (id: string, quantity: number) => Promise<void>;
+  removeItem: (id: string, variantId?: string | null) => Promise<void>;
+  updateQuantity: (id: string, quantity: number, variantId?: string | null) => Promise<void>;
   clearCart: () => void;
   refetchCart: () => Promise<void>;
 }
 
-export interface PersistedCartItem extends CartItem {
-  // Extension pour persistence
-}
+export type PersistedCartItem = CartItem;
 
 export interface CartApiResponse {
   items?: CartItem[];
@@ -38,8 +39,8 @@ export interface CartApiResponse {
 // Types pour les actions du panier
 export type CartAction =
   | { type: 'ADD_ITEM'; payload: CartItem }
-  | { type: 'REMOVE_ITEM'; payload: { id: string } }
-  | { type: 'UPDATE_QUANTITY'; payload: { id: string; quantity: number } }
+  | { type: 'REMOVE_ITEM'; payload: { id: string; variantId?: string | null } }
+  | { type: 'UPDATE_QUANTITY'; payload: { id: string; quantity: number; variantId?: string | null } }
   | { type: 'CLEAR_CART' }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }

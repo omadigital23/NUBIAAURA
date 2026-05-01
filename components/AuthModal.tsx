@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { X, Mail, Lock, User, Phone, AlertCircle, Loader } from 'lucide-react';
-import { useAuthToken } from '@/hooks/useAuthToken';
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface AuthModalProps {
@@ -20,7 +19,6 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { saveToken } = useAuthToken();
   const { t, locale } = useTranslation();
 
   const [loginData, setLoginData] = useState({
@@ -51,6 +49,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(loginData),
+        credentials: 'include',
       });
 
       const data = await response.json();
@@ -59,10 +58,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
         throw new Error(data.error || t('auth.login_error', 'Erreur de connexion'));
       }
 
-      // Save token to localStorage
-      if (data.token) {
-        saveToken(data.token);
-      }
+      window.dispatchEvent(new CustomEvent('token-changed', { detail: true }));
 
       setLoginData({ email: '', password: '' });
       onLoginSuccess?.();
@@ -112,14 +108,12 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
           email: signupData.email,
           password: signupData.password,
         }),
+        credentials: 'include',
       });
 
       if (loginResponse.ok) {
-        const loginData = await loginResponse.json();
-        // Save token to localStorage
-        if (loginData.token) {
-          saveToken(loginData.token);
-        }
+        await loginResponse.json();
+        window.dispatchEvent(new CustomEvent('token-changed', { detail: true }));
         setSignupData({ firstName: '', lastName: '', email: '', phone: '', password: '', confirmPassword: '' });
         onLoginSuccess?.();
         onClose();

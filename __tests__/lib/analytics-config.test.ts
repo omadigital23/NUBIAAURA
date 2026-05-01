@@ -5,13 +5,11 @@ import { trackProductView, trackAddToCart, trackPurchase, trackBeginCheckout } f
 
 // Mock window.gtag
 const mockGtag = jest.fn();
-(global as any).window = {
-    gtag: mockGtag,
-};
 
 describe('analytics-config', () => {
     beforeEach(() => {
         mockGtag.mockClear();
+        (window as any).gtag = mockGtag;
         process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID = 'G-TEST123';
     });
 

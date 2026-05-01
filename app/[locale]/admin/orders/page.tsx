@@ -433,7 +433,7 @@ export default function AdminOrdersPage() {
       if (!changes || Object.keys(changes).length === 0) {
         console.log('[handleSave] No changes, returning');
         setError(null);
-        setSuccess('Aucune modification à enregistrer.');
+        setSuccess(t('admin.orders.no_changes', 'Aucune modification a enregistrer.'));
         return;
       }
 
@@ -610,10 +610,10 @@ export default function AdminOrdersPage() {
       }
 
       console.log('[handleSave] showing success message');
-      setSuccess('La livraison a été mise à jour avec succès.');
+      setSuccess(t('admin.orders.delivery_updated', 'La livraison a ete mise a jour avec succes.'));
     } catch (err: any) {
       console.error('[handleSave] ERROR:', err);
-      setError(`Erreur: ${err.message}`);
+      setError(`${t('admin.orders.error_prefix', 'Erreur:')} ${err.message}`);
     }
   };
 
@@ -638,11 +638,11 @@ export default function AdminOrdersPage() {
 
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
-      pending: 'En attente',
-      processing: 'En traitement',
-      shipped: 'Expédiée',
-      delivered: 'Livrée',
-      cancelled: 'Annulée',
+      pending: t('admin.status.pending', 'En attente'),
+      processing: t('admin.status.processing', 'En traitement'),
+      shipped: t('admin.status.shipped', 'Expediee'),
+      delivered: t('admin.status.delivered', 'Livree'),
+      cancelled: t('admin.status.cancelled', 'Annulee'),
     };
     return labels[status] || status;
   };
@@ -793,7 +793,7 @@ export default function AdminOrdersPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                           <p className="text-sm text-nubia-black/60 mb-1">
-                            Montant total
+                            {t('admin.orders.total_amount', 'Montant total')}
                           </p>
                           <p className="text-2xl font-bold text-nubia-gold">
                             {order.total.toLocaleString('fr-FR')} FCFA
@@ -801,12 +801,12 @@ export default function AdminOrdersPage() {
                         </div>
                         <div>
                           <p className="text-sm text-nubia-black/60 mb-1">
-                            Statut du paiement
+                            {t('admin.orders.payment_status', 'Statut du paiement')}
                           </p>
                           <p className="text-lg font-semibold text-nubia-black">
                             {order.payment_status === 'paid'
-                              ? 'Payée'
-                              : 'En attente'}
+                              ? t('admin.payment_status.paid', 'Payee')
+                              : t('admin.payment_status.pending', 'En attente')}
                           </p>
                         </div>
                       </div>
@@ -815,14 +815,14 @@ export default function AdminOrdersPage() {
                       <div className="border-t border-nubia-gold/20 pt-6">
                         <h3 className="font-semibold text-nubia-black mb-4 flex items-center gap-2">
                           <Truck size={20} className="text-nubia-gold" />
-                          Suivi de la livraison
+                          {t('admin.orders.delivery_tracking', 'Suivi de la livraison')}
                         </h3>
 
                         <div className="space-y-4">
                           {/* Duration */}
                           <div>
                             <label className="block text-sm font-semibold text-nubia-black mb-2">
-                              Durée de livraison (jours)
+                              {t('admin.orders.delivery_duration_days', 'Duree de livraison (jours)')}
                             </label>
                             {editing[order.id] ? (
                               <input
@@ -844,7 +844,7 @@ export default function AdminOrdersPage() {
                               />
                             ) : (
                               <p className="text-lg text-nubia-black">
-                                {order.delivery_duration_days} jours
+                                {order.delivery_duration_days} {t('admin.orders.days', 'jours')}
                               </p>
                             )}
                           </div>
@@ -852,7 +852,7 @@ export default function AdminOrdersPage() {
                           {/* Shipped At */}
                           <div>
                             <label className="block text-sm font-semibold text-nubia-black mb-2">
-                              Date d'expédition
+                              {t('admin.orders.shipped_at', "Date d'expedition")}
                             </label>
                             {editing[order.id] ? (
                               <input
@@ -900,7 +900,7 @@ export default function AdminOrdersPage() {
                           {/* Estimated Delivery */}
                           <div>
                             <label className="block text-sm font-semibold text-nubia-black mb-2">
-                              Date estimée de livraison
+                              {t('admin.orders.estimated_delivery_date', 'Date estimee de livraison')}
                             </label>
                             {editing[order.id] ? (
                               <input
@@ -937,7 +937,7 @@ export default function AdminOrdersPage() {
                                     month: 'long',
                                     day: 'numeric',
                                   })
-                                  : 'À calculer'}
+                                  : t('admin.orders.to_calculate', 'A calculer')}
                               </p>
                             )}
                           </div>
@@ -945,7 +945,7 @@ export default function AdminOrdersPage() {
                           {/* Delivered At */}
                           <div>
                             <label className="block text-sm font-semibold text-nubia-black mb-2">
-                              Date de livraison réelle
+                              {t('admin.orders.delivered_at', 'Date de livraison reelle')}
                             </label>
                             {editing[order.id] ? (
                               <input
@@ -982,7 +982,7 @@ export default function AdminOrdersPage() {
                                   const currentOrder = orders.find(o => o.id === order.id);
                                   if (!currentOrder) {
                                     console.warn('[Display] Order not found in state:', order.id);
-                                    return <span>Non livrée</span>;
+                                    return <span>{t('admin.orders.not_delivered', 'Non livree')}</span>;
                                   }
 
                                   const deliveredAtValue = currentOrder.delivered_at;
@@ -1004,7 +1004,7 @@ export default function AdminOrdersPage() {
                                       const date = new Date(deliveredAtValue);
                                       if (isNaN(date.getTime())) {
                                         console.error('[Display] Invalid date:', deliveredAtValue, 'for order:', order.id);
-                                        return <span>Date invalide: {String(deliveredAtValue)}</span>;
+                                        return <span>{t('admin.orders.invalid_date', 'Date invalide')}: {String(deliveredAtValue)}</span>;
                                       }
                                       const formatted = date.toLocaleDateString('fr-FR', {
                                         year: 'numeric',
@@ -1021,10 +1021,10 @@ export default function AdminOrdersPage() {
                                       return <span>{formatted}</span>;
                                     } catch (e) {
                                       console.error('[Display] Date parsing error:', e, deliveredAtValue, 'for order:', order.id);
-                                      return <span>Erreur: {String(deliveredAtValue)}</span>;
+                                      return <span>{t('admin.orders.error_prefix', 'Erreur:')} {String(deliveredAtValue)}</span>;
                                     }
                                   }
-                                  return <span>Non livrée</span>;
+                                  return <span>{t('admin.orders.not_delivered', 'Non livree')}</span>;
                                 })()}
                               </div>
                             )}
@@ -1033,7 +1033,7 @@ export default function AdminOrdersPage() {
                           {/* Tracking Number */}
                           <div>
                             <label className="block text-sm font-semibold text-nubia-black mb-2">
-                              Numéro de suivi
+                              {t('admin.orders.tracking_number', 'Numero de suivi')}
                             </label>
                             {editing[order.id] ? (
                               <input
@@ -1063,7 +1063,7 @@ export default function AdminOrdersPage() {
                           {/* Carrier */}
                           <div>
                             <label className="block text-sm font-semibold text-nubia-black mb-2">
-                              Transporteur
+                              {t('admin.orders.carrier', 'Transporteur')}
                             </label>
                             {editing[order.id] ? (
                               <select
@@ -1077,7 +1077,7 @@ export default function AdminOrdersPage() {
                                 }
                                 className="w-full px-4 py-2 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"
                               >
-                                <option value="">{t('orders.select_carrier', 'Sélectionner un transporteur')}</option>
+                                <option value="">{t('admin.orders.select_carrier', 'Selectionner un transporteur')}</option>
                                 <option value="DHL">DHL</option>
                                 <option value="FedEx">FedEx</option>
                                 <option value="UPS">UPS</option>
@@ -1095,7 +1095,7 @@ export default function AdminOrdersPage() {
 
                       {/* Status Management */}
                       <div className="bg-nubia-gold/5 p-4 rounded-lg border border-nubia-gold/20 mt-6">
-                        <h3 className="font-semibold text-nubia-black mb-3">Statut de la commande</h3>
+                        <h3 className="font-semibold text-nubia-black mb-3">{t('admin.orders.order_status', 'Statut de la commande')}</h3>
                         <div className="flex flex-wrap gap-2">
                           {['pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((status) => (
                             <button
@@ -1120,7 +1120,7 @@ export default function AdminOrdersPage() {
                               className="flex items-center gap-2 px-4 py-2 bg-nubia-gold text-nubia-black rounded-lg hover:bg-nubia-white border-2 border-nubia-gold transition-all text-sm font-bold"
                             >
                               <Save size={16} />
-                              Confirmer le changement de statut
+                              {t('admin.orders.confirm_status_change', 'Confirmer le changement de statut')}
                             </button>
                           </div>
                         )}
@@ -1130,7 +1130,7 @@ export default function AdminOrdersPage() {
                       <div className="border-t border-nubia-gold/20 pt-6 mt-6">
                         <h3 className="font-semibold text-nubia-black mb-4 flex items-center gap-2">
                           <Package size={20} className="text-nubia-gold" />
-                          Articles commandés ({order.order_items?.length || 0})
+                          {t('admin.orders.ordered_items', 'Articles commandes')} ({order.order_items?.length || 0})
                         </h3>
                         <div className="space-y-3">
                           {order.order_items?.map((item) => (
@@ -1145,8 +1145,8 @@ export default function AdminOrdersPage() {
                                 </div>
                               )}
                               <div className="flex-1">
-                                <p className="font-medium text-nubia-black">{item.products?.name || 'Produit inconnu'}</p>
-                                <p className="text-sm text-gray-500">Qté: {item.quantity} × {item.price.toLocaleString('fr-FR')} FCFA</p>
+                                <p className="font-medium text-nubia-black">{item.products?.name || t('admin.orders.unknown_product', 'Produit inconnu')}</p>
+                                <p className="text-sm text-gray-500">{t('admin.orders.quantity_short', 'Qte')}: {item.quantity} x {item.price.toLocaleString('fr-FR')} FCFA</p>
                               </div>
                               <p className="font-bold text-nubia-black">
                                 {(item.quantity * item.price).toLocaleString('fr-FR')} FCFA
@@ -1154,7 +1154,7 @@ export default function AdminOrdersPage() {
                             </div>
                           ))}
                           {(!order.order_items || order.order_items.length === 0) && (
-                            <p className="text-gray-500 italic">Aucun article trouvé pour cette commande.</p>
+                            <p className="text-gray-500 italic">{t('admin.orders.no_items', 'Aucun article trouve pour cette commande.')}</p>
                           )}
                         </div>
                       </div>

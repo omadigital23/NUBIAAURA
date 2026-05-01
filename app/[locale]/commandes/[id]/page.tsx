@@ -58,7 +58,7 @@ export default function OrderDetailPage() {
       } else {
         setError('Commande non trouvée');
       }
-    } catch (err) {
+    } catch {
       setError('Erreur lors du chargement de la commande');
     } finally {
       setLoading(false);

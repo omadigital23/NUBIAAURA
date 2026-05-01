@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Mail, Phone, MapPin, MessageSquare, Facebook, Instagram, Twitter } from 'lucide-react';
+import { Mail, Phone, MapPin, MessageSquare } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
+import SocialIcon from '@/components/SocialIcon';
 
 export default function ContactPage() {
   const { t } = useTranslation();
@@ -266,7 +267,7 @@ export default function ContactPage() {
                     href="https://instagram.com/nubiaaura"
                     className="flex items-center gap-3 p-3 border border-nubia-gold/30 rounded-lg hover:bg-nubia-gold/10 transition-colors"
                   >
-                    <Instagram className="text-nubia-gold" size={24} />
+                    <SocialIcon name="instagram" className="text-nubia-gold" size={24} />
                     <span className="text-nubia-black font-semibold">Instagram</span>
                   </a>
 
@@ -274,7 +275,7 @@ export default function ContactPage() {
                     href="https://facebook.com/nubiaaura"
                     className="flex items-center gap-3 p-3 border border-nubia-gold/30 rounded-lg hover:bg-nubia-gold/10 transition-colors"
                   >
-                    <Facebook className="text-nubia-gold" size={24} />
+                    <SocialIcon name="facebook" className="text-nubia-gold" size={24} />
                     <span className="text-nubia-black font-semibold">Facebook</span>
                   </a>
 
@@ -282,7 +283,7 @@ export default function ContactPage() {
                     href="https://twitter.com/nubiaaura"
                     className="flex items-center gap-3 p-3 border border-nubia-gold/30 rounded-lg hover:bg-nubia-gold/10 transition-colors"
                   >
-                    <Twitter className="text-nubia-gold" size={24} />
+                    <SocialIcon name="twitter" className="text-nubia-gold" size={24} />
                     <span className="text-nubia-black font-semibold">Twitter</span>
                   </a>
                 </div>

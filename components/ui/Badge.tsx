@@ -1,10 +1,10 @@
 'use client';
 
-import React from 'react';
+import type { ReactNode } from 'react';
 import { clsx } from 'clsx';
 
 export interface BadgeProps {
-    children: React.ReactNode;
+    children: ReactNode;
     variant?: 'default' | 'success' | 'warning' | 'danger' | 'info' | 'gold';
     size?: 'sm' | 'md';
     className?: string;

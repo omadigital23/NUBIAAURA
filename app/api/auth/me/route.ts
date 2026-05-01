@@ -26,9 +26,9 @@ export async function GET(request: NextRequest) {
 
     if (!token) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { user: null },
         {
-          status: 401,
+          status: 200,
           headers: {
             'Cache-Control': 'private, max-age=60',
           },
@@ -44,11 +44,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user profile
-    let { data: profile, error: profileError } = await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from('users')
       .select('*')
       .eq('id', user.id)
       .single();
+    let profile = profileData;
 
     // If profile doesn't exist, create it automatically
     // This handles cases where auth user exists but profile wasn't created (e.g., after password reset)

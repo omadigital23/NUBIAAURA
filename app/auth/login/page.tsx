@@ -1,25 +1,29 @@
+import { redirect } from 'next/navigation';
+
 export const dynamic = 'force-dynamic';
 
-import { Suspense } from 'react';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import { Loader } from 'lucide-react';
-import LoginFormClient from './client';
+type LoginRedirectProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
 
-const LoadingFallback = () => (
-  <div className="flex-1 flex items-center justify-center">
-    <Loader className="animate-spin text-nubia-gold" size={40} />
-  </div>
-);
+function toQueryString(searchParams: Record<string, string | string[] | undefined> | undefined) {
+  const query = new URLSearchParams();
 
-export default function LoginPage() {
-  return (
-    <div className="min-h-screen bg-nubia-white flex flex-col">
-      <Header />
-      <Suspense fallback={<LoadingFallback />}>
-        <LoginFormClient />
-      </Suspense>
-      <Footer />
-    </div>
-  );
+  Object.entries(searchParams ?? {}).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach((entry) => {
+        if (entry !== undefined) query.append(key, entry);
+      });
+      return;
+    }
+
+    if (value !== undefined) query.set(key, value);
+  });
+
+  const queryString = query.toString();
+  return queryString ? `?${queryString}` : '';
+}
+
+export default async function LoginRedirect({ searchParams }: LoginRedirectProps) {
+  redirect(`/fr/auth/login${toQueryString(await searchParams)}`);
 }

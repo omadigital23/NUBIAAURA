@@ -1,6 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext } from 'react';
+import type { ReactNode } from 'react';
 import { useCart as useCartHook } from '@/hooks/useCart';
 import { CartContextType } from '@/lib/types/cart';
 

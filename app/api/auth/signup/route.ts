@@ -6,10 +6,12 @@ import { sanitizeEmail, sanitizeText } from '@/lib/sanitize';
 import * as Sentry from '@sentry/nextjs';
 import { trackSignUp } from '@/lib/analytics-config';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,15 +41,16 @@ export async function POST(request: NextRequest) {
     }
 
     return await handleSignup(request);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Signup error:', error);
     Sentry.captureException(error, {
       tags: { route: 'auth/signup' },
     });
 
-    if (error.name === 'ZodError') {
+    if (error && typeof error === 'object' && 'name' in error && error.name === 'ZodError') {
+      const zodError = error as { errors?: Array<{ message: string }> };
       return NextResponse.json(
-        { error: error.errors[0].message },
+        { error: zodError.errors?.[0]?.message || 'Données invalides' },
         { status: 400 }
       );
     }
@@ -61,6 +64,7 @@ export async function POST(request: NextRequest) {
 
 async function handleSignup(request: NextRequest) {
   const body = await request.json();
+  const supabase = getSupabaseAdmin();
 
   // Sanitize inputs
   const sanitizedBody = {
@@ -117,8 +121,8 @@ async function handleSignup(request: NextRequest) {
   // Track signup event
   try {
     trackSignUp('email');
-  } catch (e) {
-    console.error('Analytics tracking error:', e);
+  } catch (error) {
+    console.error('Analytics tracking error:', error);
   }
 
   console.log(`[Signup] New user registered: ${validated.email}`);
@@ -135,4 +139,3 @@ async function handleSignup(request: NextRequest) {
     { status: 201 }
   );
 }
-

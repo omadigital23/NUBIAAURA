@@ -25,111 +25,34 @@ export default function AnimatedCard({
     if (!cardRef.current) return;
 
     const element = cardRef.current;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    switch (animation) {
-      case 'fade':
-        gsap.fromTo(
-          element,
-          { opacity: 0, y: 20 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.6,
-            delay,
-            scrollTrigger: {
-              trigger: element,
-              start: 'top 85%',
-              end: 'top 35%',
-              scrub: 0.3,
-            },
-          }
-        );
-        break;
+    if (reduceMotion) return;
 
-      case 'slide-left':
-        gsap.fromTo(
-          element,
-          { opacity: 0, x: -40 },
-          {
-            opacity: 1,
-            x: 0,
-            duration: 0.7,
-            delay,
-            scrollTrigger: {
-              trigger: element,
-              start: 'top 85%',
-              end: 'top 35%',
-              scrub: 0.4,
-            },
-          }
-        );
-        break;
+    const context = gsap.context(() => {
+      const entranceByAnimation = {
+        fade: { opacity: 0, y: 20 },
+        'slide-left': { opacity: 0, x: -40 },
+        'slide-right': { opacity: 0, x: 40 },
+        scale: { opacity: 0, scale: 0.96 },
+        bounce: { opacity: 0, y: 30 },
+      } as const;
 
-      case 'slide-right':
-        gsap.fromTo(
-          element,
-          { opacity: 0, x: 40 },
-          {
-            opacity: 1,
-            x: 0,
-            duration: 0.7,
-            delay,
-            scrollTrigger: {
-              trigger: element,
-              start: 'top 85%',
-              end: 'top 35%',
-              scrub: 0.4,
-            },
-          }
-        );
-        break;
+      gsap.from(element, {
+        ...(entranceByAnimation[animation] || entranceByAnimation.fade),
+        duration: animation === 'bounce' ? 0.75 : 0.6,
+        delay,
+        ease: animation === 'bounce' ? 'back.out(1.4)' : 'power2.out',
+        immediateRender: false,
+        scrollTrigger: {
+          trigger: element,
+          start: 'top 88%',
+          toggleActions: 'play none none none',
+        },
+      });
+    }, element);
 
-      case 'scale':
-        gsap.fromTo(
-          element,
-          { opacity: 0, scale: 0.9 },
-          {
-            opacity: 1,
-            scale: 1,
-            duration: 0.7,
-            delay,
-            scrollTrigger: {
-              trigger: element,
-              start: 'top 85%',
-              end: 'top 35%',
-              scrub: 0.4,
-            },
-          }
-        );
-        break;
-
-      case 'bounce':
-        gsap.fromTo(
-          element,
-          { opacity: 0, y: 40 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.8,
-            delay,
-            ease: 'back.out',
-            scrollTrigger: {
-              trigger: element,
-              start: 'top 85%',
-              end: 'top 35%',
-              scrub: 0.3,
-            },
-          }
-        );
-        break;
-
-      default:
-        break;
-    }
-
-    return () => {
-      ScrollTrigger.getAll().forEach((trigger: any) => trigger.kill());
-    };
+    return () => context.revert();
   }, [animation, delay]);
 
   return (

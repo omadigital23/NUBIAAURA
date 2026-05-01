@@ -34,12 +34,8 @@ export default function CheckoutDebugPanel({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
   
-  if (!isVisible) {
-    return (
-      <div className="fixed bottom-4 right-4 bg-black/80 text-white px-3 py-2 rounded text-xs">
-        Appuyez sur <kbd className="bg-white/20 px-1 rounded">Ctrl+D</kbd> pour le debug
-      </div>
-    );
+  if (process.env.NODE_ENV === 'production' || !isVisible) {
+    return null;
   }
   
   const isButtonDisabled = loading || quoteLoading || cartItemsCount === 0 || paymentMethod === '';

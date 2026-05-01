@@ -4,9 +4,10 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Heart, Sparkles, Zap } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
+import Link from 'next/link';
 
 export default function AboutPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
 
   const values = [
     {
@@ -200,12 +201,12 @@ export default function AboutPage() {
           <p className="text-lg text-nubia-black/70 mb-8 max-w-2xl mx-auto">
             {t('about.cta_description', 'Discover our custom creation process and let us help you create the piece of your dreams')}
           </p>
-          <a
-            href="/sur-mesure"
+          <Link
+            href={`/${locale}/sur-mesure`}
             className="inline-block px-8 py-4 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white border-2 border-nubia-gold transition-all duration-300"
           >
             {t('about.cta_button', 'Create Your Custom Outfit')}
-          </a>
+          </Link>
         </div>
       </section>
 

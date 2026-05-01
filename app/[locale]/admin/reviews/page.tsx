@@ -56,6 +56,8 @@ export default function AdminReviewsPage() {
 
     useEffect(() => {
         loadReviews(page);
+        // loadReviews is scoped to filter changes here; pagination calls it explicitly.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filterStatus, filterRating]);
 
     const loadReviews = async (pageNum: number = page) => {

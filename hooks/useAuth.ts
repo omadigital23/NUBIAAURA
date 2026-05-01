@@ -21,23 +21,28 @@ interface UseAuthResult {
   refetch: () => Promise<void>;
 }
 
+const isE2E = process.env.NEXT_PUBLIC_E2E === '1';
+
 export function useAuth(): UseAuthResult {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const fetchUser = useCallback(async () => {
+    if (isE2E) {
+      setUser(null);
+      setIsAuthenticated(false);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
-
-      // Get token from localStorage (used by magic link flow)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('sb-auth-token') : null;
 
       const response = await fetch('/api/auth/me', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         },
         credentials: 'include',
       });
@@ -70,15 +75,13 @@ export function useAuth(): UseAuthResult {
     fetchUser();
   }, [fetchUser]);
 
-  // Écouter les changements de token (après login/logout)
+  // Écouter les changements de session (après login/logout)
   useEffect(() => {
     const handleTokenChange = (e: CustomEvent) => {
-      console.log('[useAuth] Token changed, refetching user...', e.detail ? 'token present' : 'token cleared');
+      console.log('[useAuth] Session changed, refetching user...', e.detail ? 'session present' : 'session cleared');
       if (e.detail) {
-        // Token ajouté/modifié - refetch user
         fetchUser();
       } else {
-        // Token supprimé - clear user
         setUser(null);
         setIsAuthenticated(false);
       }

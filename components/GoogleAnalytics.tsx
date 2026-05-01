@@ -7,7 +7,7 @@ import Script from 'next/script';
 export default function GoogleAnalytics() {
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
 
-  if (!gaId) {
+  if (!gaId || process.env.NEXT_PUBLIC_E2E === '1') {
     return null;
   }
 

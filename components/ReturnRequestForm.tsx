@@ -17,6 +17,15 @@ interface ReturnRequestFormProps {
   onSuccess?: () => void;
 }
 
+const reasonOptions = [
+  'defective_product',
+  'not_as_described',
+  'wrong_size',
+  'different_color',
+  'damaged_delivery',
+  'other',
+];
+
 export default function ReturnRequestForm({
   orderId,
   orderItems,
@@ -45,13 +54,21 @@ export default function ReturnRequestForm({
 
     try {
       if (selectedItems.length === 0) {
-        setError(t('returns.select_item', 'Veuillez sélectionner au moins un article'));
+        setError(t('returns.select_item'));
         setLoading(false);
         return;
       }
 
-      if (reason.length < 10) {
-        setError(t('returns.reason_too_short', 'La raison doit contenir au moins 10 caractères'));
+      if (!reason) {
+        setError(t('returns.select_reason_required'));
+        setLoading(false);
+        return;
+      }
+
+      const selectedReason = reason === 'other' ? comments.trim() : t(`returns.reasons.${reason}`);
+
+      if (selectedReason.length < 10) {
+        setError(t('returns.reason_too_short'));
         setLoading(false);
         return;
       }
@@ -66,9 +83,10 @@ export default function ReturnRequestForm({
       const response = await fetch('/api/returns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           orderId,
-          reason,
+          reason: selectedReason,
           items: returnItems,
           comments: comments || undefined,
         }),
@@ -77,7 +95,7 @@ export default function ReturnRequestForm({
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || t('returns.request_error', 'Erreur lors de la création de la demande'));
+        setError(data.error || t('returns.request_error'));
         setLoading(false);
         return;
       }
@@ -90,9 +108,8 @@ export default function ReturnRequestForm({
       setTimeout(() => {
         onSuccess?.();
       }, 2000);
-    } catch (err) {
-      setError(t('returns.request_error', 'Erreur lors de la création de la demande'));
-      console.error(err);
+    } catch {
+      setError(t('returns.request_error'));
     } finally {
       setLoading(false);
     }
@@ -100,15 +117,15 @@ export default function ReturnRequestForm({
 
   if (success) {
     return (
-      <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+      <div className="rounded-lg border border-green-200 bg-green-50 p-6">
         <div className="flex items-center gap-3 mb-2">
           <CheckCircle className="w-6 h-6 text-green-600" />
           <h3 className="text-lg font-semibold text-green-900">
-            {t('returns.success_title', 'Demande créée avec succès')}
+            {t('returns.success_title')}
           </h3>
         </div>
         <p className="text-green-700">
-          {t('returns.success_message', 'Votre demande de retour a été reçue. Vous recevrez une confirmation par email et WhatsApp.')}
+          {t('returns.success_message')}
         </p>
       </div>
     );
@@ -116,88 +133,82 @@ export default function ReturnRequestForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
           <p className="text-red-700">{error}</p>
         </div>
       )}
 
-      {/* Select Items */}
       <div>
-        <label className="block text-sm font-semibold text-gray-900 mb-3">
-          {t('returns.items_to_return', 'Articles à retourner')} *
+        <label className="block text-sm font-semibold text-nubia-black mb-3">
+          {t('returns.items_to_return')} *
         </label>
         <div className="space-y-2">
           {orderItems.map((item) => (
             <label
               key={item.product_id}
-              className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+              className="flex items-center gap-3 p-3 border border-nubia-gold/20 rounded-lg hover:bg-nubia-gold/5 cursor-pointer"
             >
               <input
                 type="checkbox"
                 checked={selectedItems.includes(item.product_id)}
                 onChange={() => handleItemToggle(item.product_id)}
-                className="w-4 h-4 text-gold-600 rounded"
+                className="w-4 h-4 accent-nubia-gold rounded"
               />
               <div className="flex-1">
-                <p className="font-medium text-gray-900">{item.product_name}</p>
-                <p className="text-sm text-gray-600">{t('common.quantity', 'Quantité')}: {item.quantity}</p>
+                <p className="font-medium text-nubia-black">{item.product_name}</p>
+                <p className="text-sm text-nubia-black/60">{t('cart.quantity')}: {item.quantity}</p>
               </div>
             </label>
           ))}
         </div>
       </div>
 
-      {/* Reason */}
       <div>
-        <label htmlFor="reason" className="block text-sm font-semibold text-gray-900 mb-2">
-          {t('returns.return_reason', 'Raison du retour')} *
+        <label htmlFor="reason" className="block text-sm font-semibold text-nubia-black mb-2">
+          {t('returns.return_reason')} *
         </label>
         <select
           id="reason"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent"
+          className="w-full px-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20"
         >
-          <option value="">{t('returns.select_reason', 'Sélectionnez une raison')}</option>
-          <option value="defective">{t('returns.defective_product', 'Produit défectueux')}</option>
-          <option value="not_as_described">{t('returns.not_as_described', 'Produit non conforme à la description')}</option>
-          <option value="wrong_size">{t('returns.wrong_size', 'Mauvaise taille')}</option>
-          <option value="different_color">{t('returns.different_color', 'Couleur différente')}</option>
-          <option value="damaged">{t('returns.damaged_delivery', 'Produit endommagé à la livraison')}</option>
-          <option value="other">{t('returns.other', 'Autre')}</option>
+          <option value="">{t('returns.select_reason')}</option>
+          {reasonOptions.map((option) => (
+            <option key={option} value={option}>
+              {t(`returns.reasons.${option}`)}
+            </option>
+          ))}
         </select>
       </div>
 
-      {/* Comments */}
       <div>
-        <label htmlFor="comments" className="block text-sm font-semibold text-gray-900 mb-2">
-          {t('returns.additional_comments', 'Commentaires supplémentaires')}
+        <label htmlFor="comments" className="block text-sm font-semibold text-nubia-black mb-2">
+          {t('returns.additional_comments')}
         </label>
         <textarea
           id="comments"
           value={comments}
           onChange={(e) => setComments(e.target.value)}
-          placeholder={t('returns.describe_details', 'Décrivez les détails du retour...')}
+          placeholder={t('returns.describe_details')}
           rows={4}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent"
+          className="w-full px-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20"
         />
       </div>
 
-      {/* Submit Button */}
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-gold-600 hover:bg-gold-700 disabled:bg-gray-400 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2"
+        className="w-full bg-nubia-gold hover:bg-nubia-white border-2 border-nubia-gold disabled:opacity-50 text-nubia-black font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2"
       >
         {loading && <Loader className="w-4 h-4 animate-spin" />}
-        {loading ? t('returns.creating', 'Création en cours...') : t('returns.create_request', 'Créer la demande de retour')}
+        {loading ? t('returns.creating') : t('returns.create_request')}
       </button>
 
-      <p className="text-xs text-gray-600 text-center">
-        * {t('common.required_fields', 'Champs obligatoires')}
+      <p className="text-xs text-nubia-black/60 text-center">
+        * {t('common.required_fields')}
       </p>
     </form>
   );

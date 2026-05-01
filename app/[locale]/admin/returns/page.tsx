@@ -23,7 +23,7 @@ interface Return {
 
 export default function AdminReturnsPage() {
   const router = useRouter();
-  const { locale } = useTranslation();
+  const { locale, t } = useTranslation();
   const [returns, setReturns] = useState<Return[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +45,7 @@ export default function AdminReturnsPage() {
       setLoading(true);
       const token = localStorage.getItem('admin_token');
       if (!token) {
-        throw new Error('No admin token found');
+        throw new Error(t('admin.auth.no_token', 'Session admin introuvable'));
       }
 
       const response = await fetch('/api/admin/returns/list', {
@@ -55,7 +55,7 @@ export default function AdminReturnsPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to load returns');
+        throw new Error(t('admin.returns.load_error', 'Impossible de charger les retours'));
       }
 
       const data = await response.json();
@@ -80,7 +80,7 @@ export default function AdminReturnsPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to approve return');
+        throw new Error(t('admin.returns.approve_error', 'Impossible d approuver le retour'));
       }
 
       await loadReturns();
@@ -101,7 +101,7 @@ export default function AdminReturnsPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to reject return');
+        throw new Error(t('admin.returns.reject_error', 'Impossible de rejeter le retour'));
       }
 
       await loadReturns();
@@ -121,9 +121,9 @@ export default function AdminReturnsPage() {
 
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
-      pending: 'En attente',
-      approved: 'Approuvé',
-      rejected: 'Rejeté',
+      pending: t('admin.returns.status.pending', 'En attente'),
+      approved: t('admin.returns.status.approved', 'Approuve'),
+      rejected: t('admin.returns.status.rejected', 'Rejete'),
     };
     return labels[status] || status;
   };
@@ -160,10 +160,10 @@ export default function AdminReturnsPage() {
             </button>
             <div>
               <h1 className="font-playfair text-4xl font-bold text-nubia-black">
-                Gestion des Retours
+                {t('admin.returns.title', 'Gestion des Retours')}
               </h1>
               <p className="text-nubia-black/60 mt-1">
-                Retours dans les 72h après livraison
+                {t('admin.returns.subtitle', 'Retours dans les 72h apres livraison')}
               </p>
             </div>
           </div>
@@ -188,12 +188,12 @@ export default function AdminReturnsPage() {
                 }`}
               >
                 {status === 'all'
-                  ? 'Tous'
+                  ? t('admin.returns.filter_all', 'Tous')
                   : status === 'pending'
-                  ? 'En attente'
+                  ? t('admin.returns.filter_pending', 'En attente')
                   : status === 'approved'
-                  ? 'Approuvés'
-                  : 'Rejetés'}
+                  ? t('admin.returns.filter_approved', 'Approuves')
+                  : t('admin.returns.filter_rejected', 'Rejetes')}
               </button>
             ))}
           </div>
@@ -201,12 +201,12 @@ export default function AdminReturnsPage() {
           {/* Loading */}
           {loading ? (
             <div className="text-center py-12">
-              <p className="text-nubia-black/70">Chargement des retours...</p>
+              <p className="text-nubia-black/70">{t('admin.returns.loading', 'Chargement des retours...')}</p>
             </div>
           ) : filteredReturns.length === 0 ? (
             <div className="text-center py-12 bg-nubia-gold/5 rounded-lg border-2 border-nubia-gold/20">
               <RotateCcw size={48} className="mx-auto text-nubia-gold/40 mb-4" />
-              <p className="text-nubia-black/70">Aucun retour trouvé</p>
+              <p className="text-nubia-black/70">{t('admin.returns.empty', 'Aucun retour trouve')}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -224,7 +224,7 @@ export default function AdminReturnsPage() {
                             {ret.order_number}
                           </p>
                           <p className="text-sm text-nubia-black/60">
-                            Demandé le{' '}
+                            {t('admin.returns.requested_on', 'Demande le')}{' '}
                             {new Date(ret.created_at).toLocaleDateString('fr-FR')}
                           </p>
                         </div>
@@ -233,7 +233,7 @@ export default function AdminReturnsPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                         <div>
                           <p className="text-sm text-nubia-black/60 mb-1">
-                            Raison du retour
+                            {t('admin.returns.reason', 'Raison du retour')}
                           </p>
                           <p className="text-nubia-black">{ret.reason}</p>
                         </div>
@@ -241,7 +241,7 @@ export default function AdminReturnsPage() {
                         {ret.delivered_at && (
                           <div>
                             <p className="text-sm text-nubia-black/60 mb-1">
-                              Livré le
+                              {t('admin.returns.delivered_on', 'Livre le')}
                             </p>
                             <p className="text-nubia-black">
                               {new Date(ret.delivered_at).toLocaleDateString(
@@ -254,7 +254,7 @@ export default function AdminReturnsPage() {
                         {ret.hours_since_delivery !== null && (
                           <div>
                             <p className="text-sm text-nubia-black/60 mb-1">
-                              Temps écoulé depuis la livraison
+                              {t('admin.returns.elapsed_since_delivery', 'Temps ecoule depuis la livraison')}
                             </p>
                             <p className="text-nubia-black">
                               {Math.floor(ret.hours_since_delivery / 24)}j{' '}
@@ -265,7 +265,7 @@ export default function AdminReturnsPage() {
 
                         <div>
                           <p className="text-sm text-nubia-black/60 mb-1">
-                            Statut
+                            {t('admin.returns.status_label', 'Statut')}
                           </p>
                           <span
                             className={`inline-block px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(
@@ -285,13 +285,13 @@ export default function AdminReturnsPage() {
                           onClick={() => handleApprove(ret.id)}
                           className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold whitespace-nowrap"
                         >
-                          Approuver
+                          {t('admin.returns.approve', 'Approuver')}
                         </button>
                         <button
                           onClick={() => handleReject(ret.id)}
                           className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold whitespace-nowrap"
                         >
-                          Rejeter
+                          {t('admin.returns.reject', 'Rejeter')}
                         </button>
                       </div>
                     )}

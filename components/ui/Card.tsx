@@ -1,10 +1,10 @@
 'use client';
 
-import React from 'react';
+import type { ReactNode } from 'react';
 import { clsx } from 'clsx';
 
 export interface CardProps {
-    children: React.ReactNode;
+    children: ReactNode;
     className?: string;
     padding?: 'none' | 'sm' | 'md' | 'lg';
     hover?: boolean;
@@ -45,7 +45,7 @@ export function Card({
 }
 
 export interface CardHeaderProps {
-    children: React.ReactNode;
+    children: ReactNode;
     className?: string;
 }
 
@@ -58,7 +58,7 @@ export function CardHeader({ children, className }: CardHeaderProps) {
 }
 
 export interface CardTitleProps {
-    children: React.ReactNode;
+    children: ReactNode;
     className?: string;
 }
 
@@ -71,7 +71,7 @@ export function CardTitle({ children, className }: CardTitleProps) {
 }
 
 export interface CardDescriptionProps {
-    children: React.ReactNode;
+    children: ReactNode;
     className?: string;
 }
 
@@ -84,7 +84,7 @@ export function CardDescription({ children, className }: CardDescriptionProps) {
 }
 
 export interface CardContentProps {
-    children: React.ReactNode;
+    children: ReactNode;
     className?: string;
 }
 
@@ -93,7 +93,7 @@ export function CardContent({ children, className }: CardContentProps) {
 }
 
 export interface CardFooterProps {
-    children: React.ReactNode;
+    children: ReactNode;
     className?: string;
 }
 

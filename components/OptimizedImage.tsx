@@ -58,7 +58,6 @@ export default function OptimizedImage({
     onError,
 }: OptimizedImageProps) {
     const [hasError, setHasError] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
 
     // Normalize protocol-relative URLs (// -> https://)
     const normalizeImageUrl = (url: string): string => {
@@ -70,38 +69,38 @@ export default function OptimizedImage({
     };
 
     // Fallback image for errors
-    const fallbackSrc = '/images/placeholder.jpg';
+    const fallbackSrc = '/images/logo_nubia_aura.png';
 
     // Normalize the source URL
     const normalizedSrc = normalizeImageUrl(src);
+    const displaySrc = process.env.NEXT_PUBLIC_E2E === '1' || hasError ? fallbackSrc : normalizedSrc;
+    const unoptimized = process.env.NODE_ENV === 'development';
 
     const handleLoad = () => {
-        setIsLoading(false);
         onLoad?.();
     };
 
     const handleError = () => {
         setHasError(true);
-        setIsLoading(false);
         onError?.();
     };
 
     // Build className with loading state
     const imageClassName = `
     ${className}
-    ${isLoading ? 'opacity-0' : 'opacity-100'}
+    opacity-100
     transition-opacity duration-300
   `.trim();
 
     // Common props
     const commonProps = {
-        alt,
         quality,
         priority,
         loading: loading || (priority ? 'eager' : 'lazy'),
         onLoad: handleLoad,
         onError: handleError,
         className: imageClassName,
+        unoptimized,
         ...(placeholder === 'blur' && blurDataURL ? { placeholder, blurDataURL } : {}),
     } as const;
 
@@ -110,7 +109,8 @@ export default function OptimizedImage({
         return (
             <div className="relative w-full h-full">
                 <Image
-                    src={hasError ? fallbackSrc : normalizedSrc}
+                    src={displaySrc}
+                    alt={alt}
                     fill
                     sizes={sizes || '100vw'}
                     style={{ objectFit }}
@@ -124,7 +124,8 @@ export default function OptimizedImage({
     if (width && height) {
         return (
             <Image
-                src={hasError ? fallbackSrc : normalizedSrc}
+                src={displaySrc}
+                alt={alt}
                 width={width}
                 height={height}
                 sizes={sizes}
@@ -138,7 +139,8 @@ export default function OptimizedImage({
     return (
         <div className="relative w-full h-full">
             <Image
-                src={hasError ? fallbackSrc : normalizedSrc}
+                src={displaySrc}
+                alt={alt}
                 fill
                 sizes={sizes || '100vw'}
                 style={{ objectFit }}

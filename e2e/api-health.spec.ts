@@ -36,6 +36,7 @@ test.describe('API Health Checks', () => {
       data: {
         name: 'Test User',
         email: 'test@example.com',
+        subject: 'Playwright health check',
         message: 'Test message from Playwright',
       },
     });

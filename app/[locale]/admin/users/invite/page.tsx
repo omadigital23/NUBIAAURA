@@ -63,7 +63,7 @@ export default function InviteUserPage() {
                         href={`/${locale}/admin/users`}
                         className="px-4 py-2 text-neutral-600 hover:text-neutral-900 transition"
                     >
-                        ← Retour
+                        {t('admin.users.invite.back', 'Retour')}
                     </Link>
                 </div>
 
@@ -80,20 +80,20 @@ export default function InviteUserPage() {
                                 {t('auth.invite_sent', 'Invitation envoyée avec succès')}
                             </h3>
                             <p className="text-neutral-600 mb-6">
-                                L'utilisateur recevra un email avec un lien pour créer son compte.
+                                {t('admin.users.invite.success_desc', "L'utilisateur recevra un email avec un lien pour creer son compte.")}
                             </p>
                             <div className="flex gap-4 justify-center">
                                 <button
                                     onClick={() => setSuccess(false)}
                                     className="px-6 py-2 bg-[#D4AF37] text-black font-semibold rounded-lg hover:bg-[#C4A030] transition"
                                 >
-                                    Inviter un autre utilisateur
+                                    {t('admin.users.invite.invite_another', 'Inviter un autre utilisateur')}
                                 </button>
                                 <Link
                                     href={`/${locale}/admin/users`}
                                     className="px-6 py-2 border border-neutral-300 text-neutral-700 font-medium rounded-lg hover:bg-neutral-50 transition"
                                 >
-                                    Voir les utilisateurs
+                                    {t('admin.users.invite.view_users', 'Voir les utilisateurs')}
                                 </Link>
                             </div>
                         </div>
@@ -191,7 +191,7 @@ export default function InviteUserPage() {
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                         </svg>
-                                        Envoi en cours...
+                                        {t('admin.users.invite.sending', 'Envoi en cours...')}
                                     </span>
                                 ) : (
                                     t('auth.send_invite', 'Envoyer l\'invitation')

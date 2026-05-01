@@ -450,9 +450,15 @@ export function PaymentMethodsSelector({
                 <p className="text-xs text-gray-400 text-center">
                     {t('checkout.secured_by_paydunya', 'Paiements sécurisés par PayDunya')}
                 </p>
-                <div className="flex justify-center gap-4 mt-3 opacity-50">
-                    <img src="/images/payments/visa.svg" alt="Visa" className="h-6" onError={(e) => e.currentTarget.style.display = 'none'} />
-                    <img src="/images/payments/mastercard.svg" alt="Mastercard" className="h-6" onError={(e) => e.currentTarget.style.display = 'none'} />
+                <div className="flex justify-center gap-2 mt-3 opacity-70">
+                    {['Visa', 'Mastercard'].map((label) => (
+                        <span
+                            key={label}
+                            className="rounded border border-gray-200 bg-white px-3 py-1 text-[11px] font-semibold text-gray-600"
+                        >
+                            {label}
+                        </span>
+                    ))}
                 </div>
             </div>
         </div>

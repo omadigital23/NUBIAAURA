@@ -5,7 +5,6 @@ import Footer from '@/components/Footer';
 import { useState, useEffect } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useRouter } from 'next/navigation';
-import { useAuthToken } from '@/hooks/useAuthToken';
 import { Package, Calendar, CreditCard, Truck, Eye, ArrowLeft } from 'lucide-react';
 import { Loader } from 'lucide-react';
 
@@ -36,44 +35,20 @@ interface OrderItem {
 export default function OrdersPage() {
   const { t, locale } = useTranslation();
   const router = useRouter();
-  const { token, isLoading: tokenLoading } = useAuthToken();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Wait for token to be loaded
-    if (tokenLoading) {
-      console.log('[OrdersPage] Waiting for token to load...');
-      return;
-    }
-
-    console.log('[OrdersPage] Token loading complete. Token:', token ? 'present' : 'missing');
-
-    if (token) {
-      console.log('[OrdersPage] Token available, fetching orders');
-      fetchOrders();
-    } else {
-      console.log('[OrdersPage] No token available, redirecting to login');
-      setLoading(false);
-      router.push(`/${locale}/auth/login?callbackUrl=/${locale}/commandes`);
-    }
-  }, [token, tokenLoading, locale]);
+    fetchOrders();
+    // fetchOrders redirects using the initial locale/router for this page mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fetchOrders = async () => {
     try {
       const headers: any = { 'Content-Type': 'application/json' };
-      
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-        console.log('[OrdersPage] Auth header set with token');
-      } else {
-        console.warn('[OrdersPage] No auth token available for fetch');
-        setError(t('orders.error_loading', 'Impossible de charger vos commandes'));
-        setLoading(false);
-        return;
-      }
-      
+
       console.log('[OrdersPage] Fetching orders from /api/orders/list');
       const response = await fetch('/api/orders/list', {
         method: 'GET',
@@ -88,6 +63,10 @@ export default function OrdersPage() {
         console.log('[OrdersPage] Orders received:', data.orders?.length || 0);
         setOrders(data.orders || []);
       } else {
+        if (response.status === 401) {
+          router.push(`/${locale}/auth/login?callbackUrl=/${locale}/commandes`);
+          return;
+        }
         const errorData = await response.json().catch(() => ({}));
         console.error('[OrdersPage] API error:', response.status, errorData);
         setError(t('orders.error_loading', 'Impossible de charger vos commandes'));

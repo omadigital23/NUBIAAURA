@@ -21,6 +21,7 @@ const redis = isRedisConfigured
         token: process.env.UPSTASH_REDIS_REST_TOKEN!,
     })
     : null;
+const enableUpstashAnalytics = process.env.PLAYWRIGHT !== '1';
 
 /**
  * Rate limit configurations for different endpoints
@@ -31,7 +32,7 @@ export const authRateLimit = redis
     ? new Ratelimit({
         redis,
         limiter: Ratelimit.slidingWindow(5, '1 m'), // 5 requests per minute
-        analytics: true,
+        analytics: enableUpstashAnalytics,
         prefix: 'ratelimit:auth',
     })
     : null;
@@ -41,7 +42,7 @@ export const adminRateLimit = redis
     ? new Ratelimit({
         redis,
         limiter: Ratelimit.slidingWindow(3, '1 m'), // 3 requests per minute
-        analytics: true,
+        analytics: enableUpstashAnalytics,
         prefix: 'ratelimit:admin',
     })
     : null;
@@ -51,7 +52,7 @@ export const paymentRateLimit = redis
     ? new Ratelimit({
         redis,
         limiter: Ratelimit.slidingWindow(1, '30 s'), // 1 request per 30 seconds
-        analytics: true,
+        analytics: enableUpstashAnalytics,
         prefix: 'ratelimit:payment',
     })
     : null;
@@ -61,7 +62,7 @@ export const cartRateLimit = redis
     ? new Ratelimit({
         redis,
         limiter: Ratelimit.slidingWindow(10, '1 m'), // 10 requests per minute
-        analytics: true,
+        analytics: enableUpstashAnalytics,
         prefix: 'ratelimit:cart',
     })
     : null;
@@ -71,7 +72,7 @@ export const apiRateLimit = redis
     ? new Ratelimit({
         redis,
         limiter: Ratelimit.slidingWindow(20, '1 m'), // 20 requests per minute
-        analytics: true,
+        analytics: enableUpstashAnalytics,
         prefix: 'ratelimit:api',
     })
     : null;

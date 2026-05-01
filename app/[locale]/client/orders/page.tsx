@@ -43,15 +43,10 @@ export default function OrdersPage() {
   const fetchOrders = async () => {
     try {
       setOrdersLoading(true);
-      const token = localStorage.getItem('sb-auth-token');
       const headers: any = {
         'Content-Type': 'application/json',
       };
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-      
-      console.log('[OrdersPage] Using token from localStorage:', !!token);
+
       const response = await fetch('/api/orders/list', {
         method: 'GET',
         headers,
@@ -61,7 +56,7 @@ export default function OrdersPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Erreur lors du chargement des commandes');
+        throw new Error(t('orders.error_loading', 'Impossible de charger vos commandes'));
       }
 
       const data = await response.json();
@@ -108,10 +103,10 @@ export default function OrdersPage() {
 
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
-      pending: 'En attente',
-      paid: 'Payée',
-      shipped: 'Expédiée',
-      delivered: 'Livrée',
+      pending: t('orders.pending', 'En attente'),
+      paid: t('orders.paid', 'Payee'),
+      shipped: t('orders.status.shipped', 'Expediee'),
+      delivered: t('orders.status.delivered', 'Livree'),
     };
     return labels[status] || status;
   };
@@ -135,7 +130,7 @@ export default function OrdersPage() {
                 {t('nav.my_orders', 'Mes commandes')}
               </h1>
               <p className="text-nubia-black/70">
-                Historique de vos achats
+                {t('orders.subtitle', 'Consultez l historique de vos commandes et suivez leur statut')}
               </p>
             </div>
           </div>
@@ -154,12 +149,12 @@ export default function OrdersPage() {
           ) : orders.length === 0 ? (
             <div className="text-center py-12">
               <Package className="mx-auto mb-4 text-nubia-gold/30" size={48} />
-              <p className="text-nubia-black/70 mb-6">Vous n'avez pas encore de commandes</p>
+              <p className="text-nubia-black/70 mb-6">{t('orders.empty.subtitle', "Vous n'avez pas encore passe de commande. Decouvrez nos produits.")}</p>
               <Link
                 href={`/${locale}/catalogue`}
                 className="inline-block px-6 py-3 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white border-2 border-nubia-gold transition-all"
               >
-                Découvrir le catalogue
+                {t('orders.empty.shop_now', 'Commencer mes achats')}
               </Link>
             </div>
           ) : (
@@ -174,7 +169,7 @@ export default function OrdersPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="font-playfair font-bold text-nubia-black">
-                          Commande #{order.id.slice(0, 8).toUpperCase()}
+                          {t('orders.number', 'Commande')} #{order.id.slice(0, 8).toUpperCase()}
                         </h3>
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(order.status)}`}>
                           {getStatusLabel(order.status)}
@@ -189,7 +184,7 @@ export default function OrdersPage() {
                       </p>
                       {order.delivered_at && (
                         <p className="text-sm text-green-600 font-medium mb-2">
-                          Livrée le {new Date(order.delivered_at).toLocaleDateString('fr-FR', {
+                          {t('orders.delivered_on', 'Livree le')} {new Date(order.delivered_at).toLocaleDateString('fr-FR', {
                             year: 'numeric',
                             month: 'long',
                             day: 'numeric',
@@ -198,7 +193,7 @@ export default function OrdersPage() {
                       )}
                       {!order.delivered_at && order.shipped_at && (
                         <p className="text-sm text-purple-600 font-medium mb-2">
-                          Expédiée le {new Date(order.shipped_at).toLocaleDateString('fr-FR', {
+                          {t('orders.shipped_on', 'Expediee le')} {new Date(order.shipped_at).toLocaleDateString('fr-FR', {
                             year: 'numeric',
                             month: 'long',
                             day: 'numeric',
@@ -206,13 +201,13 @@ export default function OrdersPage() {
                         </p>
                       )}
                       <p className="text-sm text-nubia-black/70">
-                        Livraison: {order.shipping_method === 'standard' ? 'Standard' : 'Express'}
+                        {t('orders.shipping', 'Livraison')}: {order.shipping_method === 'standard' ? t('checkout.shipping.standard', 'Standard') : t('checkout.shipping.express', 'Express')}
                       </p>
                     </div>
 
                     {/* Total */}
                     <div className="text-right">
-                      <p className="text-sm text-nubia-black/70 mb-1">Total</p>
+                      <p className="text-sm text-nubia-black/70 mb-1">{t('orders.total', 'Total')}</p>
                       <p className="font-playfair text-2xl font-bold text-nubia-gold">
                         {Number(order.total).toLocaleString('fr-FR')} {t('common.currency', 'FCFA')}
                       </p>
@@ -223,7 +218,7 @@ export default function OrdersPage() {
                       href={`/${locale}/client/orders/${order.id}`}
                       className="px-6 py-2 border-2 border-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-gold/10 transition-colors text-center"
                     >
-                      Détails
+                      {t('common.details', 'Details')}
                     </Link>
                   </div>
                 </div>

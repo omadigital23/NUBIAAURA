@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: NextRequest) {
     try {
@@ -11,15 +12,24 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        const supabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+        const { data: { user }, error } = await supabase.auth.getUser(token);
+
+        if (error || !user) {
+            return NextResponse.json(
+                { error: 'Invalid token' },
+                { status: 401 }
+            );
+        }
+
         const response = NextResponse.json({ success: true });
 
-        // Set the auth cookie
-        // NOTE: httpOnly is set to false intentionally to allow client-side JavaScript
-        // to access the token for useAuth hook and other client-side auth operations.
-        // This is a trade-off between XSS protection and client-side auth requirements.
-        // Mitigated by: CSP headers, secure flag in production, short token expiry.
+        // Keep the Supabase access token out of client-side JavaScript.
         response.cookies.set('sb-auth-token', token, {
-            httpOnly: false,
+            httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             maxAge: 60 * 60 * 24 * 7, // 7 days

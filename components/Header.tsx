@@ -31,11 +31,11 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-nubia-black text-nubia-gold border-b border-nubia-gold/20 shadow-lg">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 md:h-20 lg:h-24">
           {/* Logo */}
           <Link href={`/${locale}`} className="flex items-center space-x-2 flex-shrink-0">
-            <div className="relative w-[120px] h-12 sm:w-[148px] sm:h-14 md:w-[180px] md:h-16 lg:h-20">
+            <div className="relative w-[96px] h-11 sm:w-[148px] sm:h-14 md:w-[180px] md:h-16 lg:h-20">
               <OptimizedImage
                 src={getProductImageUrl('images/logo.png')}
                 alt="Nubia Aura Logo"
@@ -64,9 +64,9 @@ export default function Header() {
           </nav>
 
           {/* Right Icons */}
-          <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4">
+          <div className="flex items-center gap-0 sm:gap-2 md:gap-4">
             <button
-              className="p-3 text-nubia-gold hover:text-nubia-white transition-colors focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2 focus:ring-offset-nubia-black rounded"
+              className="p-2 sm:p-3 text-nubia-gold hover:text-nubia-white transition-colors focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2 focus:ring-offset-nubia-black rounded"
               aria-label={t('nav.search', 'Rechercher')}
               title={t('nav.search', 'Rechercher')}
             >
@@ -75,7 +75,7 @@ export default function Header() {
             <LanguageSwitcher />
             <Link
               href={`/${locale}/panier`}
-              className="relative p-3 text-nubia-gold hover:text-nubia-white transition-colors focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2 focus:ring-offset-nubia-black rounded"
+              className="relative p-2 sm:p-3 text-nubia-gold hover:text-nubia-white transition-colors focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2 focus:ring-offset-nubia-black rounded"
               aria-label={t('nav.cart', 'Panier') + (cartCount > 0 ? ` (${cartCount} articles)` : '')}
               title={t('nav.cart', 'Panier')}
             >
@@ -94,7 +94,7 @@ export default function Header() {
               ) : (
                 <Link
                   href={`/${locale}/auth/login`}
-                  className="p-3 text-nubia-gold hover:text-nubia-white transition-colors focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2 focus:ring-offset-nubia-black rounded"
+                  className="p-2 sm:p-3 text-nubia-gold hover:text-nubia-white transition-colors focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2 focus:ring-offset-nubia-black rounded"
                   aria-label={t('nav.login', 'Se connecter')}
                   title={t('nav.login', 'Se connecter')}
                 >
@@ -105,7 +105,7 @@ export default function Header() {
 
             {/* Mobile Menu Button */}
             <button
-              className="md:hidden p-3 text-nubia-gold hover:text-nubia-white transition-colors focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2 focus:ring-offset-nubia-black rounded"
+              className="md:hidden p-2 sm:p-3 text-nubia-gold hover:text-nubia-white transition-colors focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2 focus:ring-offset-nubia-black rounded"
               onClick={() => setIsOpen(!isOpen)}
               aria-label={isOpen ? t('nav.close_menu', 'Fermer le menu') : t('nav.open_menu', 'Ouvrir le menu')}
               aria-expanded={isOpen}
@@ -136,4 +136,3 @@ export default function Header() {
     </header>
   );
 }
-

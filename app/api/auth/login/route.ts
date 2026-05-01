@@ -41,11 +41,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse request body
-    const body = await request.json();
+    const body = await readJsonBody(request);
+    if (!body || typeof body !== 'object') {
+      return NextResponse.json(
+        { error: 'Requête invalide' },
+        { status: 400 }
+      );
+    }
 
     // Sanitize and validate input
-    const email = sanitizeEmail(body.email || '');
-    const password = body.password || '';
+    const { email: rawEmail, password: rawPassword } = body as Record<string, unknown>;
+    const email = sanitizeEmail(typeof rawEmail === 'string' ? rawEmail : '');
+    const password = typeof rawPassword === 'string' ? rawPassword : '';
 
     const validation = validateLoginInput(email, password);
     if (!validation.valid) {
@@ -92,7 +99,6 @@ export async function POST(request: NextRequest) {
           id: data.user.id,
           email: data.user.email,
         },
-        token: data.session?.access_token,
       },
       { status: 200 }
     );
@@ -105,7 +111,7 @@ export async function POST(request: NextRequest) {
     // Set cookie
     if (data.session) {
       response.cookies.set('sb-auth-token', data.session.access_token, {
-        httpOnly: false,
+        httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 60 * 60 * 24 * 7, // 7 days
@@ -127,5 +133,13 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     );
+  }
+}
+
+async function readJsonBody(request: NextRequest) {
+  try {
+    return await request.json();
+  } catch {
+    return null;
   }
 }

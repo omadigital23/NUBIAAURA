@@ -13,6 +13,9 @@ export const AddressSchema = z.object({
 
 export const CartItemSchema = z.object({
   product_id: z.string().min(1, 'Product ID is required'),
+  variant_id: z.string().uuid('Invalid variant ID').nullable().optional(),
+  size: z.string().nullable().optional(),
+  color: z.string().nullable().optional(),
   quantity: z.number().int().positive('Quantity must be positive'),
   price: z.number().positive('Price must be positive'),
 });

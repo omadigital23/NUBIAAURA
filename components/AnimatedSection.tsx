@@ -23,99 +23,46 @@ export default function AnimatedSection({
     if (!sectionRef.current) return;
 
     const element = sectionRef.current;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    switch (animation) {
-      case 'fade':
-        gsap.fromTo(
-          element,
-          { opacity: 0, y: 30 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.8,
-            scrollTrigger: {
-              trigger: element,
-              start: 'top 80%',
-              end: 'top 20%',
-              scrub: 0.5,
-            },
-          }
-        );
-        break;
+    if (reduceMotion) return;
 
-      case 'slide-left':
-        gsap.fromTo(
-          element,
-          { opacity: 0, x: -60 },
-          {
-            opacity: 1,
-            x: 0,
-            duration: 0.9,
-            scrollTrigger: {
-              trigger: element,
-              start: 'top 80%',
-              end: 'top 20%',
-              scrub: 0.6,
-            },
-          }
-        );
-        break;
+    const context = gsap.context(() => {
+      const entranceByAnimation = {
+        fade: { opacity: 0, y: 30 },
+        'slide-left': { opacity: 0, x: -60 },
+        'slide-right': { opacity: 0, x: 60 },
+        scale: { opacity: 0, scale: 0.96 },
+      } as const;
 
-      case 'slide-right':
-        gsap.fromTo(
-          element,
-          { opacity: 0, x: 60 },
-          {
-            opacity: 1,
-            x: 0,
-            duration: 0.9,
-            scrollTrigger: {
-              trigger: element,
-              start: 'top 80%',
-              end: 'top 20%',
-              scrub: 0.6,
-            },
-          }
-        );
-        break;
-
-      case 'scale':
-        gsap.fromTo(
-          element,
-          { opacity: 0, scale: 0.85 },
-          {
-            opacity: 1,
-            scale: 1,
-            duration: 0.9,
-            scrollTrigger: {
-              trigger: element,
-              start: 'top 80%',
-              end: 'top 20%',
-              scrub: 0.6,
-            },
-          }
-        );
-        break;
-
-      case 'parallax':
+      if (animation === 'parallax') {
         gsap.to(element, {
-          y: -60,
+          y: -40,
+          ease: 'none',
           scrollTrigger: {
             trigger: element,
             start: 'top bottom',
             end: 'bottom top',
-            scrub: 1,
+            scrub: 0.8,
           },
         });
-        break;
+        return;
+      }
 
-      default:
-        break;
-    }
+      gsap.from(element, {
+        ...(entranceByAnimation[animation] || entranceByAnimation.fade),
+        duration: 0.7,
+        ease: 'power2.out',
+        immediateRender: false,
+        scrollTrigger: {
+          trigger: element,
+          start: 'top 86%',
+          toggleActions: 'play none none none',
+        },
+      });
+    }, element);
 
-    return () => {
-      ScrollTrigger.getAll().forEach((trigger: any) => trigger.kill());
-    };
+    return () => context.revert();
   }, [animation]);
 
   return (

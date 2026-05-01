@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Product, ProductFilters } from '@/lib/types';
 
@@ -10,6 +10,8 @@ export function useProductsFromDB(options?: { category?: string; categories?: st
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const categories = useMemo(() => options?.categories || [], [options?.categories]);
+  const excludeCategories = useMemo(() => options?.excludeCategories || [], [options?.excludeCategories]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -29,13 +31,13 @@ export function useProductsFromDB(options?: { category?: string; categories?: st
           query = query.eq('category', options.category);
         }
 
-        if (options?.categories && options.categories.length > 0) {
-          query = query.in('category', options.categories);
+        if (categories.length > 0) {
+          query = query.in('category', categories);
         }
 
         // Exclure les catégories spécifiées
-        if (options?.excludeCategories && options.excludeCategories.length > 0) {
-          query = query.not('category', 'in', `(${options.excludeCategories.map(c => `"${c}"`).join(',')})`);
+        if (excludeCategories.length > 0) {
+          query = query.not('category', 'in', `(${excludeCategories.map(c => `"${c}"`).join(',')})`);
         }
 
         if (options?.search && options.search.trim().length > 0) {
@@ -87,7 +89,7 @@ export function useProductsFromDB(options?: { category?: string; categories?: st
     };
 
     fetchProducts();
-  }, [options?.category, JSON.stringify(options?.categories || []), options?.search, options?.sort, options?.priceMin, options?.priceMax, JSON.stringify(options?.excludeCategories || [])]);
+  }, [options?.category, categories, options?.search, options?.sort, options?.priceMin, options?.priceMax, excludeCategories]);
 
   return { products, loading, error };
 }
@@ -134,4 +136,3 @@ export function useProductBySlug(slug: string) {
 
   return { product, loading, error };
 }
-

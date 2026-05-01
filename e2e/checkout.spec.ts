@@ -75,7 +75,9 @@ test.describe('Checkout Flow', () => {
     for (const [selector, value] of Object.entries(fields)) {
       const input = page.locator(selector).first();
       if (await input.count() > 0) {
-        await input.fill(value);
+        if (await input.isEditable()) {
+          await input.fill(value);
+        }
       }
     }
 
@@ -88,16 +90,14 @@ test.describe('Checkout Flow', () => {
 
   test('should display order summary', async ({ page }) => {
     // Check if any summary or total is shown
-    const summary = page.locator('[class*="summary"], [class*="total"], text=/total|sous-total|livraison/i').first();
-    if (await summary.count() > 0) {
-      await expect(summary).toBeVisible();
-    }
+    const summaryCount = await page.locator('[class*="summary"], [class*="total"]').count();
+    const summaryTextCount = await page.getByText(/total|sous-total|livraison/i).count();
+    expect(summaryCount + summaryTextCount).toBeGreaterThan(0);
   });
 
   test('should have payment method selection', async ({ page }) => {
-    const paymentSection = page.locator('text=/paiement|payment|mode de paiement/i, [class*="payment"]').first();
-    if (await paymentSection.count() > 0) {
-      await expect(paymentSection).toBeVisible();
-    }
+    const paymentClassCount = await page.locator('[class*="payment"]').count();
+    const paymentTextCount = await page.getByText(/paiement|payment|mode de paiement/i).count();
+    expect(paymentClassCount + paymentTextCount).toBeGreaterThan(0);
   });
 });

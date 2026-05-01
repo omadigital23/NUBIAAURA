@@ -11,7 +11,7 @@ export default function NotFound() {
         <div className="mb-8">
           <h1 className="text-9xl font-playfair font-bold text-nubia-gold mb-4">404</h1>
           <h2 className="text-3xl font-playfair font-bold text-nubia-black mb-2">Page Non Trouvée</h2>
-          <p className="text-gray-600">La page que vous recherchez n'existe pas ou a été supprimée.</p>
+          <p className="text-gray-600">La page que vous recherchez n&apos;existe pas ou a été supprimée.</p>
         </div>
 
         {/* Illustration */}

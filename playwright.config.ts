@@ -38,5 +38,10 @@ export default defineConfig({
     url: 'http://localhost:3000',
     reuseExistingServer: true,
     timeout: 120000,
+    env: {
+      ...process.env,
+      PLAYWRIGHT: '1',
+      NEXT_PUBLIC_E2E: '1',
+    },
   },
 });

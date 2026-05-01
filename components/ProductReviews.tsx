@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/hooks/useAuth';
 import { StarRating } from './StarRating';
@@ -29,6 +30,12 @@ interface ProductReviewsProps {
     productId: string;
 }
 
+function logReviewsWarning(message: string, error: unknown) {
+    if (process.env.NODE_ENV !== 'production') {
+        console.warn(message, error);
+    }
+}
+
 export function ProductReviews({ productId }: ProductReviewsProps) {
     const { t } = useTranslation();
     const { user, isAuthenticated } = useAuth();
@@ -47,11 +54,16 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
     const [submitting, setSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [hasReviewed, setHasReviewed] = useState(false);
+    const titleInputId = `review-title-${productId}`;
+    const commentInputId = `review-comment-${productId}`;
 
     const fetchReviews = useCallback(async (pageNum: number = 1) => {
         try {
             setLoading(true);
             const res = await fetch(`/api/reviews?productId=${productId}&page=${pageNum}&limit=5`);
+            if (!res.ok) {
+                throw new Error(`Reviews request failed with ${res.status}`);
+            }
             const data = await res.json();
 
             if (pageNum === 1) {
@@ -69,7 +81,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
                 setHasReviewed(!!userReview);
             }
         } catch (error) {
-            console.error('Error fetching reviews:', error);
+            logReviewsWarning('Failed to load product reviews:', error);
         } finally {
             setLoading(false);
         }
@@ -87,12 +99,10 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
         setSubmitError(null);
 
         try {
-            const token = localStorage.getItem('sb-auth-token');
             const res = await fetch('/api/reviews', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
                 },
                 credentials: 'include',
                 body: JSON.stringify({
@@ -139,14 +149,23 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
     };
 
     return (
-        <div className="mt-12 border-t border-nubia-gold/20 pt-12">
-            <h2 className="font-playfair text-2xl font-bold text-nubia-black mb-8">
-                {t('reviews.title', 'Avis clients')}
-            </h2>
+        <motion.section
+            className="mt-14 border-t border-nubia-gold/20 pt-12"
+        >
+            <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-nubia-gold">
+                        Nubia Aura
+                    </p>
+                    <h2 className="mt-2 font-playfair text-2xl font-bold text-nubia-black">
+                        {t('reviews.title', 'Avis clients')}
+                    </h2>
+                </div>
+            </div>
 
             {/* Stats Section */}
             {stats && stats.total > 0 && (
-                <div className="flex flex-col sm:flex-row gap-8 mb-8 p-6 bg-nubia-cream/30 rounded-xl">
+                <div className="mb-8 flex flex-col gap-8 rounded-lg border border-nubia-gold/20 bg-nubia-cream/30 p-6 shadow-sm sm:flex-row">
                     {/* Average Rating */}
                     <div className="text-center sm:text-left">
                         <div className="text-5xl font-bold text-nubia-gold mb-2">
@@ -184,7 +203,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
             {/* Write Review Button/Form */}
             <div className="mb-8">
                 {!isAuthenticated ? (
-                    <p className="text-nubia-black/70 text-center py-4 bg-nubia-cream/20 rounded-lg">
+                    <p className="rounded-lg border border-nubia-gold/15 bg-nubia-cream/20 py-4 text-center text-nubia-black/70">
                         {t('reviews.login_required', 'Connectez-vous pour laisser un avis')}
                     </p>
                 ) : hasReviewed ? (
@@ -193,14 +212,15 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
                     </p>
                 ) : !showForm ? (
                     <button
+                        type="button"
                         onClick={() => setShowForm(true)}
-                        className="w-full py-3 border-2 border-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-gold/10 transition-all flex items-center justify-center gap-2"
+                        className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-nubia-gold py-3 font-semibold text-nubia-black transition-all hover:-translate-y-0.5 hover:bg-nubia-gold/10"
                     >
                         <MessageSquare size={20} />
                         {t('reviews.write_review', 'Écrire un avis')}
                     </button>
                 ) : (
-                    <form onSubmit={handleSubmit} className="p-6 bg-nubia-cream/20 rounded-xl space-y-4">
+                    <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-nubia-gold/20 bg-nubia-cream/20 p-6">
                         <h3 className="font-semibold text-lg mb-4">
                             {t('reviews.write_review', 'Écrire un avis')}
                         </h3>
@@ -220,10 +240,11 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
 
                         {/* Title */}
                         <div>
-                            <label className="block text-sm font-medium mb-2">
+                            <label htmlFor={titleInputId} className="block text-sm font-medium mb-2">
                                 {t('reviews.review_title', 'Titre (optionnel)')}
                             </label>
                             <input
+                                id={titleInputId}
                                 type="text"
                                 value={formTitle}
                                 onChange={(e) => setFormTitle(e.target.value)}
@@ -235,10 +256,11 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
 
                         {/* Comment */}
                         <div>
-                            <label className="block text-sm font-medium mb-2">
+                            <label htmlFor={commentInputId} className="block text-sm font-medium mb-2">
                                 {t('reviews.comment', 'Votre avis (optionnel)')}
                             </label>
                             <textarea
+                                id={commentInputId}
                                 value={formComment}
                                 onChange={(e) => setFormComment(e.target.value)}
                                 maxLength={1000}
@@ -249,7 +271,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
                         </div>
 
                         {submitError && (
-                            <p className="text-red-600 text-sm">{submitError}</p>
+                            <p role="alert" className="text-red-600 text-sm">{submitError}</p>
                         )}
 
                         <div className="flex gap-3">
@@ -289,7 +311,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
             ) : (
                 <div className="space-y-6">
                     {reviews.map((review) => (
-                        <div key={review.id} className="border-b border-nubia-gold/10 pb-6 last:border-0">
+                        <div key={review.id} className="rounded-lg border border-nubia-gold/10 bg-white p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-nubia-gold/30 hover:shadow-sm">
                             <div className="flex items-start gap-4">
                                 {/* Avatar */}
                                 <div className="w-10 h-10 rounded-full bg-nubia-gold/20 flex items-center justify-center flex-shrink-0">
@@ -332,6 +354,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
                     {/* Load More */}
                     {hasMore && (
                         <button
+                            type="button"
                             onClick={loadMore}
                             disabled={loading}
                             className="w-full py-3 text-nubia-gold font-medium hover:bg-nubia-gold/10 rounded-lg transition-all flex items-center justify-center gap-2"
@@ -342,7 +365,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
                     )}
                 </div>
             )}
-        </div>
+        </motion.section>
     );
 }
 

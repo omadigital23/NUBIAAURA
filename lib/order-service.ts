@@ -56,6 +56,7 @@ export async function createOrder(
     const orderItems = checkoutData.items.map((item) => ({
       order_id: order.id,
       product_id: item.product_id,
+      variant_id: item.variant_id || null,
       quantity: item.quantity,
       price: item.price,
     }));
@@ -84,16 +85,19 @@ export async function createOrder(
 
       // Réduire le stock de chaque variante
       if (variants && variants.length > 0) {
-        for (const variant of variants) {
-          const newStock = Math.max(0, (variant.stock || 0) - item.quantity);
-          const { error: updateError } = await supabase
-            .from('product_variants')
-            .update({ stock: newStock })
-            .eq('id', variant.id);
+        const variant = variants.find((v) => v.id === item.variant_id);
+        if (!variant) {
+          throw new Error(`Variant selection required for product ${item.product_id}`);
+        }
 
-          if (updateError) {
-            throw new Error(updateError.message || 'Failed to update stock');
-          }
+        const newStock = Math.max(0, (variant.stock || 0) - item.quantity);
+        const { error: updateError } = await supabase
+          .from('product_variants')
+          .update({ stock: newStock })
+          .eq('id', variant.id);
+
+        if (updateError) {
+          throw new Error(updateError.message || 'Failed to update stock');
         }
       }
 
@@ -228,6 +232,7 @@ export async function createCODOrder(
     const orderItems = codData.items.map((item) => ({
       order_id: order.id,
       product_id: item.product_id,
+      variant_id: item.variant_id || null,
       quantity: item.quantity,
       price: item.price,
     }));
@@ -249,13 +254,16 @@ export async function createCODOrder(
         .eq('product_id', item.product_id);
 
       if (variants && variants.length > 0) {
-        for (const variant of variants) {
-          const newStock = Math.max(0, (variant.stock || 0) - item.quantity);
-          await supabase
-            .from('product_variants')
-            .update({ stock: newStock })
-            .eq('id', variant.id);
+        const variant = variants.find((v) => v.id === item.variant_id);
+        if (!variant) {
+          throw new Error(`Variant selection required for product ${item.product_id}`);
         }
+
+        const newStock = Math.max(0, (variant.stock || 0) - item.quantity);
+        await supabase
+          .from('product_variants')
+          .update({ stock: newStock })
+          .eq('id', variant.id);
       }
 
       // Mettre à jour le flag inStock
@@ -314,13 +322,13 @@ export async function createCODOrder(
 /**
  * Vérifie le stock avant de créer une commande
  */
-export async function verifyStock(items: Array<{ product_id: string; quantity: number }>) {
+export async function verifyStock(items: Array<{ product_id: string; variant_id?: string | null; quantity: number }>) {
   const supabase = getSupabaseServerClient();
 
   for (const item of items) {
     const { data: product, error } = await supabase
       .from('products')
-      .select('id, inStock, product_variants(stock)')
+      .select('id, inStock, stock, product_variants(id, stock)')
       .eq('id', item.product_id)
       .single();
 
@@ -332,10 +340,16 @@ export async function verifyStock(items: Array<{ product_id: string; quantity: n
       throw new Error(`Product ${item.product_id} is out of stock`);
     }
 
-    const totalStock = (product.product_variants as any[])?.reduce(
-      (sum, v) => sum + (v.stock || 0),
-      0
-    ) || 0;
+    const variants = (product.product_variants as any[]) || [];
+    if (variants.length > 0 && !item.variant_id) {
+      throw new Error(`Variant selection required for product ${item.product_id}`);
+    }
+
+    const totalStock = variants.length > 0
+      ? Number(variants.find((v) => v.id === item.variant_id)?.stock || 0)
+      : typeof (product as any).stock === 'number'
+        ? (product as any).stock
+        : 0;
 
     if (totalStock < item.quantity) {
       throw new Error(

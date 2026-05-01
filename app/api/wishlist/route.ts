@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabaseAdmin() {
+    return createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+}
+
+function getErrorMessage(error: unknown) {
+    return error instanceof Error ? error.message : 'Erreur serveur';
+}
 
 // GET - Get user's wishlist
 export async function GET(request: NextRequest) {
@@ -15,6 +21,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
         }
 
+        const supabase = getSupabaseAdmin();
         const { data: { user }, error: authError } = await supabase.auth.getUser(token);
         if (authError || !user) {
             return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
@@ -73,9 +80,9 @@ export async function GET(request: NextRequest) {
             count: items?.length || 0
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Wishlist error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
     }
 }
 
@@ -87,6 +94,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
         }
 
+        const supabase = getSupabaseAdmin();
         const { data: { user }, error: authError } = await supabase.auth.getUser(token);
         if (authError || !user) {
             return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
@@ -147,9 +155,9 @@ export async function POST(request: NextRequest) {
             message: 'Ajouté à la liste de souhaits'
         }, { status: 201 });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Wishlist add error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
     }
 }
 
@@ -161,6 +169,7 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
         }
 
+        const supabase = getSupabaseAdmin();
         const { data: { user }, error: authError } = await supabase.auth.getUser(token);
         if (authError || !user) {
             return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
@@ -201,8 +210,8 @@ export async function DELETE(request: NextRequest) {
             message: 'Retiré de la liste de souhaits'
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Wishlist remove error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
     }
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Mail, Phone, Calendar, Eye, CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface ContactSubmission {
     id: string;
@@ -49,6 +50,7 @@ interface NewsletterSubscription {
 }
 
 export default function SubmissionsPage() {
+    const { t, locale } = useTranslation();
     const [activeTab, setActiveTab] = useState<'contact' | 'custom' | 'newsletter'>('contact');
     const [contacts, setContacts] = useState<ContactSubmission[]>([]);
     const [customOrders, setCustomOrders] = useState<CustomOrder[]>([]);
@@ -177,15 +179,15 @@ export default function SubmissionsPage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center gap-4 mb-2">
                         <Link
-                            href="/admin/dashboard"
+                            href={`/${locale}/admin/dashboard`}
                             className="flex items-center gap-2 text-nubia-white/80 hover:text-nubia-gold transition-colors"
                         >
                             <ArrowLeft size={20} />
-                            <span className="text-sm">Retour au Dashboard</span>
+                            <span className="text-sm">{t('admin.submissions.back_dashboard')}</span>
                         </Link>
                     </div>
-                    <h1 className="text-3xl font-bold">Dashboard Admin - Soumissions</h1>
-                    <p className="text-nubia-white/80 mt-2">Gérez vos messages, commandes et abonnés</p>
+                    <h1 className="text-3xl font-bold">{t('admin.submissions.title')}</h1>
+                    <p className="text-nubia-white/80 mt-2">{t('admin.submissions.subtitle')}</p>
                 </div>
             </div>
 
@@ -200,7 +202,7 @@ export default function SubmissionsPage() {
                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                 } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
                         >
-                            📧 Messages de Contact ({contacts.length})
+                            {t('admin.submissions.tabs.contact')} ({contacts.length})
                         </button>
                         <button
                             onClick={() => setActiveTab('custom')}
@@ -209,7 +211,7 @@ export default function SubmissionsPage() {
                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                 } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
                         >
-                            🎨 Commandes Sur-mesure ({customOrders.length})
+                            {t('admin.submissions.tabs.custom')} ({customOrders.length})
                         </button>
                         <button
                             onClick={() => setActiveTab('newsletter')}
@@ -218,7 +220,7 @@ export default function SubmissionsPage() {
                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                 } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
                         >
-                            📬 Newsletter ({newsletters.length})
+                            {t('admin.submissions.tabs.newsletter')} ({newsletters.length})
                         </button>
                     </nav>
                 </div>
@@ -228,7 +230,7 @@ export default function SubmissionsPage() {
                     {loading ? (
                         <div className="text-center py-12">
                             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-nubia-gold"></div>
-                            <p className="mt-4 text-gray-600">Chargement...</p>
+                            <p className="mt-4 text-gray-600">{t('common.loading')}</p>
                         </div>
                     ) : (
                         <>
@@ -237,7 +239,7 @@ export default function SubmissionsPage() {
                                 <div className="grid gap-4">
                                     {contacts.length === 0 ? (
                                         <div className="text-center py-12 bg-white rounded-lg shadow">
-                                            <p className="text-gray-500">Aucun message de contact</p>
+                                            <p className="text-gray-500">{t('admin.submissions.empty.contact')}</p>
                                         </div>
                                     ) : (
                                         contacts.map((contact) => (
@@ -255,7 +257,7 @@ export default function SubmissionsPage() {
                                                             </span>
                                                         </div>
                                                         <p className="text-sm text-gray-600 mb-2">
-                                                            <strong>Sujet:</strong> {contact.subject}
+                                                            <strong>{t('admin.submissions.subject')}</strong> {contact.subject}
                                                         </p>
                                                         <p className="text-sm text-gray-500 line-clamp-2">{contact.message}</p>
                                                         <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
@@ -290,7 +292,7 @@ export default function SubmissionsPage() {
                                 <div className="grid gap-4">
                                     {customOrders.length === 0 ? (
                                         <div className="text-center py-12 bg-white rounded-lg shadow">
-                                            <p className="text-gray-500">Aucune commande sur-mesure</p>
+                                            <p className="text-gray-500">{t('admin.submissions.empty.custom')}</p>
                                         </div>
                                     ) : (
                                         customOrders.map((order) => (
@@ -307,10 +309,10 @@ export default function SubmissionsPage() {
                                                             </span>
                                                         </div>
                                                         <p className="text-sm text-gray-600 mb-2">
-                                                            <strong>Budget:</strong> {order.budget ? `${order.budget.toLocaleString('fr-FR')} FCFA` : 'Non spécifié'}
+                                                            <strong>{t('admin.submissions.budget')}</strong> {order.budget ? `${order.budget.toLocaleString('fr-FR')} FCFA` : t('common.not_specified')}
                                                         </p>
                                                         <p className="text-sm text-gray-500 line-clamp-2">
-                                                            <strong>Préférences:</strong> {order.preferences ? JSON.stringify(order.preferences) : 'Non spécifié'}
+                                                            <strong>{t('admin.submissions.preferences')}</strong> {order.preferences ? JSON.stringify(order.preferences) : t('common.not_specified')}
                                                         </p>
                                                         <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
                                                             <span className="flex items-center gap-1">
@@ -367,16 +369,16 @@ export default function SubmissionsPage() {
                                         <thead className="bg-gray-50">
                                             <tr>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Email
+                                                    {t('auth.email')}
                                                 </th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Nom
+                                                    {t('contact.name_label')}
                                                 </th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Statut
+                                                    {t('admin.submissions.status')}
                                                 </th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Date
+                                                    {t('orders.date')}
                                                 </th>
                                             </tr>
                                         </thead>
@@ -384,7 +386,7 @@ export default function SubmissionsPage() {
                                             {newsletters.length === 0 ? (
                                                 <tr>
                                                     <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
-                                                        Aucun abonné
+                                                        {t('admin.submissions.empty.newsletter')}
                                                     </td>
                                                 </tr>
                                             ) : (
@@ -400,12 +402,12 @@ export default function SubmissionsPage() {
                                                             {sub.subscribed ? (
                                                                 <span className="flex items-center gap-1 text-green-600">
                                                                     <CheckCircle size={16} />
-                                                                    Actif
+                                                                    {t('admin.submissions.active')}
                                                                 </span>
                                                             ) : (
                                                                 <span className="flex items-center gap-1 text-gray-400">
                                                                     <XCircle size={16} />
-                                                                    Désabonné
+                                                                    {t('admin.submissions.unsubscribed')}
                                                                 </span>
                                                             )}
                                                         </td>
@@ -435,7 +437,7 @@ export default function SubmissionsPage() {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-2xl font-bold text-gray-900">Détails</h2>
+                            <h2 className="text-2xl font-bold text-gray-900">{t('common.details')}</h2>
                             <button
                                 onClick={() => setSelectedItem(null)}
                                 className="text-gray-400 hover:text-gray-600"
@@ -448,31 +450,31 @@ export default function SubmissionsPage() {
                             <div className="grid grid-cols-2 gap-4">
                                 {selectedItem.name && (
                                     <div className="border-b pb-2">
-                                        <p className="text-sm font-medium text-gray-500">Nom</p>
+                                        <p className="text-sm font-medium text-gray-500">{t('contact.name_label')}</p>
                                         <p className="text-gray-900 mt-1">{selectedItem.name}</p>
                                     </div>
                                 )}
                                 {selectedItem.email && (
                                     <div className="border-b pb-2">
-                                        <p className="text-sm font-medium text-gray-500">Email</p>
+                                        <p className="text-sm font-medium text-gray-500">{t('auth.email')}</p>
                                         <p className="text-gray-900 mt-1">{selectedItem.email}</p>
                                     </div>
                                 )}
                                 {selectedItem.phone && (
                                     <div className="border-b pb-2">
-                                        <p className="text-sm font-medium text-gray-500">Téléphone</p>
+                                        <p className="text-sm font-medium text-gray-500">{t('contact.phone_label')}</p>
                                         <p className="text-gray-900 mt-1">{selectedItem.phone}</p>
                                     </div>
                                 )}
                                 {selectedItem.type && (
                                     <div className="border-b pb-2">
-                                        <p className="text-sm font-medium text-gray-500">Type</p>
+                                        <p className="text-sm font-medium text-gray-500">{t('admin.submissions.type')}</p>
                                         <p className="text-gray-900 mt-1">{selectedItem.type}</p>
                                     </div>
                                 )}
                                 {selectedItem.status && (
                                     <div className="border-b pb-2">
-                                        <p className="text-sm font-medium text-gray-500">Statut</p>
+                                        <p className="text-sm font-medium text-gray-500">{t('admin.submissions.status')}</p>
                                         <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedItem.status)}`}>
                                             {selectedItem.status}
                                         </span>
@@ -480,13 +482,13 @@ export default function SubmissionsPage() {
                                 )}
                                 {selectedItem.country && (
                                     <div className="border-b pb-2">
-                                        <p className="text-sm font-medium text-gray-500">Pays</p>
+                                        <p className="text-sm font-medium text-gray-500">{t('common.country')}</p>
                                         <p className="text-gray-900 mt-1">{selectedItem.country}</p>
                                     </div>
                                 )}
                                 {selectedItem.budget && (
                                     <div className="border-b pb-2">
-                                        <p className="text-sm font-medium text-gray-500">Budget</p>
+                                        <p className="text-sm font-medium text-gray-500">{t('admin.submissions.budget_label')}</p>
                                         <p className="text-gray-900 mt-1 font-semibold">{selectedItem.budget.toLocaleString('fr-FR')} FCFA</p>
                                     </div>
                                 )}
@@ -495,7 +497,7 @@ export default function SubmissionsPage() {
                             {/* Préférences et Mesures */}
                             {selectedItem.preferences && (
                                 <div className="border-b pb-2">
-                                    <p className="text-sm font-medium text-gray-500 mb-2">Préférences</p>
+                                    <p className="text-sm font-medium text-gray-500 mb-2">{t('admin.submissions.preferences_label')}</p>
                                     <pre className="bg-gray-50 p-3 rounded-lg text-sm overflow-x-auto">
                                         {JSON.stringify(selectedItem.preferences, null, 2)}
                                     </pre>
@@ -503,7 +505,7 @@ export default function SubmissionsPage() {
                             )}
                             {selectedItem.measurements && (
                                 <div className="border-b pb-2">
-                                    <p className="text-sm font-medium text-gray-500 mb-2">Mesures</p>
+                                    <p className="text-sm font-medium text-gray-500 mb-2">{t('admin.submissions.measurements')}</p>
                                     <pre className="bg-gray-50 p-3 rounded-lg text-sm overflow-x-auto">
                                         {JSON.stringify(selectedItem.measurements, null, 2)}
                                     </pre>
@@ -513,7 +515,7 @@ export default function SubmissionsPage() {
                             {/* Image de référence */}
                             {selectedItem.reference_image_url && (
                                 <div className="border-b pb-2">
-                                    <p className="text-sm font-medium text-gray-500 mb-2">Image de référence</p>
+                                    <p className="text-sm font-medium text-gray-500 mb-2">{t('admin.submissions.reference_image')}</p>
                                     <img
                                         src={selectedItem.reference_image_url}
                                         alt="Référence"
@@ -525,41 +527,41 @@ export default function SubmissionsPage() {
                             {/* Informations de livraison (pour commandes sur-mesure) */}
                             {(selectedItem.tracking_number || selectedItem.carrier || selectedItem.shipped_at) && (
                                 <div className="bg-blue-50 p-4 rounded-lg">
-                                    <p className="text-sm font-bold text-blue-800 mb-3">📦 Informations de Livraison</p>
+                                    <p className="text-sm font-bold text-blue-800 mb-3">{t('admin.submissions.delivery_info')}</p>
                                     <div className="grid grid-cols-2 gap-3 text-sm">
                                         {selectedItem.tracking_number && (
                                             <div>
-                                                <span className="text-gray-500">N° Suivi:</span>
+                                                <span className="text-gray-500">{t('admin.submissions.tracking_number')}</span>
                                                 <span className="ml-2 font-mono font-medium">{selectedItem.tracking_number}</span>
                                             </div>
                                         )}
                                         {selectedItem.carrier && (
                                             <div>
-                                                <span className="text-gray-500">Transporteur:</span>
+                                                <span className="text-gray-500">{t('admin.submissions.carrier')}</span>
                                                 <span className="ml-2">{selectedItem.carrier}</span>
                                             </div>
                                         )}
                                         {selectedItem.shipped_at && (
                                             <div>
-                                                <span className="text-gray-500">Expédié le:</span>
+                                                <span className="text-gray-500">{t('admin.submissions.shipped_on')}</span>
                                                 <span className="ml-2">{formatDate(selectedItem.shipped_at)}</span>
                                             </div>
                                         )}
                                         {selectedItem.estimated_delivery_date && (
                                             <div>
-                                                <span className="text-gray-500">Livraison estimée:</span>
+                                                <span className="text-gray-500">{t('admin.submissions.estimated_delivery')}</span>
                                                 <span className="ml-2">{formatDate(selectedItem.estimated_delivery_date)}</span>
                                             </div>
                                         )}
                                         {selectedItem.delivered_at && (
                                             <div>
-                                                <span className="text-gray-500">Livré le:</span>
+                                                <span className="text-gray-500">{t('admin.submissions.delivered_on')}</span>
                                                 <span className="ml-2 text-green-600 font-medium">{formatDate(selectedItem.delivered_at)}</span>
                                             </div>
                                         )}
                                         {selectedItem.delivery_duration_days && (
                                             <div>
-                                                <span className="text-gray-500">Durée prévue:</span>
+                                                <span className="text-gray-500">{t('admin.submissions.delivery_duration')}</span>
                                                 <span className="ml-2">{selectedItem.delivery_duration_days} jours</span>
                                             </div>
                                         )}

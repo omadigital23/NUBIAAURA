@@ -3,10 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks/useTranslation';
-import { supabase } from '@/lib/supabase';
 import { withImageParams } from '@/lib/image-formats';
 import OptimizedImage from '@/components/OptimizedImage';
-import { CUSTOM_ONLY_CATEGORIES } from '@/lib/custom-categories';
 
 type DBProduct = {
   id: string;
@@ -19,7 +17,7 @@ type DBProduct = {
   price: number;
   rating: number | null;
   reviews: number | null;
-  product_images?: Array<{ url: string; alt?: string; position?: number }> | null;
+  product_images?: Array<{ url: string | null; alt?: string | null; position?: number | null }> | null;
 };
 
 export default function FeaturedProducts() {
@@ -29,34 +27,43 @@ export default function FeaturedProducts() {
 
   useEffect(() => {
     let isMounted = true;
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 30000);
+
     async function load() {
       setLoading(true);
-      // ⚠️ Catégories réservées au Sur-Mesure - NE PAS afficher sur homepage
-      const { data } = await supabase
-        .from('products')
-        .select('id, slug, name, name_fr, name_en, image, image_url, price, rating, reviews, category, product_images(url, alt, position)')
-        .eq('inStock', true)
-        .not('category', 'in', `(${CUSTOM_ONLY_CATEGORIES.map(c => `"${c}"`).join(',')})`)
-        .order('rating', { ascending: false, nullsFirst: false })
-        .order('reviews', { ascending: false, nullsFirst: false })
-        .limit(8);
+      try {
+        const response = await fetch('/api/home-products?limit=8&excludeCustomOnly=1', {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
 
-      if (!isMounted) return;
+        if (!response.ok) {
+          throw new Error(`Failed to load featured products: ${response.status}`);
+        }
 
-      // Trier les product_images par position pour chaque produit
-      const sortedData = (data || []).map((product: any) => ({
-        ...product,
-        product_images: product.product_images
-          ? [...product.product_images].sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0))
-          : []
-      }));
-
-      setItems(sortedData);
-      setLoading(false);
+        const payload = (await response.json()) as { products?: DBProduct[] };
+        if (isMounted) {
+          setItems(payload.products || []);
+        }
+      } catch (error) {
+        if (isMounted && !controller.signal.aborted) {
+          console.warn('[FeaturedProducts] Failed to load products:', error);
+          setItems([]);
+        }
+      } finally {
+        window.clearTimeout(timeoutId);
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
     }
+
     load();
     return () => {
       isMounted = false;
+      controller.abort();
+      window.clearTimeout(timeoutId);
     };
   }, []);
 
@@ -93,12 +100,13 @@ export default function FeaturedProducts() {
                 ? p.product_images.find(img => img.position === 0 || img.position === null || p.product_images!.indexOf(img) === 0)?.url
                 : null;
               const imageSrc = mainImage || p.image_url || p.image || '';
+              const rating = Math.max(1, Math.min(5, p.rating ?? 5));
               return (
                 <Link
                   key={p.id}
                   href={`/${locale}/produit/${p.slug}`}
                   className="group border border-nubia-gold/20 rounded-xl overflow-hidden bg-white hover:shadow-2xl hover:border-nubia-gold/60 transition-all duration-300 transform hover:-translate-y-2 block cursor-pointer focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2"
-                  aria-label={`Découvrir ${name}`}
+                  aria-label={`${t('home.discover', 'Découvrir')} ${name}`}
                 >
                   <div className="relative w-full h-96 bg-nubia-cream/30 overflow-hidden">
                     {imageSrc && (
@@ -107,6 +115,8 @@ export default function FeaturedProducts() {
                         alt={name}
                         fill
                         sizes="(max-width: 768px) 50vw, 25vw"
+                        priority
+                        loading="eager"
                         className="group-hover:scale-110 transition-transform duration-500"
                         objectFit="cover"
                       />)
@@ -121,9 +131,9 @@ export default function FeaturedProducts() {
                       <span
                         className="text-nubia-black/60 group-hover:text-nubia-gold transition-colors duration-300"
                         role="img"
-                        aria-label={`${Math.max(1, Math.min(5, p.rating ?? 5))} étoiles sur 5`}
+                        aria-label={locale === 'fr' ? `${rating} étoiles sur 5` : `${rating} stars out of 5`}
                       >
-                        {'⭐'.repeat(Math.max(1, Math.min(5, p.rating ?? 5)))}
+                        {'⭐'.repeat(rating)}
                       </span>
                     </div>
                     <div className="mt-3 inline-block text-nubia-gold hover:text-nubia-black transition-colors group-hover:font-semibold">

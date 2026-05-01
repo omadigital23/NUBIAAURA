@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Award, Crown, Gem, Palette, Sparkles } from 'lucide-react';
 import Header from '@/components/Header';
 import HeroSlider from '@/components/HeroSlider';
 import AnimatedSection from '@/components/AnimatedSection';
@@ -31,7 +31,7 @@ const Footer = dynamic(() => import('@/components/Footer'), {
 });
 
 export default function Home() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
 
   return (
     <div className="min-h-screen bg-nubia-white flex flex-col">
@@ -40,10 +40,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-nubia-white via-nubia-cream to-nubia-white text-nubia-black py-12 md:py-20 lg:py-32 overflow-hidden" aria-label="Section principale">
         {/* Background decoration */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-nubia-gold rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-nubia-gold rounded-full blur-3xl"></div>
-        </div>
+        <div className="absolute inset-0 opacity-[0.05] bg-[linear-gradient(135deg,transparent_0,transparent_45%,#d4af37_45%,#d4af37_46%,transparent_46%,transparent_100%)] bg-[length:28px_28px]" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
@@ -64,7 +61,7 @@ export default function Home() {
 
               <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
                 <Link
-                  href="/catalogue"
+                  href={`/${locale}/catalogue`}
                   className="inline-flex items-center justify-center px-6 md:px-8 py-3 md:py-4 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white transition-all duration-300 transform hover:scale-105 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2"
                   aria-label={t('home.discover_catalog', 'Découvrir le catalogue')}
                 >
@@ -72,7 +69,7 @@ export default function Home() {
                   <ArrowRight className="ml-2" size={18} />
                 </Link>
                 <Link
-                  href="/sur-mesure"
+                  href={`/${locale}/sur-mesure`}
                   className="inline-flex items-center justify-center px-6 md:px-8 py-3 md:py-4 border-2 border-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-gold/10 transition-all duration-300 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2"
                   aria-label={t('home.custom_order', 'Commander sur mesure')}
                 >
@@ -103,7 +100,7 @@ export default function Home() {
                   {t('home.about_description2')}
                 </p>
                 <Link
-                  href="/a-propos"
+                  href={`/${locale}/a-propos`}
                   className="inline-flex items-center px-5 md:px-6 py-2.5 md:py-3 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white transition-all duration-300 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2"
                   aria-label={t('home.learn_more', 'En savoir plus')}
                 >
@@ -112,23 +109,23 @@ export default function Home() {
                 </Link>
               </div>
               <div className="grid grid-cols-2 gap-3 md:gap-4">
-                <AnimatedCard className="bg-nubia-white border border-nubia-gold/20 rounded-lg p-4 md:p-6 text-center">
-                  <div className="text-3xl md:text-4xl mb-2 md:mb-3" aria-hidden="true">✨</div>
+                <AnimatedCard className="bg-nubia-white border border-nubia-gold/20 rounded-lg p-4 md:p-6 text-center transition-all duration-300 hover:-translate-y-1 hover:border-nubia-gold/60 hover:shadow-gold">
+                  <Award className="mx-auto mb-2 md:mb-3 text-nubia-gold" size={34} aria-hidden="true" />
                   <h3 className="font-semibold text-nubia-black mb-1 md:mb-2 text-sm md:text-base">{t('home.quality')}</h3>
                   <p className="text-xs md:text-sm text-nubia-black/80">{t('home.quality_desc')}</p>
                 </AnimatedCard>
-                <AnimatedCard className="bg-nubia-white border border-nubia-gold/20 rounded-lg p-4 md:p-6 text-center">
-                  <div className="text-3xl md:text-4xl mb-2 md:mb-3" aria-hidden="true">🎨</div>
+                <AnimatedCard className="bg-nubia-white border border-nubia-gold/20 rounded-lg p-4 md:p-6 text-center transition-all duration-300 hover:-translate-y-1 hover:border-nubia-gold/60 hover:shadow-gold">
+                  <Palette className="mx-auto mb-2 md:mb-3 text-nubia-gold" size={34} aria-hidden="true" />
                   <h3 className="font-semibold text-nubia-black mb-1 md:mb-2 text-sm md:text-base">{t('home.creativity')}</h3>
                   <p className="text-xs md:text-sm text-nubia-black/80">{t('home.creativity_desc')}</p>
                 </AnimatedCard>
-                <AnimatedCard className="bg-nubia-white border border-nubia-gold/20 rounded-lg p-4 md:p-6 text-center">
-                  <div className="text-3xl md:text-4xl mb-2 md:mb-3" aria-hidden="true">👑</div>
+                <AnimatedCard className="bg-nubia-white border border-nubia-gold/20 rounded-lg p-4 md:p-6 text-center transition-all duration-300 hover:-translate-y-1 hover:border-nubia-gold/60 hover:shadow-gold">
+                  <Crown className="mx-auto mb-2 md:mb-3 text-nubia-gold" size={34} aria-hidden="true" />
                   <h3 className="font-semibold text-nubia-black mb-1 md:mb-2 text-sm md:text-base">{t('home.elegance')}</h3>
                   <p className="text-xs md:text-sm text-nubia-black/80">{t('home.elegance_desc')}</p>
                 </AnimatedCard>
-                <AnimatedCard className="bg-nubia-white border border-nubia-gold/20 rounded-lg p-4 md:p-6 text-center">
-                  <div className="text-3xl md:text-4xl mb-2 md:mb-3" aria-hidden="true">💎</div>
+                <AnimatedCard className="bg-nubia-white border border-nubia-gold/20 rounded-lg p-4 md:p-6 text-center transition-all duration-300 hover:-translate-y-1 hover:border-nubia-gold/60 hover:shadow-gold">
+                  <Gem className="mx-auto mb-2 md:mb-3 text-nubia-gold" size={34} aria-hidden="true" />
                   <h3 className="font-semibold text-nubia-black mb-1 md:mb-2 text-sm md:text-base">{t('home.authenticity')}</h3>
                   <p className="text-xs md:text-sm text-nubia-black/80">{t('home.authenticity_desc')}</p>
                 </AnimatedCard>
@@ -150,14 +147,14 @@ export default function Home() {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
               <Link
-                href="/catalogue"
+                href={`/${locale}/catalogue`}
                 className="inline-flex items-center justify-center px-6 md:px-8 py-3 md:py-4 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white transition-all duration-300 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2"
                 aria-label={t('home.discover_catalog', 'Découvrir le catalogue')}
               >
                 {t('home.discover_catalog')}
               </Link>
               <Link
-                href="/contact"
+                href={`/${locale}/contact`}
                 className="inline-flex items-center justify-center px-6 md:px-8 py-3 md:py-4 border-2 border-nubia-gold text-nubia-white font-semibold rounded-lg hover:bg-nubia-gold/10 transition-all duration-300 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2"
                 aria-label={t('nav.contact', 'Nous contacter')}
               >

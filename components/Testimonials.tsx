@@ -58,7 +58,7 @@ export default function Testimonials() {
                 ))}
               </div>
 
-              <p className="text-nubia-black/80 leading-relaxed italic">"{testimonial.text}"</p>
+              <p className="text-nubia-black/80 leading-relaxed italic">&quot;{testimonial.text}&quot;</p>
             </AnimatedCard>
           ))}
         </div>

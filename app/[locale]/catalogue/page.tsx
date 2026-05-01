@@ -18,6 +18,8 @@ import { SortSelect } from '@/components/SortSelect';
 import OptimizedImage from '@/components/OptimizedImage';
 import { CUSTOM_ONLY_CATEGORIES } from '@/lib/custom-categories';
 
+const DEFAULT_CATALOG_CATEGORIES = ['chemises-wax', 'robes-ville', 'robes-wax', 'super100'];
+
 function CatalogueContent() {
   const { t, locale } = useTranslation();
   const router = useRouter();
@@ -28,7 +30,7 @@ function CatalogueContent() {
   const categories = useMemo(() => (searchParams.get('cat') || '').split(',').filter(Boolean), [searchParams]);
   const priceMin = searchParams.get('min') || '';
   const priceMax = searchParams.get('max') || '';
-  const [allCategories, setAllCategories] = useState<string[]>([]);
+  const [allCategories, setAllCategories] = useState<string[]>(DEFAULT_CATALOG_CATEGORIES);
 
   // Load categories from API
   useEffect(() => {
@@ -46,7 +48,9 @@ function CatalogueContent() {
         if (mounted) {
           // ⚠️ Exclure les catégories réservées au Sur-Mesure
           const filteredCategories = (categories || []).filter((cat: string) => !CUSTOM_ONLY_CATEGORIES.includes(cat as any));
-          setAllCategories(filteredCategories);
+          if (filteredCategories.length > 0) {
+            setAllCategories(filteredCategories);
+          }
         }
       } catch (err) {
         console.error('Failed to load categories:', err);
@@ -69,7 +73,7 @@ function CatalogueContent() {
 
     // Si nous avons des filtres actifs, rediriger vers la page de résultats
     if (search || categories.length || priceMin || priceMax || (sort && sort !== 'rating')) {
-      router.push(`/catalogue/recherche?${params.toString()}`);
+      router.push(`/${locale}/catalogue/recherche?${params.toString()}`);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, sort, categories.join(','), priceMin, priceMax]);
@@ -150,7 +154,7 @@ function CatalogueContent() {
 
             {hasActiveFilters && (
               <Link
-                href="/catalogue"
+                href={`/${locale}/catalogue`}
                 className="mt-4 md:mt-0 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-nubia-black bg-nubia-gold hover:bg-nubia-gold/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-nubia-gold"
               >
                 {t('catalog.clear_filters', 'Effacer les filtres')}
@@ -170,7 +174,7 @@ function CatalogueContent() {
                 <Link
                   key={cat}
                   href={`/${locale}/catalogue/${cat}`}
-                  className="group relative overflow-hidden rounded-xl h-48 cursor-pointer hover:shadow-lg transition-all duration-300 block"
+                  className="group relative overflow-hidden rounded-lg h-48 cursor-pointer hover:shadow-lg transition-all duration-300 block"
                 >
                   {/* Banner Image */}
                   <OptimizedImage
@@ -178,6 +182,7 @@ function CatalogueContent() {
                     alt={t(`categories.${cat}`, cat)}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 200px"
+                    priority
                     className="group-hover:scale-110 transition-transform duration-300"
                     objectFit="cover"
                   />
@@ -199,7 +204,7 @@ function CatalogueContent() {
       )}
 
       {/* Search & Filter Bar */}
-      <section className="bg-nubia-white border-b border-nubia-gold/20 py-4">
+      <section className="bg-nubia-white/95 border-b border-nubia-gold/20 py-4 backdrop-blur supports-[backdrop-filter]:sticky supports-[backdrop-filter]:top-20 supports-[backdrop-filter]:z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             {/* Search */}
@@ -262,6 +267,8 @@ function CatalogueContent() {
                             alt={(locale === 'fr' ? (product as any).name_fr : (product as any).name_en) || product.name}
                             fill
                             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            priority
+                            loading="eager"
                             className="group-hover:scale-110 transition-transform duration-500"
                             objectFit="contain"
                           />
@@ -326,5 +333,3 @@ export default function CataloguePage() {
     </Suspense>
   );
 }
-
-

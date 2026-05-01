@@ -79,6 +79,7 @@ class TrackingService {
    * Track a generic event
    */
   public track(eventData: TrackingEventData) {
+    if (process.env.NEXT_PUBLIC_E2E === '1') return;
     if (!this.isEnabled) return;
 
     const enrichedData: TrackingEventData = {

@@ -62,8 +62,9 @@ test.describe('Authentication', () => {
 
       // Should show error or stay on login page
       const isStillOnLogin = page.url().includes('login') || page.url().includes('auth');
-      const errorMsg = page.locator('[role="alert"], [class*="error"], text=/erreur|error|invalid/i').first();
-      const hasError = await errorMsg.count() > 0;
+      const alertCount = await page.locator('[role="alert"], [class*="error"]').count();
+      const textErrorCount = await page.getByText(/erreur|error|invalid/i).count();
+      const hasError = alertCount > 0 || textErrorCount > 0;
 
       expect(isStillOnLogin || hasError).toBeTruthy();
     }
@@ -86,7 +87,7 @@ test.describe('Authentication', () => {
     await page.goto('/fr/auth/login');
     await page.waitForLoadState('domcontentloaded');
 
-    const signUpLink = page.locator('a:has-text("inscription"), a:has-text("créer"), button:has-text("inscription"), text=/s\'inscrire|créer un compte|signup/i').first();
+    const signUpLink = page.getByRole('link', { name: /inscription|créer un compte|signup/i }).first();
     if (await signUpLink.count() > 0) {
       await expect(signUpLink).toBeVisible();
     }

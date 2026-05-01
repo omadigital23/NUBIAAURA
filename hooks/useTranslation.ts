@@ -7,6 +7,8 @@ import { useMemo } from 'react';
 // Import translations
 import frCommon from '@/locales/fr/common.json';
 import enCommon from '@/locales/en/common.json';
+import frAdmin from '@/locales/fr/admin.json';
+import enAdmin from '@/locales/en/admin.json';
 import frLegal from '@/locales/fr/legal.json';
 import enLegal from '@/locales/en/legal.json';
 import frHome from '@/locales/fr/home.json';
@@ -29,11 +31,81 @@ import frContact from '@/locales/fr/contact.json';
 import enContact from '@/locales/en/contact.json';
 import frThankYou from '@/locales/fr/thank-you.json';
 import enThankYou from '@/locales/en/thank-you.json';
+import frErrors from '@/locales/fr/errors.json';
+import enErrors from '@/locales/en/errors.json';
 
 const merge = (...objs: Record<string, any>[]) => Object.assign({}, ...objs);
+
+const expandFlatKeys = (obj: Record<string, any>) => {
+  const result: Record<string, any> = {};
+
+  Object.entries(obj).forEach(([key, value]) => {
+    if (!key.includes('.')) {
+      result[key] = value;
+      return;
+    }
+
+    const parts = key.split('.');
+    let cursor = result;
+    parts.forEach((part, index) => {
+      if (index === parts.length - 1) {
+        cursor[part] = value;
+        return;
+      }
+      cursor[part] = cursor[part] && typeof cursor[part] === 'object' ? cursor[part] : {};
+      cursor = cursor[part];
+    });
+  });
+
+  return result;
+};
+
+const namespaced = (namespace: string, obj: Record<string, any>) => {
+  const expanded = expandFlatKeys(obj);
+  const nested = expanded[namespace];
+
+  return {
+    ...obj,
+    [namespace]: {
+      ...expanded,
+      ...(nested && typeof nested === 'object' ? nested : {}),
+    },
+  };
+};
+
 const translations: Record<Locale, Record<string, any>> = {
-  fr: merge(frCommon as any, frLegal as any, frHome as any, frCatalog as any, frProduct as any, frCheckout as any, frCallback as any, frCustom as any, frAuth as any, frAbout as any, frContact as any, frThankYou as any),
-  en: merge(enCommon as any, enLegal as any, enHome as any, enCatalog as any, enProduct as any, enCheckout as any, enCallback as any, enCustom as any, enAuth as any, enAbout as any, enContact as any, enThankYou as any),
+  fr: merge(
+    frCommon as any,
+    namespaced('admin', frAdmin as any),
+    namespaced('legal', frLegal as any),
+    namespaced('home', frHome as any),
+    namespaced('catalog', frCatalog as any),
+    namespaced('product', frProduct as any),
+    namespaced('checkout', frCheckout as any),
+    namespaced('callback', frCallback as any),
+    namespaced('custom', frCustom as any),
+    namespaced('auth', frAuth as any),
+    namespaced('about', frAbout as any),
+    namespaced('contact', frContact as any),
+    namespaced('merci', frThankYou as any),
+    namespaced('errors', frErrors as any),
+  ),
+  en: merge(
+    enCommon as any,
+    namespaced('admin', enAdmin as any),
+    namespaced('legal', enLegal as any),
+    namespaced('home', enHome as any),
+    namespaced('catalog', enCatalog as any),
+    namespaced('product', enProduct as any),
+    namespaced('checkout', enCheckout as any),
+    namespaced('callback', enCallback as any),
+    namespaced('custom', enCustom as any),
+    namespaced('auth', enAuth as any),
+    namespaced('about', enAbout as any),
+    namespaced('contact', enContact as any),
+    namespaced('merci', enThankYou as any),
+    namespaced('errors', enErrors as any),
+  ),
 };
 
 export function useTranslation() {

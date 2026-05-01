@@ -272,37 +272,25 @@ function ThankYouContent() {
           </div>
         )}
 
-        {/* Action Buttons - Debug */}
-        <div className="bg-blue-50 p-4 mb-8 rounded-lg border-2 border-blue-200">
-          <h3 className="text-lg font-semibold text-blue-800 mb-4">Boutons de navigation</h3>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button
-              onClick={() => router.push(`/${locale}/commandes`)}
-              className="px-6 py-3 bg-nubia-black text-nubia-white font-semibold rounded-lg hover:bg-nubia-gold hover:text-nubia-black border-2 border-nubia-black transition-all text-center flex-1 sm:flex-none"
-            >
-              {t('merci.view_orders', 'Voir mes commandes')}
-            </button>
-            <button
-              onClick={() => router.push(`/${locale}/catalogue`)}
-              className="px-6 py-3 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white border-2 border-nubia-gold transition-all text-center flex-1 sm:flex-none"
-            >
-              {t('merci.back_to_catalog', 'Retour au Catalogue')}
-            </button>
-            <button
-              onClick={() => router.push(`/${locale}`)}
-              className="px-6 py-3 border-2 border-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-gold/10 transition-all text-center flex-1 sm:flex-none"
-            >
-              {t('merci.back_to_home', "Retour à l'Accueil")}
-            </button>
-          </div>
-          <div className="mt-4 text-sm text-blue-600">
-            <p>Si les boutons ne sont pas visibles, vérifiez :</p>
-            <ul className="list-disc pl-5 mt-2">
-              <li>Les styles CSS sont-ils chargés ?</li>
-              <li>La variable `locale` est-elle définie ?</li>
-              <li>Y a-t-il des erreurs dans la console du navigateur ?</li>
-            </ul>
-          </div>
+        <div className="mb-8 flex flex-col justify-center gap-4 sm:flex-row">
+          <button
+            onClick={() => router.push(`/${locale}/commandes`)}
+            className="px-6 py-3 bg-nubia-black text-nubia-white font-semibold rounded-lg hover:bg-nubia-gold hover:text-nubia-black border-2 border-nubia-black transition-all text-center flex-1 sm:flex-none"
+          >
+            {t('merci.view_orders', 'Voir mes commandes')}
+          </button>
+          <button
+            onClick={() => router.push(`/${locale}/catalogue`)}
+            className="px-6 py-3 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white border-2 border-nubia-gold transition-all text-center flex-1 sm:flex-none"
+          >
+            {t('merci.back_to_catalog', 'Retour au Catalogue')}
+          </button>
+          <button
+            onClick={() => router.push(`/${locale}`)}
+            className="px-6 py-3 border-2 border-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-gold/10 transition-all text-center flex-1 sm:flex-none"
+          >
+            {t('merci.back_to_home', "Retour à l'Accueil")}
+          </button>
         </div>
         
         {/* Additional Info */}

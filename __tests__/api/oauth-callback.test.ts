@@ -1,38 +1,80 @@
-/**
- * Tests for OAuth Callback Route
- */
+import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { NextRequest } from 'next/server';
+
+function callbackRequest(path: string) {
+  return new NextRequest(`http://localhost:3000${path}`);
+}
+
+async function loadCallbackRoute({
+  exchangeCodeForSession = async () => ({
+    data: {
+      session: { access_token: 'oauth-token-123' },
+    },
+    error: null,
+  }),
+}: {
+  exchangeCodeForSession?: () => Promise<{
+    data: { session: { access_token: string } | null };
+    error: { message: string } | null;
+  }>;
+} = {}) {
+  jest.resetModules();
+
+  const exchange = jest.fn(async (_code: string) => exchangeCodeForSession());
+  const createClient = jest.fn(() => ({
+    auth: {
+      exchangeCodeForSession: exchange,
+    },
+  }));
+
+  jest.doMock('@supabase/supabase-js', () => ({ createClient }));
+
+  return {
+    ...(await import('@/app/api/auth/callback/route')),
+    createClient,
+    exchange,
+  };
+}
 
 describe('OAuth Callback API', () => {
-    const baseUrl = process.env.TEST_BASE_URL || 'http://localhost:3000';
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
-    describe('GET /api/auth/callback', () => {
-        it('should redirect to login when no code provided', async () => {
-            const response = await fetch(`${baseUrl}/api/auth/callback`, {
-                redirect: 'manual',
-            });
+  it('redirects to login when no code is provided', async () => {
+    const { GET, createClient } = await loadCallbackRoute();
 
-            expect(response.status).toBe(302);
-            expect(response.headers.get('location')).toContain('/auth/login');
-        });
+    const response = await GET(callbackRequest('/api/auth/callback'));
 
-        it('should handle invalid code gracefully', async () => {
-            const response = await fetch(`${baseUrl}/api/auth/callback?code=invalid-code`, {
-                redirect: 'manual',
-            });
+    expect(response.status).toBe(302);
+    expect(response.headers.get('location')).toBe('http://localhost:3000/fr/auth/login');
+    expect(createClient).not.toHaveBeenCalled();
+  });
 
-            // Should redirect to login with error
-            expect(response.status).toBe(302);
-            const location = response.headers.get('location');
-            expect(location).toContain('/auth/login');
-        });
+  it('sets an HttpOnly cookie and redirects to the next URL after a valid code', async () => {
+    const { GET, exchange } = await loadCallbackRoute();
 
-        it('should preserve next parameter in redirect', async () => {
-            const response = await fetch(
-                `${baseUrl}/api/auth/callback?next=/fr/client/dashboard`,
-                { redirect: 'manual' }
-            );
+    const response = await GET(
+      callbackRequest('/api/auth/callback?code=valid-code&next=/fr/client/dashboard')
+    );
 
-            expect(response.status).toBe(302);
-        });
+    expect(response.status).toBe(302);
+    expect(response.headers.get('location')).toBe('http://localhost:3000/fr/client/dashboard');
+    expect(response.headers.get('set-cookie')).toContain('HttpOnly');
+    expect(exchange).toHaveBeenCalledWith('valid-code');
+  });
+
+  it('redirects to login when Supabase rejects the OAuth code', async () => {
+    const { GET } = await loadCallbackRoute({
+      exchangeCodeForSession: async () => ({
+        data: { session: null },
+        error: { message: 'Invalid code' },
+      }),
     });
+
+    const response = await GET(callbackRequest('/api/auth/callback?code=invalid-code'));
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get('location')).toContain('/fr/auth/login?error=Invalid%20code');
+  });
 });

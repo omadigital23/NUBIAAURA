@@ -42,7 +42,7 @@ interface EditFormData {
 
 export default function AdminProductsPage() {
     const router = useRouter();
-    const { locale } = useTranslation();
+    const { locale, t } = useTranslation();
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -308,7 +308,7 @@ export default function AdminProductsPage() {
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-nubia-gold mx-auto mb-4"></div>
-                    <p className="text-gray-600">Chargement des produits...</p>
+                    <p className="text-gray-600">{t('admin.products.loading_full')}</p>
                 </div>
             </div>
         );
@@ -325,8 +325,11 @@ export default function AdminProductsPage() {
                                 <ArrowLeft size={24} />
                             </Link>
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-900">📦 Mes Produits</h1>
-                                <p className="text-gray-500 text-sm">{products.length} produit(s)</p>
+                                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                                    <Package size={24} className="text-nubia-gold" />
+                                    {t('admin.products.list_title')}
+                                </h1>
+                                <p className="text-gray-500 text-sm">{products.length} {t('admin.products.count_label')}</p>
                             </div>
                         </div>
                         <Link
@@ -334,7 +337,7 @@ export default function AdminProductsPage() {
                             className="flex items-center gap-2 px-4 py-2 bg-nubia-gold text-black font-semibold rounded-lg hover:bg-nubia-gold/90 transition"
                         >
                             <Plus size={20} />
-                            Ajouter un produit
+                            {t('admin.products.add_product')}
                         </Link>
                     </div>
                 </div>
@@ -362,13 +365,13 @@ export default function AdminProductsPage() {
                 {products.length === 0 ? (
                     <div className="text-center py-12 bg-white rounded-lg border">
                         <Package size={48} className="mx-auto text-gray-400 mb-4" />
-                        <p className="text-gray-500 mb-4">Aucun produit pour le moment</p>
+                        <p className="text-gray-500 mb-4">{t('admin.products.empty')}</p>
                         <Link
                             href={`/${locale}/admin/products/new`}
                             className="inline-flex items-center gap-2 px-4 py-2 bg-nubia-gold text-black rounded-lg"
                         >
                             <Plus size={20} />
-                            Ajouter mon premier produit
+                            {t('admin.products.add_first')}
                         </Link>
                     </div>
                 ) : (
@@ -376,11 +379,11 @@ export default function AdminProductsPage() {
                         <table className="w-full">
                             <thead className="bg-gray-50 border-b">
                                 <tr>
-                                    <th className="text-left p-4 font-semibold text-gray-700">Produit</th>
-                                    <th className="text-right p-4 font-semibold text-gray-700">Prix (FCFA)</th>
-                                    <th className="text-center p-4 font-semibold text-gray-700">Stock</th>
-                                    <th className="text-center p-4 font-semibold text-gray-700">Statut</th>
-                                    <th className="text-center p-4 font-semibold text-gray-700">Actions</th>
+                                    <th className="text-left p-4 font-semibold text-gray-700">{t('admin.products.table.product')}</th>
+                                    <th className="text-right p-4 font-semibold text-gray-700">{t('admin.products.table.price_fcfa')}</th>
+                                    <th className="text-center p-4 font-semibold text-gray-700">{t('admin.products.table.stock')}</th>
+                                    <th className="text-center p-4 font-semibold text-gray-700">{t('admin.products.table.status')}</th>
+                                    <th className="text-center p-4 font-semibold text-gray-700">{t('admin.products.table.actions')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -401,7 +404,7 @@ export default function AdminProductsPage() {
                                                 )}
                                                 <div>
                                                     <p className="font-medium text-gray-900">{product.name_fr || product.name}</p>
-                                                    <p className="text-xs text-gray-500">{product.category || 'Sans catégorie'}</p>
+                                                    <p className="text-xs text-gray-500">{product.category || t('admin.products.no_category')}</p>
                                                 </div>
                                             </div>
                                         </td>
@@ -420,7 +423,7 @@ export default function AdminProductsPage() {
                                         <td className="p-4 text-center">
                                             <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${product.inStock ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                                                 }`}>
-                                                {product.inStock ? '✓ En stock' : '✗ Épuisé'}
+                                                {product.inStock ? t('admin.products.in_stock') : t('admin.products.out_of_stock')}
                                             </span>
                                         </td>
                                         <td className="p-4">
@@ -431,13 +434,13 @@ export default function AdminProductsPage() {
                                                             onClick={() => deleteProduct(product.id)}
                                                             className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600"
                                                         >
-                                                            Confirmer
+                                                            {t('common.confirm')}
                                                         </button>
                                                         <button
                                                             onClick={() => setDeleteConfirm(null)}
                                                             className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm hover:bg-gray-400"
                                                         >
-                                                            Annuler
+                                                            {t('common.cancel')}
                                                         </button>
                                                     </>
                                                 ) : (
@@ -469,12 +472,12 @@ export default function AdminProductsPage() {
 
                 {/* Aide */}
                 <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <h3 className="font-semibold text-blue-800 mb-2">💡 Aide rapide</h3>
+                    <h3 className="font-semibold text-blue-800 mb-2">{t('admin.products.help.title')}</h3>
                     <ul className="text-sm text-blue-700 space-y-1">
-                        <li>• <strong>Modifier le stock</strong> : Cliquez sur le nombre dans la colonne "Stock"</li>
-                        <li>• <strong>Modifier un produit</strong> : Cliquez sur ✏️ pour ouvrir le formulaire complet</li>
-                        <li>• <strong>Changer les images</strong> : Dans le formulaire, cliquez sur l'image à changer</li>
-                        <li>• <strong>Supprimer</strong> : Cliquez sur 🗑️ puis confirmez</li>
+                        <li><strong>{t('admin.products.help.stock_title')}</strong>{t('admin.products.help.stock_desc')}</li>
+                        <li><strong>{t('admin.products.help.edit_title')}</strong>{t('admin.products.help.edit_desc')}</li>
+                        <li><strong>{t('admin.products.help.images_title')}</strong>{t('admin.products.help.images_desc')}</li>
+                        <li><strong>{t('admin.products.help.delete_title')}</strong>{t('admin.products.help.delete_desc')}</li>
                     </ul>
                 </div>
             </div>
@@ -485,7 +488,7 @@ export default function AdminProductsPage() {
                     <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         {/* Header modal */}
                         <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-                            <h2 className="text-xl font-bold">✏️ Modifier le produit</h2>
+                            <h2 className="text-xl font-bold">{t('admin.products.edit_title')}</h2>
                             <button onClick={closeEditModal} className="p-2 hover:bg-gray-100 rounded-lg">
                                 <X size={20} />
                             </button>
@@ -494,7 +497,7 @@ export default function AdminProductsPage() {
                         <div className="p-6 space-y-6">
                             {/* Images */}
                             <div>
-                                <label className="block font-semibold mb-3">📸 Images du produit</label>
+                                <label className="block font-semibold mb-3">{t('admin.products.images_title')}</label>
                                 <div className="grid grid-cols-3 gap-4">
                                     {[0, 1, 2].map((position) => (
                                         <div key={position} className="relative">
@@ -529,14 +532,14 @@ export default function AdminProductsPage() {
                                                         ) : (
                                                             <>
                                                                 <ImageIcon size={32} />
-                                                                <span className="text-xs mt-1">Cliquer</span>
+                                                                <span className="text-xs mt-1">{t('admin.products.click_to_upload')}</span>
                                                             </>
                                                         )}
                                                     </div>
                                                 )}
                                             </button>
                                             <p className="text-xs text-center text-gray-500 mt-1">
-                                                {position === 0 ? 'Face' : position === 1 ? 'Dos' : 'Détail'}
+                                                {position === 0 ? t('admin.products.image.front') : position === 1 ? t('admin.products.image.back') : t('admin.products.image.detail')}
                                             </p>
                                         </div>
                                     ))}
@@ -545,56 +548,56 @@ export default function AdminProductsPage() {
 
                             {/* Nom FR */}
                             <div>
-                                <label className="block font-semibold mb-2">🇫🇷 Nom (Français) *</label>
+                                <label className="block font-semibold mb-2">{t('admin.products.form.name_fr_label')}</label>
                                 <input
                                     type="text"
                                     value={editForm.name_fr}
                                     onChange={(e) => setEditForm({ ...editForm, name_fr: e.target.value })}
                                     className="w-full border rounded-lg px-4 py-2 focus:border-nubia-gold focus:outline-none"
-                                    placeholder="Nom du produit en français"
+                                    placeholder={t('admin.products.form.name_fr_placeholder')}
                                 />
                             </div>
 
                             {/* Nom EN */}
                             <div>
-                                <label className="block font-semibold mb-2">🇬🇧 Nom (Anglais)</label>
+                                <label className="block font-semibold mb-2">{t('admin.products.form.name_en_label')}</label>
                                 <input
                                     type="text"
                                     value={editForm.name_en}
                                     onChange={(e) => setEditForm({ ...editForm, name_en: e.target.value })}
                                     className="w-full border rounded-lg px-4 py-2 focus:border-nubia-gold focus:outline-none"
-                                    placeholder="Product name in English"
+                                    placeholder={t('admin.products.form.name_en_placeholder')}
                                 />
                             </div>
 
                             {/* Description FR */}
                             <div>
-                                <label className="block font-semibold mb-2">🇫🇷 Description (Français)</label>
+                                <label className="block font-semibold mb-2">{t('admin.products.form.description_fr_label')}</label>
                                 <textarea
                                     value={editForm.description_fr}
                                     onChange={(e) => setEditForm({ ...editForm, description_fr: e.target.value })}
                                     rows={3}
                                     className="w-full border rounded-lg px-4 py-2 focus:border-nubia-gold focus:outline-none resize-none"
-                                    placeholder="Description du produit en français..."
+                                    placeholder={t('admin.products.form.description_fr_placeholder')}
                                 />
                             </div>
 
                             {/* Description EN */}
                             <div>
-                                <label className="block font-semibold mb-2">🇬🇧 Description (Anglais)</label>
+                                <label className="block font-semibold mb-2">{t('admin.products.form.description_en_label')}</label>
                                 <textarea
                                     value={editForm.description_en}
                                     onChange={(e) => setEditForm({ ...editForm, description_en: e.target.value })}
                                     rows={3}
                                     className="w-full border rounded-lg px-4 py-2 focus:border-nubia-gold focus:outline-none resize-none"
-                                    placeholder="Product description in English..."
+                                    placeholder={t('admin.products.form.description_en_placeholder')}
                                 />
                             </div>
 
                             {/* Prix et Stock */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block font-semibold mb-2">💰 Prix (FCFA)</label>
+                                    <label className="block font-semibold mb-2">{t('admin.products.form.price_label')}</label>
                                     <input
                                         type="number"
                                         value={editForm.price}
@@ -604,7 +607,7 @@ export default function AdminProductsPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block font-semibold mb-2">📦 Stock</label>
+                                    <label className="block font-semibold mb-2">{t('admin.products.form.stock_label')}</label>
                                     <input
                                         type="number"
                                         value={editForm.stock}
@@ -624,7 +627,7 @@ export default function AdminProductsPage() {
                                         onChange={(e) => setEditForm({ ...editForm, inStock: e.target.checked })}
                                         className="w-5 h-5 rounded border-gray-300"
                                     />
-                                    <span className="font-semibold">✓ Produit disponible à la vente</span>
+                                    <span className="font-semibold">{t('admin.products.form.available')}</span>
                                 </label>
                             </div>
                         </div>
@@ -635,7 +638,7 @@ export default function AdminProductsPage() {
                                 onClick={closeEditModal}
                                 className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
                             >
-                                Annuler
+                                {t('common.cancel')}
                             </button>
                             <button
                                 onClick={saveEdit}
@@ -645,12 +648,12 @@ export default function AdminProductsPage() {
                                 {saving ? (
                                     <>
                                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></div>
-                                        Enregistrement...
+                                        {t('common.saving')}
                                     </>
                                 ) : (
                                     <>
                                         <Save size={18} />
-                                        Enregistrer
+                                        {t('common.save')}
                                     </>
                                 )}
                             </button>

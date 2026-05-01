@@ -1,21 +1,21 @@
 'use client';
 
 import Link from 'next/link';
-import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone, MapPin } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
-import { getProductImageUrl } from '@/lib/media';
+import SocialIcon from '@/components/SocialIcon';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const { t, locale } = useTranslation();
 
   const paymentMethods = [
-    { name: 'Visa', src: getProductImageUrl('images/visa.png') },
-    { name: 'Mastercard', src: getProductImageUrl('images/mastercard.png') },
-    { name: 'CMI', src: getProductImageUrl('images/cmi.png') },
-    { name: 'Orange Money', src: getProductImageUrl('images/orange-money.png') },
-    { name: 'Wave', src: getProductImageUrl('images/wave.png') },
-    { name: 'PayPal', src: getProductImageUrl('images/paypal.png') },
+    { name: 'Visa' },
+    { name: 'Mastercard' },
+    { name: 'CMI' },
+    { name: 'Orange Money' },
+    { name: 'Wave' },
+    { name: 'PayPal' },
   ];
 
   return (
@@ -128,16 +128,11 @@ export default function Footer() {
           <div className="text-center mb-6">
             <h3 className="font-playfair text-lg font-bold mb-4 text-nubia-gold">{t('footer.payment_methods', 'Moyens de Paiement')}</h3>
             <p className="text-sm text-nubia-black/85 mb-4">{t('footer.secure_payments', 'Paiements sécurisés via Flutterwave')}</p>
-            <div className="flex flex-wrap justify-center gap-6">
+            <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
               {paymentMethods.map((method) => (
                 <div key={method.name} className="flex flex-col items-center group cursor-pointer">
-                  <div className="w-20 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 border border-nubia-gold/20 p-2 overflow-hidden">
-                    <img
-                      src={method.src}
-                      alt={method.name}
-                      loading="lazy"
-                      className="object-contain w-full h-full"
-                    />
+                  <div className="min-w-20 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-lg transition-all duration-300 border border-nubia-gold/20 px-3">
+                    <span className="text-xs font-bold tracking-wide text-nubia-black">{method.name}</span>
                   </div>
                   <span className="text-xs text-nubia-black/85 mt-2 group-hover:text-nubia-gold transition-colors font-medium">{method.name}</span>
                 </div>
@@ -157,7 +152,7 @@ export default function Footer() {
               aria-label={t('footer.facebook', 'Suivez-nous sur Facebook')}
               title={t('footer.facebook', 'Facebook')}
             >
-              <Facebook size={24} />
+              <SocialIcon name="facebook" size={24} />
             </a>
             <a
               href="https://instagram.com/nubiaaura"
@@ -167,7 +162,7 @@ export default function Footer() {
               aria-label={t('footer.instagram', 'Suivez-nous sur Instagram')}
               title={t('footer.instagram', 'Instagram')}
             >
-              <Instagram size={24} />
+              <SocialIcon name="instagram" size={24} />
             </a>
             <a
               href="https://twitter.com/nubiaaura"
@@ -177,7 +172,7 @@ export default function Footer() {
               aria-label={t('footer.twitter', 'Suivez-nous sur Twitter')}
               title={t('footer.twitter', 'Twitter')}
             >
-              <Twitter size={24} />
+              <SocialIcon name="twitter" size={24} />
             </a>
           </div>
         </div>

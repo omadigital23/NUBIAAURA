@@ -51,6 +51,19 @@
       "cod_failed": "Erreur lors de la création de la commande (COD)",
       "select_payment": "Veuillez choisir un mode de paiement"
     },
+    "empty_cart": "Votre panier est vide",
+    "quantity": "Quantité",
+    "summary": {
+      "subtotal": "Sous-total",
+      "shipping": "Livraison",
+      "tax": "Taxes",
+      "total": "Total",
+      "free": "Gratuit"
+    },
+    "promo": {
+      "invalid": "Code invalide",
+      "validation_error": "Erreur de validation"
+    },
     "order_summary": "Résumé de la Commande"
   },
   "title": "Paiement",

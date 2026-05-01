@@ -36,7 +36,7 @@ interface NewPromoCode {
 
 export default function AdminPromosPage() {
     const router = useRouter();
-    const { locale } = useTranslation();
+    const { locale, t } = useTranslation();
     const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCreateForm, setShowCreateForm] = useState(false);
@@ -64,6 +64,8 @@ export default function AdminPromosPage() {
 
     useEffect(() => {
         loadPromoCodes();
+        // loadPromoCodes is only needed for the initial admin list load.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const loadPromoCodes = async () => {
@@ -141,7 +143,7 @@ export default function AdminPromosPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Êtes-vous sûr de vouloir supprimer ce code promo ?')) return;
+        if (!confirm(t('admin.promos.confirm_delete'))) return;
 
         try {
             const res = await fetch(`/api/admin/promos?id=${id}`, {
@@ -184,8 +186,8 @@ export default function AdminPromosPage() {
                                 <ArrowLeft size={24} />
                             </button>
                             <div>
-                                <h1 className="text-3xl font-bold text-nubia-black">Gestion des Codes Promo</h1>
-                                <p className="text-gray-600 mt-1">Créez et gérez vos codes de réduction</p>
+                                <h1 className="text-3xl font-bold text-nubia-black">{t('admin.promos.title')}</h1>
+                                <p className="text-gray-600 mt-1">{t('admin.promos.subtitle')}</p>
                             </div>
                         </div>
                         <button
@@ -193,7 +195,7 @@ export default function AdminPromosPage() {
                             className="flex items-center gap-2 bg-nubia-gold text-nubia-black px-4 py-2 rounded-lg hover:bg-nubia-gold/90 transition-colors font-medium"
                         >
                             <Plus size={20} />
-                            Nouveau Code
+                            {t('admin.promos.new_code')}
                         </button>
                     </div>
 
@@ -201,7 +203,7 @@ export default function AdminPromosPage() {
                     {error && (
                         <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
                             {error}
-                            <button onClick={() => setError(null)} className="ml-4 underline">Fermer</button>
+                            <button onClick={() => setError(null)} className="ml-4 underline">{t('common.close')}</button>
                         </div>
                     )}
                     {success && (
@@ -215,7 +217,7 @@ export default function AdminPromosPage() {
                         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                             <div className="bg-white rounded-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
                                 <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-xl font-bold">Nouveau Code Promo</h2>
+                                    <h2 className="text-xl font-bold">{t('admin.promos.new_title')}</h2>
                                     <button onClick={() => setShowCreateForm(false)} className="p-2 hover:bg-gray-100 rounded-lg">
                                         <X size={20} />
                                     </button>
@@ -223,7 +225,7 @@ export default function AdminPromosPage() {
 
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Code *</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('admin.promos.form.code')}</label>
                                         <input
                                             type="text"
                                             value={newPromo.code}
@@ -235,18 +237,18 @@ export default function AdminPromosPage() {
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Type de réduction</label>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">{t('admin.promos.form.discount_type')}</label>
                                             <select
                                                 value={newPromo.discount_type}
                                                 onChange={(e) => setNewPromo({ ...newPromo, discount_type: e.target.value as 'percentage' | 'fixed' })}
                                                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-nubia-gold focus:border-transparent"
                                             >
-                                                <option value="percentage">Pourcentage (%)</option>
-                                                <option value="fixed">Montant fixe (FCFA)</option>
+                                                <option value="percentage">{t('admin.promos.form.percentage')}</option>
+                                                <option value="fixed">{t('admin.promos.form.fixed')}</option>
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Valeur *</label>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">{t('admin.promos.form.value')}</label>
                                             <input
                                                 type="number"
                                                 value={newPromo.discount_value}
@@ -258,7 +260,7 @@ export default function AdminPromosPage() {
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Montant min. commande</label>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">{t('admin.promos.form.min_order')}</label>
                                             <input
                                                 type="number"
                                                 value={newPromo.min_order_amount}
@@ -268,7 +270,7 @@ export default function AdminPromosPage() {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Réduction max.</label>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">{t('admin.promos.form.max_discount')}</label>
                                             <input
                                                 type="number"
                                                 value={newPromo.max_discount || ''}
@@ -281,7 +283,7 @@ export default function AdminPromosPage() {
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Utilisations max.</label>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">{t('admin.promos.form.max_uses')}</label>
                                             <input
                                                 type="number"
                                                 value={newPromo.max_uses || ''}
@@ -291,7 +293,7 @@ export default function AdminPromosPage() {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Date d'expiration</label>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">{t('admin.promos.form.expires_at')}</label>
                                             <input
                                                 type="date"
                                                 value={newPromo.valid_until}
@@ -302,7 +304,7 @@ export default function AdminPromosPage() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('admin.promos.form.description')}</label>
                                         <textarea
                                             value={newPromo.description}
                                             onChange={(e) => setNewPromo({ ...newPromo, description: e.target.value })}
@@ -317,14 +319,14 @@ export default function AdminPromosPage() {
                                             onClick={() => setShowCreateForm(false)}
                                             className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                                         >
-                                            Annuler
+                                            {t('common.cancel')}
                                         </button>
                                         <button
                                             onClick={handleCreate}
                                             className="flex items-center gap-2 bg-nubia-gold text-nubia-black px-4 py-2 rounded-lg hover:bg-nubia-gold/90 transition-colors font-medium"
                                         >
                                             <Save size={18} />
-                                            Créer le Code
+                                            {t('admin.promos.create_code')}
                                         </button>
                                     </div>
                                 </div>
@@ -336,26 +338,26 @@ export default function AdminPromosPage() {
                     {loading ? (
                         <div className="text-center py-12">
                             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-nubia-gold"></div>
-                            <p className="mt-4 text-gray-600">Chargement...</p>
+                            <p className="mt-4 text-gray-600">{t('common.loading')}</p>
                         </div>
                     ) : promoCodes.length === 0 ? (
                         <div className="text-center py-12 bg-white rounded-xl shadow-sm">
                             <Percent size={48} className="mx-auto text-gray-400 mb-4" />
-                            <p className="text-gray-500">Aucun code promo</p>
-                            <p className="text-gray-400 text-sm mt-1">Créez votre premier code promo</p>
+                            <p className="text-gray-500">{t('admin.promos.empty')}</p>
+                            <p className="text-gray-400 text-sm mt-1">{t('admin.promos.empty_subtitle')}</p>
                         </div>
                     ) : (
                         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Code</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Réduction</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Conditions</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Utilisations</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Validité</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.promos.table.code')}</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.promos.table.discount')}</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.promos.table.conditions')}</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.promos.table.uses')}</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.promos.table.validity')}</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.promos.table.status')}</th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('admin.promos.table.actions')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
@@ -396,7 +398,7 @@ export default function AdminPromosPage() {
                                                     {promo.valid_until ? formatDate(promo.valid_until) : 'Sans limite'}
                                                 </div>
                                                 {isExpired(promo.valid_until) && (
-                                                    <span className="text-xs text-red-500 font-medium">Expiré</span>
+                                                    <span className="text-xs text-red-500 font-medium">{t('admin.promos.expired')}</span>
                                                 )}
                                             </td>
                                             <td className="px-6 py-4">

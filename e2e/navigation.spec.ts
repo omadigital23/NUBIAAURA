@@ -24,35 +24,31 @@ test.describe('Navigation', () => {
   });
 
   test('should navigate to catalogue page', async ({ page }) => {
-    await page.click('a[href*="catalogue"]');
-    await page.waitForLoadState('domcontentloaded');
-    expect(page.url()).toContain('catalogue');
+    await page.locator('header nav a[href*="catalogue"]').first().click();
+    await expect(page).toHaveURL(/catalogue/);
   });
 
   test('should navigate to contact page', async ({ page }) => {
-    const contactLink = page.locator('a[href*="contact"]').first();
+    const contactLink = page.locator('header nav a[href*="contact"]').first();
     if (await contactLink.count() > 0) {
       await contactLink.click();
-      await page.waitForLoadState('domcontentloaded');
-      expect(page.url()).toContain('contact');
+      await expect(page).toHaveURL(/contact/);
     }
   });
 
   test('should navigate to sur-mesure page', async ({ page }) => {
-    const surMesureLink = page.locator('a[href*="sur-mesure"]').first();
+    const surMesureLink = page.locator('header nav a[href*="sur-mesure"]').first();
     if (await surMesureLink.count() > 0) {
       await surMesureLink.click();
-      await page.waitForLoadState('domcontentloaded');
-      expect(page.url()).toContain('sur-mesure');
+      await expect(page).toHaveURL(/sur-mesure/);
     }
   });
 
   test('should navigate to a-propos page', async ({ page }) => {
-    const aboutLink = page.locator('a[href*="a-propos"]').first();
+    const aboutLink = page.locator('header nav a[href*="a-propos"]').first();
     if (await aboutLink.count() > 0) {
       await aboutLink.click();
-      await page.waitForLoadState('domcontentloaded');
-      expect(page.url()).toContain('a-propos');
+      await expect(page).toHaveURL(/a-propos/);
     }
   });
 
@@ -62,14 +58,13 @@ test.describe('Navigation', () => {
     await page.waitForLoadState('domcontentloaded');
 
     // Look for a menu toggle button (hamburger)
-    const menuButton = page.locator('header button, nav button').first();
+    const menuButton = page.getByRole('button', { name: /ouvrir le menu|open menu/i }).first();
     if (await menuButton.count() > 0) {
       await expect(menuButton).toBeVisible();
       await menuButton.click();
 
       // Menu should expand
-      const mobileNav = page.locator('[role="navigation"], nav, [class*="mobile"], [class*="menu"]');
-      await expect(mobileNav.first()).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('#mobile-navigation')).toBeVisible({ timeout: 5000 });
     }
   });
 });

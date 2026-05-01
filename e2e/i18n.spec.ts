@@ -60,12 +60,12 @@ test.describe('Internationalization (i18n)', () => {
     await page.goto('/fr');
     await page.waitForLoadState('domcontentloaded');
 
-    const langSwitcher = page.locator('a[href*="/en"], button:has-text("EN"), button:has-text("English")').first();
+    const langSwitcher = page.getByRole('button', { name: /changer la langue|change language/i }).first();
     if (await langSwitcher.count() > 0) {
       await langSwitcher.click();
-      await page.waitForLoadState('domcontentloaded');
+      await page.getByRole('button', { name: /english/i }).click();
 
-      expect(page.url()).toContain('/en');
+      await expect(page).toHaveURL(/\/en/);
     }
   });
 

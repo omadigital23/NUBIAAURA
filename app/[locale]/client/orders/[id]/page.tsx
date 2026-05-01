@@ -1,13 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import ReturnEligibilityBanner from '@/components/ReturnEligibilityBanner';
+import ReturnRequestForm from '@/components/ReturnRequestForm';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
-import { ArrowLeft, Loader, AlertCircle, Truck, Package, MapPin } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Loader, MapPin, Package, RotateCcw, Truck } from 'lucide-react';
 
 interface OrderDetail {
   id: string;
@@ -35,15 +37,66 @@ interface OrderDetail {
   }>;
 }
 
+const statusColors: Record<string, string> = {
+  pending: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+  processing: 'bg-blue-50 text-blue-700 border-blue-200',
+  shipped: 'bg-purple-50 text-purple-700 border-purple-200',
+  delivered: 'bg-green-50 text-green-700 border-green-200',
+  cancelled: 'bg-red-50 text-red-700 border-red-200',
+  paid: 'bg-green-50 text-green-700 border-green-200',
+};
+
 export default function OrderDetailPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { t, locale } = useTranslation();
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showReturnForm, setShowReturnForm] = useState(false);
   const router = useRouter();
   const params = useParams();
   const orderId = params.id as string;
+
+  const formatDate = useCallback((date: string, withTime = false) => {
+    return new Date(date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', {
+      weekday: withTime ? 'long' : undefined,
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: withTime ? '2-digit' : undefined,
+      minute: withTime ? '2-digit' : undefined,
+    });
+  }, [locale]);
+
+  const fetchOrder = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/orders/detail/${orderId}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        cache: 'no-store',
+      });
+
+      if (response.status === 401) {
+        router.push(`/${locale}/auth/login?callbackUrl=/${locale}/client/orders/${orderId}`);
+        return;
+      }
+
+      if (!response.ok) {
+        setError(response.status === 404 ? t('orders.not_found') : t('orders.error_loading'));
+        return;
+      }
+
+      const data = await response.json();
+      setOrder(data.order);
+      setError('');
+    } catch (err: any) {
+      setError(err.message || t('orders.error_loading'));
+    } finally {
+      setLoading(false);
+    }
+  }, [orderId, router, locale, t]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -55,79 +108,28 @@ export default function OrderDetailPage() {
     if (isAuthenticated && user && orderId) {
       fetchOrder();
     }
-  }, [isAuthenticated, user, orderId]);
+  }, [isAuthenticated, user, orderId, fetchOrder]);
 
-  const fetchOrder = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('sb-auth-token');
-      const headers: any = {
-        'Content-Type': 'application/json',
-      };
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
+  const orderItemsForReturn = useMemo(() => {
+    return (order?.order_items || []).map((item) => ({
+      product_id: item.product_id,
+      product_name: item.products?.name || t('orders.items.product'),
+      quantity: item.quantity,
+    }));
+  }, [order?.order_items, t]);
 
-      const response = await fetch(`/api/orders/detail/${orderId}`, {
-        method: 'GET',
-        headers,
-        credentials: 'include',
-        cache: 'no-store',
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          setError('Commande non trouvée');
-        } else {
-          setError('Erreur lors du chargement de la commande');
-        }
-        return;
-      }
-
-      const data = await response.json();
-      setOrder(data.order);
-      setError('');
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    const labels: Record<string, string> = {
-      pending: 'En attente',
-      processing: 'En traitement',
-      shipped: 'Expédiée',
-      delivered: 'Livrée',
-      cancelled: 'Annulée',
-      paid: 'Payée',
-    };
-    return labels[status] || status;
-  };
-
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      pending: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-      processing: 'bg-blue-50 text-blue-700 border-blue-200',
-      shipped: 'bg-purple-50 text-purple-700 border-purple-200',
-      delivered: 'bg-green-50 text-green-700 border-green-200',
-      cancelled: 'bg-red-50 text-red-700 border-red-200',
-      paid: 'bg-green-50 text-green-700 border-green-200',
-    };
-    return colors[status] || 'bg-gray-50 text-gray-700 border-gray-200';
-  };
+  const returnDeadlineIsOpen = Boolean(order?.return_deadline && new Date(order.return_deadline) > new Date());
 
   if (isLoading || loading) {
     return (
       <div className="min-h-screen bg-nubia-white flex flex-col">
         <Header />
-        <section className="flex-1 flex items-center justify-center">
+        <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <Loader className="animate-spin text-nubia-gold mx-auto mb-4" size={40} />
-            <p className="text-nubia-black/70">{t('common.loading', 'Chargement...')}</p>
+            <p className="text-nubia-black/70">{t('common.loading')}</p>
           </div>
-        </section>
+        </main>
         <Footer />
       </div>
     );
@@ -137,188 +139,223 @@ export default function OrderDetailPage() {
     return (
       <div className="min-h-screen bg-nubia-white flex flex-col">
         <Header />
-        <section className="flex-1 flex items-center justify-center">
-          <div className="text-center">
+        <main className="flex-1 flex items-center justify-center px-4">
+          <div className="max-w-md rounded-lg border border-red-200 bg-red-50 p-6 text-center">
             <AlertCircle className="text-red-600 mx-auto mb-4" size={40} />
-            <p className="text-red-700 mb-6">{error || t('orders.not_found', 'Commande non trouvée')}</p>
+            <p className="text-red-700 mb-6">{error || t('orders.not_found')}</p>
             <Link
               href={`/${locale}/client/orders`}
-              className="inline-block px-6 py-3 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white border-2 border-nubia-gold transition-all"
+              className="inline-flex items-center justify-center rounded-lg border-2 border-nubia-gold bg-nubia-gold px-6 py-3 font-semibold text-nubia-black transition-all hover:bg-nubia-white"
             >
-              Retour aux commandes
+              {t('orders.back_to_list')}
             </Link>
           </div>
-        </section>
+        </main>
         <Footer />
       </div>
     );
   }
 
+  const statusColor = statusColors[order.status] || 'bg-gray-50 text-gray-700 border-gray-200';
+
   return (
     <div className="min-h-screen bg-nubia-white flex flex-col">
       <Header />
 
-      <section className="flex-1 py-12">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
+      <main className="flex-1 py-10 sm:py-12">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
             <Link
               href={`/${locale}/client/orders`}
-              className="inline-flex items-center gap-2 text-nubia-gold hover:underline mb-4"
+              className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-nubia-gold transition-colors hover:text-nubia-black"
             >
-              <ArrowLeft size={20} />
-              Retour aux commandes
+              <ArrowLeft size={18} />
+              {t('orders.back_to_list')}
             </Link>
-            <div className="flex justify-between items-start">
-              <div>
-                <h1 className="font-playfair text-4xl font-bold text-nubia-black mb-2">
-                  {order.order_number}
-                </h1>
-                <p className="text-nubia-black/70">
-                  {new Date(order.created_at).toLocaleDateString('fr-FR', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </p>
+
+            <div className="rounded-lg border border-nubia-gold/20 bg-nubia-cream/30 p-6 sm:p-8">
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-nubia-gold">
+                    {t('orders.detail.eyebrow')}
+                  </p>
+                  <h1 className="font-playfair text-4xl font-bold text-nubia-black">
+                    {order.order_number}
+                  </h1>
+                  <p className="mt-2 text-nubia-black/70">
+                    {formatDate(order.created_at, true)}
+                  </p>
+                </div>
+                <span className={`inline-flex rounded-full border px-4 py-2 text-sm font-semibold ${statusColor}`}>
+                  {t(`orders.status.${order.status}`, order.status)}
+                </span>
               </div>
-              <span
-                className={`text-sm px-4 py-2 rounded-full border ${getStatusColor(
-                  order.status
-                )}`}
-              >
-                {getStatusLabel(order.status)}
-              </span>
             </div>
           </div>
 
-          {/* Status Timeline */}
-          <div className="bg-nubia-white/50 border border-nubia-gold/20 rounded-lg p-8 mb-8">
-            <h2 className="font-semibold text-nubia-black mb-6">Suivi de la commande</h2>
-            <div className="space-y-4">
-              {order.status === 'pending' && (
-                <div className="flex gap-4">
-                  <Package className="text-yellow-600 flex-shrink-0" size={24} />
-                  <div>
-                    <p className="font-semibold text-nubia-black">En attente de traitement</p>
-                    <p className="text-sm text-nubia-black/70">
-                      Votre commande est en cours de préparation
-                    </p>
-                  </div>
+          <div className="mb-8">
+            <ReturnEligibilityBanner
+              orderId={order.id}
+              onReturnClick={() => setShowReturnForm(true)}
+            />
+          </div>
+
+          {showReturnForm && (
+            <section className="mb-8 rounded-lg border border-nubia-gold/20 bg-nubia-white p-6 sm:p-8">
+              <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 className="font-playfair text-2xl font-bold text-nubia-black">
+                    {t('returns.request.title')}
+                  </h2>
+                  <p className="mt-2 text-sm text-nubia-black/70">
+                    {t('returns.request.subtitle')}
+                  </p>
                 </div>
-              )}
-              {order.status === 'processing' && (
-                <>
+                <button
+                  type="button"
+                  onClick={() => setShowReturnForm(false)}
+                  className="text-sm font-semibold text-nubia-black/60 transition-colors hover:text-nubia-black"
+                >
+                  {t('common.cancel')}
+                </button>
+              </div>
+              <ReturnRequestForm
+                orderId={order.id}
+                orderItems={orderItemsForReturn}
+                onSuccess={() => router.push(`/${locale}/client/returns`)}
+              />
+            </section>
+          )}
+
+          <div className="grid gap-6 lg:grid-cols-[1fr_0.8fr]">
+            <section className="rounded-lg border border-nubia-gold/20 bg-nubia-white p-6 sm:p-8">
+              <h2 className="font-playfair text-2xl font-bold text-nubia-black">
+                {t('orders.timeline.title')}
+              </h2>
+              <div className="mt-6 space-y-5">
+                {order.status === 'pending' && (
+                  <div className="flex gap-4">
+                    <Package className="text-yellow-600 flex-shrink-0" size={24} />
+                    <div>
+                      <p className="font-semibold text-nubia-black">{t('orders.timeline.pending_title')}</p>
+                      <p className="text-sm text-nubia-black/70">{t('orders.timeline.preparing_desc')}</p>
+                    </div>
+                  </div>
+                )}
+
+                {order.status === 'processing' && (
                   <div className="flex gap-4">
                     <Package className="text-blue-600 flex-shrink-0" size={24} />
                     <div className="flex-1">
-                      <p className="font-semibold text-nubia-black">En traitement</p>
-                      <p className="text-sm text-nubia-black/70">
-                        Votre commande est en cours de préparation
-                      </p>
+                      <p className="font-semibold text-nubia-black">{t('orders.timeline.processing_title')}</p>
+                      <p className="text-sm text-nubia-black/70">{t('orders.timeline.preparing_desc')}</p>
+                      {order.estimated_delivery_date && (
+                        <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+                          <p className="text-sm font-semibold text-blue-900">
+                            {t('orders.timeline.estimated_in')} {order.delivery_duration_days} {t(order.delivery_duration_days > 1 ? 'common.days' : 'common.day')}
+                          </p>
+                          <p className="mt-1 text-sm text-blue-700">
+                            {t('orders.timeline.expected_date')} {formatDate(order.estimated_delivery_date)}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  {order.estimated_delivery_date && (
-                    <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                      <p className="text-sm font-semibold text-blue-900">
-                        📦 Livraison estimée dans {order.delivery_duration_days} jour{order.delivery_duration_days > 1 ? 's' : ''}
-                      </p>
-                      <p className="text-sm text-blue-700 mt-1">
-                        Date prévue : {new Date(order.estimated_delivery_date).toLocaleDateString('fr-FR', {
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </p>
-                    </div>
-                  )}
-                </>
-              )}
-              {['shipped', 'delivered'].includes(order.status) && (
-                <>
+                )}
+
+                {['shipped', 'delivered'].includes(order.status) && (
                   <div className="flex gap-4">
                     <Truck className="text-purple-600 flex-shrink-0" size={24} />
                     <div className="flex-1">
-                      <p className="font-semibold text-nubia-black">Expédiée</p>
+                      <p className="font-semibold text-nubia-black">{t('orders.timeline.shipped_title')}</p>
                       {order.tracking_number && (
                         <p className="text-sm text-nubia-black/70">
-                          Numéro de suivi: {order.tracking_number}
+                          {t('orders.tracking')}: {order.tracking_number}
                         </p>
                       )}
                       {order.estimated_delivery_date && (
                         <p className="text-sm text-nubia-black/70">
-                          Livraison estimée:{' '}
-                          {new Date(order.estimated_delivery_date).toLocaleDateString('fr-FR')}
+                          {t('orders.estimated')} {formatDate(order.estimated_delivery_date)}
                         </p>
                       )}
                     </div>
                   </div>
-                </>
-              )}
-              {order.status === 'delivered' && (
-                <>
+                )}
+
+                {order.status === 'delivered' && (
                   <div className="flex gap-4">
                     <Package className="text-green-600 flex-shrink-0" size={24} />
                     <div className="flex-1">
-                      <p className="font-semibold text-nubia-black">Livrée</p>
-                      <p className="text-sm text-nubia-black/70">
-                        Votre commande a été livrée avec succès
-                      </p>
-                    </div>
-                  </div>
-                  {order.return_deadline && (
-                    <div className={`mt-4 p-4 rounded-lg border ${new Date(order.return_deadline) > new Date()
-                        ? 'bg-green-50 border-green-200'
-                        : 'bg-red-50 border-red-200'
-                      }`}>
-                      <p className={`text-sm font-semibold ${new Date(order.return_deadline) > new Date()
-                          ? 'text-green-900'
-                          : 'text-red-900'
-                        }`}>
-                        🔄 Retour possible jusqu'au
-                      </p>
-                      <p className={`text-sm mt-1 ${new Date(order.return_deadline) > new Date()
-                          ? 'text-green-700'
-                          : 'text-red-700'
-                        }`}>
-                        {new Date(order.return_deadline).toLocaleDateString('fr-FR', {
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </p>
-                      {new Date(order.return_deadline) > new Date() ? (
-                        <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
-                          ✅ Vous pouvez encore demander un retour
-                        </p>
-                      ) : (
-                        <p className="text-xs text-red-600 mt-2 flex items-center gap-1">
-                          ❌ Délai de retour expiré
-                        </p>
+                      <p className="font-semibold text-nubia-black">{t('orders.timeline.delivered_title')}</p>
+                      <p className="text-sm text-nubia-black/70">{t('orders.timeline.delivered_desc')}</p>
+                      {order.return_deadline && (
+                        <div className={`mt-4 rounded-lg border p-4 ${returnDeadlineIsOpen ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                          <p className={`text-sm font-semibold ${returnDeadlineIsOpen ? 'text-green-900' : 'text-red-900'}`}>
+                            {t('orders.timeline.return_until')}
+                          </p>
+                          <p className={`mt-1 text-sm ${returnDeadlineIsOpen ? 'text-green-700' : 'text-red-700'}`}>
+                            {formatDate(order.return_deadline)}
+                          </p>
+                          <p className={`mt-2 text-xs ${returnDeadlineIsOpen ? 'text-green-600' : 'text-red-600'}`}>
+                            {returnDeadlineIsOpen ? t('orders.timeline.return_available') : t('orders.timeline.return_expired')}
+                          </p>
+                        </div>
                       )}
                     </div>
-                  )}
-                </>
-              )}
-            </div>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <aside className="space-y-6">
+              <section className="rounded-lg border border-nubia-gold/20 bg-nubia-white p-6 sm:p-8">
+                <h2 className="font-playfair text-2xl font-bold text-nubia-black">
+                  {t('orders.summary')}
+                </h2>
+                <div className="mt-5 space-y-3">
+                  <div className="flex justify-between text-nubia-black/70">
+                    <span>{t('orders.subtotal')}</span>
+                    <span>{order.total.toLocaleString('fr-FR')} FCFA</span>
+                  </div>
+                  <div className="flex justify-between text-nubia-black/70">
+                    <span>{t('orders.shipping')}</span>
+                    <span>{order.shipping_method === 'express' ? t('checkout.shipping.express') : t('checkout.shipping.standard')}</span>
+                  </div>
+                  <div className="border-t border-nubia-gold/20 pt-3 flex justify-between font-bold">
+                    <span>{t('orders.total')}</span>
+                    <span className="text-lg text-nubia-gold">{order.total.toLocaleString('fr-FR')} FCFA</span>
+                  </div>
+                </div>
+              </section>
+
+              <section className="rounded-lg border border-nubia-gold/20 bg-nubia-white p-6 sm:p-8">
+                <h2 className="font-playfair text-2xl font-bold text-nubia-black flex items-center gap-2">
+                  <MapPin size={20} className="text-nubia-gold" />
+                  {t('orders.shipping_address')}
+                </h2>
+                <div className="mt-5 space-y-2 text-nubia-black/70">
+                  <p>{order.shipping_address?.firstName} {order.shipping_address?.lastName}</p>
+                  <p>{order.shipping_address?.address}</p>
+                  <p>{order.shipping_address?.zipCode} {order.shipping_address?.city}</p>
+                  <p>{order.shipping_address?.country}</p>
+                </div>
+              </section>
+            </aside>
           </div>
 
-          {/* Items */}
-          <div className="bg-nubia-white/50 border border-nubia-gold/20 rounded-lg p-8 mb-8">
-            <h2 className="font-semibold text-nubia-black mb-6">Articles commandés</h2>
-            <div className="space-y-4">
+          <section className="mt-8 rounded-lg border border-nubia-gold/20 bg-nubia-white p-6 sm:p-8">
+            <h2 className="font-playfair text-2xl font-bold text-nubia-black">
+              {t('orders.items.title')}
+            </h2>
+            <div className="mt-6 space-y-4">
               {order.order_items.map((item) => (
-                <div key={item.id} className="flex justify-between items-center pb-4 border-b border-nubia-gold/10 last:border-0">
+                <div key={item.id} className="flex justify-between gap-4 border-b border-nubia-gold/10 pb-4 last:border-0 last:pb-0">
                   <div className="flex-1">
                     <p className="font-semibold text-nubia-black">
-                      {item.products?.name || 'Produit'}
+                      {item.products?.name || t('orders.items.product')}
                     </p>
                     <p className="text-sm text-nubia-black/70">
-                      Quantité: {item.quantity}
+                      {t('cart.quantity')}: {item.quantity}
                     </p>
                   </div>
                   <p className="font-bold text-nubia-gold">
@@ -327,59 +364,25 @@ export default function OrderDetailPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </section>
 
-          {/* Shipping Address */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            <div className="bg-nubia-white/50 border border-nubia-gold/20 rounded-lg p-8">
-              <h2 className="font-semibold text-nubia-black mb-4 flex items-center gap-2">
-                <MapPin size={20} className="text-nubia-gold" />
-                Adresse de livraison
-              </h2>
-              <div className="space-y-2 text-nubia-black/70">
-                <p>{order.shipping_address?.firstName} {order.shipping_address?.lastName}</p>
-                <p>{order.shipping_address?.address}</p>
-                <p>
-                  {order.shipping_address?.zipCode} {order.shipping_address?.city}
-                </p>
-                <p>{order.shipping_address?.country}</p>
-              </div>
-            </div>
-
-            <div className="bg-nubia-white/50 border border-nubia-gold/20 rounded-lg p-8">
-              <h2 className="font-semibold text-nubia-black mb-4">Résumé</h2>
-              <div className="space-y-3">
-                <div className="flex justify-between text-nubia-black/70">
-                  <span>Sous-total</span>
-                  <span>{order.total.toLocaleString('fr-FR')} FCFA</span>
-                </div>
-                <div className="flex justify-between text-nubia-black/70">
-                  <span>Livraison</span>
-                  <span>
-                    {order.shipping_method === 'express' ? 'Express (15 000 FCFA)' : 'Standard (Gratuit)'}
-                  </span>
-                </div>
-                <div className="pt-3 border-t border-nubia-gold/20 flex justify-between font-bold">
-                  <span>Total</span>
-                  <span className="text-nubia-gold text-lg">
-                    {order.total.toLocaleString('fr-FR')} FCFA
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-4">
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
             <Link
               href={`/${locale}/client/orders`}
-              className="flex-1 py-3 border-2 border-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-gold/10 transition-all text-center"
+              className="inline-flex items-center justify-center rounded-lg border-2 border-nubia-gold px-6 py-3 font-semibold text-nubia-black transition-all hover:bg-nubia-gold/10"
             >
-              Retour aux commandes
+              {t('orders.back_to_list')}
+            </Link>
+            <Link
+              href={`/${locale}/client/returns`}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-nubia-gold bg-nubia-gold px-6 py-3 font-semibold text-nubia-black transition-all hover:bg-nubia-white"
+            >
+              <RotateCcw size={18} />
+              {t('returns.title')}
             </Link>
           </div>
         </div>
-      </section>
+      </main>
 
       <Footer />
     </div>

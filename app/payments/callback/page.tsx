@@ -24,6 +24,11 @@ function PaymentCallbackContent() {
 
   // Refresh Supabase session after cross-domain redirect from PayDunya
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_E2E === '1') {
+      setSessionRefreshed(true);
+      return;
+    }
+
     const refreshSession = async () => {
       try {
         console.log('[Payment Callback] Refreshing session after PayDunya redirect...');

@@ -1,5 +1,5 @@
 import type { Config } from 'jest';
-import nextJest from 'next/jest';
+import nextJest from 'next/jest.js';
 
 const createJestConfig = nextJest({
     // Path to your Next.js app
@@ -21,8 +21,13 @@ const customJestConfig: Config = {
 
     // Test match patterns
     testMatch: [
-        '**/__tests__/**/*.+(ts|tsx|js)',
-        '**/?(*.)+(spec|test).+(ts|tsx|js)',
+        '<rootDir>/__tests__/**/*.+(ts|tsx|js)',
+    ],
+
+    testPathIgnorePatterns: [
+        '<rootDir>/e2e/',
+        '<rootDir>/node_modules/',
+        '<rootDir>/.next/',
     ],
 
     // Coverage settings

@@ -1,12 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
 import { withImageParams } from '@/lib/image-formats';
 import OptimizedImage from '@/components/OptimizedImage';
+
+type ProductImage = {
+  url: string | null;
+  alt?: string | null;
+  position?: number | null;
+};
 
 type DBProduct = {
   id: string;
@@ -18,7 +23,13 @@ type DBProduct = {
   image_url: string | null;
   price: number;
   rating: number | null;
+  product_images?: ProductImage[] | null;
 };
+
+function getPrimaryProductImage(product?: DBProduct) {
+  const imageFromGallery = product?.product_images?.find((image) => Boolean(image.url))?.url;
+  return imageFromGallery || product?.image_url || product?.image || '';
+}
 
 export default function HeroSlider() {
   const { t, locale } = useTranslation();
@@ -26,54 +37,61 @@ export default function HeroSlider() {
   const [isAutoPlay, setIsAutoPlay] = useState(true);
   const [items, setItems] = useState<DBProduct[]>([]);
   const [loading, setLoading] = useState(true);
-  const HERO_SLUGS = (process.env.NEXT_PUBLIC_HERO_SLUGS || '')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
+  const heroSlugs = useMemo(
+    () =>
+      (process.env.NEXT_PUBLIC_HERO_SLUGS || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+    []
+  );
 
   useEffect(() => {
     let isMounted = true;
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 30000);
+
     async function load() {
       setLoading(true);
-      let data: DBProduct[] | null = null;
-      let error: any = null;
-
       try {
-        const base = supabase
-          .from('products')
-          .select('id, slug, name, name_fr, name_en, image, image_url, price, rating');
-
-        if (HERO_SLUGS.length > 0) {
-          const { data: d, error: e } = await base.in('slug', HERO_SLUGS).limit(5);
-          data = d as any;
-          error = e;
-          // Preserve the order defined in HERO_SLUGS
-          if (data) {
-            const orderMap = new Map(HERO_SLUGS.map((s, i) => [s, i] as const));
-            data.sort((a: any, b: any) => (orderMap.get(a.slug) ?? 999) - (orderMap.get(b.slug) ?? 999));
-          }
-        } else {
-          const { data: d, error: e } = await base
-            .eq('inStock', true)
-            .order('rating', { ascending: false, nullsFirst: false })
-            .limit(5);
-          data = d as any;
-          error = e;
+        const params = new URLSearchParams({ limit: '5' });
+        if (heroSlugs.length > 0) {
+          params.set('slugs', heroSlugs.join(','));
         }
-      } catch (e: any) {
-        error = e;
-      }
 
-      if (!isMounted) return;
-      if (error) setItems([]);
-      else setItems(data || []);
-      setLoading(false);
+        const response = await fetch(`/api/home-products?${params.toString()}`, {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to load hero products: ${response.status}`);
+        }
+
+        const payload = (await response.json()) as { products?: DBProduct[] };
+        if (isMounted) {
+          setItems(payload.products || []);
+        }
+      } catch (error) {
+        if (isMounted && !controller.signal.aborted) {
+          console.warn('[HeroSlider] Failed to load products:', error);
+          setItems([]);
+        }
+      } finally {
+        window.clearTimeout(timeoutId);
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
     }
+
     load();
     return () => {
       isMounted = false;
+      controller.abort();
+      window.clearTimeout(timeoutId);
     };
-  }, []);
+  }, [heroSlugs]);
 
   useEffect(() => {
     if (!isAutoPlay || items.length === 0) return;
@@ -104,7 +122,7 @@ export default function HeroSlider() {
       ? currentProduct.name_fr || currentProduct.name || currentProduct.name_en || ''
       : currentProduct.name_en || currentProduct.name || currentProduct.name_fr || '')
     : '';
-  const imageSrc = currentProduct?.image || currentProduct?.image_url || '';
+  const imageSrc = getPrimaryProductImage(currentProduct);
   const price = currentProduct?.price || 0;
   const rating = currentProduct?.rating ?? 5;
 
@@ -120,8 +138,9 @@ export default function HeroSlider() {
             alt={displayName}
             fill
             sizes="100vw"
-            priority={currentIndex === 0}
-            objectFit="cover"
+            priority
+            loading="eager"
+            objectFit="contain"
             className="transition-opacity duration-500"
           />
         ) : (

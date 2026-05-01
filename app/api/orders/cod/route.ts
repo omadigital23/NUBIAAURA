@@ -9,6 +9,34 @@ import { notifyManagerNewOrder } from '@/lib/whatsapp-notifications';
 import { calculateDeliveryDuration } from '@/lib/delivery-calculator';
 import { sendOrderConfirmationEmail } from '@/lib/smtp-email';
 
+type VariantInput = {
+  variant_id?: string | null;
+  size?: string | null;
+  color?: string | null;
+};
+
+type ProductVariant = {
+  id: string;
+  stock?: number | null;
+  size?: string | null;
+  color?: string | null;
+  price?: number | string | null;
+};
+
+function findRequestedVariant(variants: ProductVariant[], item: VariantInput) {
+  if (!variants.length) return null;
+  if (item.variant_id) {
+    return variants.find((variant) => variant.id === item.variant_id) || null;
+  }
+  if (item.size || item.color) {
+    return variants.find((variant) => {
+      const sizeMatches = !item.size || variant.size === item.size;
+      const colorMatches = !item.color || variant.color === item.color;
+      return sizeMatches && colorMatches;
+    }) || null;
+  }
+  return variants.length === 1 ? variants[0] : null;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,7 +48,18 @@ export async function POST(request: NextRequest) {
 
     const origin = request.headers.get('origin') || '';
     const appBase = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
-    if (origin && appBase && origin !== appBase) {
+    const isLocalDevOrigin = (() => {
+      if (process.env.NODE_ENV === 'production') return false;
+      try {
+        const originUrl = new URL(origin);
+        const appUrl = new URL(appBase);
+        const localHosts = new Set(['localhost', '127.0.0.1', '::1']);
+        return localHosts.has(originUrl.hostname) && localHosts.has(appUrl.hostname) && originUrl.port === appUrl.port;
+      } catch {
+        return false;
+      }
+    })();
+    if (origin && appBase && origin !== appBase && !isLocalDevOrigin) {
       const msg = getTranslationKey(commonNs, 'common.error') || 'Forbidden';
       return NextResponse.json({ error: msg }, { status: 403 });
     }
@@ -44,7 +83,13 @@ export async function POST(request: NextRequest) {
       zipCode: z.string().optional(),
       country: z.string().min(1),
       shippingMethod: z.enum(['standard', 'express']).default('standard'),
-      items: z.array(z.object({ product_id: z.string().min(1), quantity: z.number().int().positive() })).min(1),
+      items: z.array(z.object({
+        product_id: z.string().min(1),
+        variant_id: z.string().uuid().nullable().optional(),
+        size: z.string().nullable().optional(),
+        color: z.string().nullable().optional(),
+        quantity: z.number().int().positive(),
+      })).min(1),
     });
 
     const body = await request.json();
@@ -81,7 +126,7 @@ export async function POST(request: NextRequest) {
     const { items, shippingMethod } = parsed.data;
     const { data: products, error: prodErr } = await supabase
       .from('products')
-      .select('id, name, price, "inStock", product_variants(stock)')
+      .select('id, name, price, stock, "inStock", product_variants(id, stock, size, color, price)')
       .in('id', items.map(i => i.product_id));
     if (prodErr) {
       console.error('[COD API] Product fetch error:', prodErr);
@@ -92,36 +137,53 @@ export async function POST(request: NextRequest) {
     // Consider existing reservations for availability
     const { data: reservations } = await supabase
       .from('stock_reservations')
-      .select('product_id, qty, expires_at, finalized_at, released_at')
+      .select('product_id, variant_id, qty, expires_at, finalized_at, released_at')
       .in('product_id', items.map(i => i.product_id));
     const now = Date.now();
     const reservedByProduct = new Map<string, number>();
+    const reservedByVariant = new Map<string, number>();
     if (Array.isArray(reservations)) {
       for (const r of reservations as any[]) {
         const isFinalized = !!r.finalized_at;
         const isActive = !r.released_at && new Date(r.expires_at).getTime() > now;
         if (isFinalized || isActive) {
-          reservedByProduct.set(r.product_id, (reservedByProduct.get(r.product_id) || 0) + Number(r.qty || 0));
+          if (r.variant_id) {
+            reservedByVariant.set(r.variant_id, (reservedByVariant.get(r.variant_id) || 0) + Number(r.qty || 0));
+          } else {
+            reservedByProduct.set(r.product_id, (reservedByProduct.get(r.product_id) || 0) + Number(r.qty || 0));
+          }
         }
       }
     }
 
-    const normalized = [] as { product_id: string; price: number; quantity: number }[];
+    const normalized = [] as { product_id: string; variant_id: string | null; price: number; quantity: number }[];
     for (const it of items) {
       const p = products?.find(pr => pr.id === it.product_id);
       if (!p || !p.inStock) {
         const msg = getTranslationKey(productNs, 'product.out_of_stock') || 'Out of stock';
         return NextResponse.json({ error: msg }, { status: 400 });
       }
-      const hasVariants = Array.isArray(p.product_variants) && p.product_variants.length > 0;
-      const totalStock = hasVariants ? p.product_variants.reduce((s: number, v: any) => s + (v?.stock || 0), 0) : null;
-      const alreadyReserved = reservedByProduct.get(it.product_id) || 0;
+      const variants = Array.isArray(p.product_variants) ? p.product_variants as ProductVariant[] : [];
+      const selectedVariant = findRequestedVariant(variants, it);
+      if (variants.length > 0 && !selectedVariant) {
+        const msg = getTranslationKey(productNs, 'product.out_of_stock') || 'Out of stock';
+        return NextResponse.json({ error: msg }, { status: 400 });
+      }
+      const totalStock = variants.length > 0
+        ? Number(selectedVariant?.stock || 0)
+        : typeof p.stock === 'number'
+          ? p.stock
+          : null;
+      const alreadyReserved = selectedVariant
+        ? (reservedByVariant.get(selectedVariant.id) || 0) + (reservedByProduct.get(it.product_id) || 0)
+        : reservedByProduct.get(it.product_id) || 0;
       if (totalStock !== null && (totalStock - alreadyReserved) < it.quantity) {
         const msg = getTranslationKey(productNs, 'product.out_of_stock') || 'Out of stock';
         return NextResponse.json({ error: msg }, { status: 400 });
       }
-      const price = typeof p.price === 'string' ? parseFloat(p.price) : p.price;
-      normalized.push({ product_id: it.product_id, price, quantity: it.quantity });
+      const rawPrice = selectedVariant?.price ?? p.price;
+      const price = typeof rawPrice === 'string' ? parseFloat(rawPrice) : rawPrice;
+      normalized.push({ product_id: it.product_id, variant_id: selectedVariant?.id || it.variant_id || null, price, quantity: it.quantity });
     }
 
     const quote = computeQuote({ items: normalized, shippingMethod: shippingMethod as ShippingMethod, country: parsed.data.country });
@@ -186,6 +248,7 @@ export async function POST(request: NextRequest) {
     const orderItems = normalized.map(it => ({
       order_id: order.id,
       product_id: it.product_id,
+      variant_id: it.variant_id,
       quantity: it.quantity,
       price: it.price,
     }));
@@ -204,7 +267,7 @@ export async function POST(request: NextRequest) {
     const reservationsPayload = normalized.map(it => ({
       order_id: order.id,
       product_id: it.product_id,
-      variant_id: null,
+      variant_id: it.variant_id,
       qty: it.quantity,
       expires_at: expiresAt,
       finalized_at: finalizedAt, // ✅ Finalize immediately for COD to trigger stock decrement

@@ -45,6 +45,9 @@ const PaymentInitializationSchema = z.object({
   // Cart items
   items: z.array(z.object({
     product_id: z.string(),
+    variant_id: z.string().uuid().nullable().optional(),
+    size: z.string().nullable().optional(),
+    color: z.string().nullable().optional(),
     quantity: z.number().positive('Quantité doit être positive'),
     price: z.number().positive('Prix doit être positif'),
     name: z.string().optional(),
@@ -56,6 +59,9 @@ const PaymentInitializationSchema = z.object({
   customerName: z.string().optional(),
   cartItems: z.array(z.object({
     product_id: z.string(),
+    variant_id: z.string().uuid().nullable().optional(),
+    size: z.string().nullable().optional(),
+    color: z.string().nullable().optional(),
     quantity: z.number().positive(),
     price: z.number().positive(),
   })).optional(),
@@ -80,6 +86,35 @@ function determineGateway(_country: string, method?: string): PaymentGateway {
   return 'paydunya';
 }
 
+type VariantInput = {
+  variant_id?: string | null;
+  size?: string | null;
+  color?: string | null;
+};
+
+type ProductVariantRecord = {
+  id: string;
+  stock?: number | null;
+  size?: string | null;
+  color?: string | null;
+  price?: number | string | null;
+};
+
+function findRequestedVariant(variants: ProductVariantRecord[], item: VariantInput) {
+  if (!variants.length) return null;
+  if (item.variant_id) {
+    return variants.find((variant) => variant.id === item.variant_id) || null;
+  }
+  if (item.size || item.color) {
+    return variants.find((variant) => {
+      const sizeMatches = !item.size || variant.size === item.size;
+      const colorMatches = !item.color || variant.color === item.color;
+      return sizeMatches && colorMatches;
+    }) || null;
+  }
+  return variants.length === 1 ? variants[0] : null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Get locale from request
@@ -98,7 +133,18 @@ export async function POST(request: NextRequest) {
     // CORS check
     const origin = request.headers.get('origin') || '';
     const appBase = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
-    if (origin && appBase && origin !== appBase) {
+    const isLocalDevOrigin = (() => {
+      if (process.env.NODE_ENV === 'production') return false;
+      try {
+        const originUrl = new URL(origin);
+        const appUrl = new URL(appBase);
+        const localHosts = new Set(['localhost', '127.0.0.1', '::1']);
+        return localHosts.has(originUrl.hostname) && localHosts.has(appUrl.hostname) && originUrl.port === appUrl.port;
+      } catch {
+        return false;
+      }
+    })();
+    if (origin && appBase && origin !== appBase && !isLocalDevOrigin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -120,6 +166,20 @@ export async function POST(request: NextRequest) {
     });
 
     const validatedData = PaymentInitializationSchema.parse(body);
+
+    if (process.env.PLAYWRIGHT === '1') {
+      const e2eOrderId = body.orderId || 'e2e-order';
+      const e2eCallbackUrl = `${request.nextUrl.origin}/fr/payments/callback?orderId=${encodeURIComponent(e2eOrderId)}&reference=e2e-payment&status=success&gateway=e2e`;
+
+      return NextResponse.json({
+        success: true,
+        redirect_url: e2eCallbackUrl,
+        paymentLink: e2eCallbackUrl,
+        reference: 'e2e-payment',
+        orderId: e2eOrderId,
+        gateway: validatedData.paymentMethod || 'paydunya',
+      }, { status: 200 });
+    }
 
     // Initialize Supabase client
     const supabase = createClient(
@@ -149,7 +209,7 @@ export async function POST(request: NextRequest) {
     const productIds = cartItems.map((i: { product_id: string }) => i.product_id);
     const { data: products, error: prodErr } = await supabase
       .from('products')
-      .select('id, price, "inStock", product_variants(stock)')
+      .select('id, price, stock, "inStock", product_variants(id, stock, size, color, price)')
       .in('id', productIds);
 
     if (prodErr) {
@@ -160,47 +220,69 @@ export async function POST(request: NextRequest) {
     // Check stock availability
     const { data: reservations } = await supabase
       .from('stock_reservations')
-      .select('product_id, qty, expires_at, finalized_at, released_at')
+      .select('product_id, variant_id, qty, expires_at, finalized_at, released_at')
       .in('product_id', productIds);
 
     const now = Date.now();
     const reservedByProduct = new Map<string, number>();
+    const reservedByVariant = new Map<string, number>();
     if (Array.isArray(reservations)) {
       for (const r of reservations) {
         const isFinalized = !!r.finalized_at;
         const isActive = !r.released_at && new Date(r.expires_at).getTime() > now;
         if (isFinalized || isActive) {
-          reservedByProduct.set(r.product_id, (reservedByProduct.get(r.product_id) || 0) + Number(r.qty || 0));
+          if (r.variant_id) {
+            reservedByVariant.set(r.variant_id, (reservedByVariant.get(r.variant_id) || 0) + Number(r.qty || 0));
+          } else {
+            reservedByProduct.set(r.product_id, (reservedByProduct.get(r.product_id) || 0) + Number(r.qty || 0));
+          }
         }
       }
     }
 
     // Normalize and validate cart items
-    interface ProductVariant { stock: number; }
     interface Product {
       id: string;
       price: number | string;
+      stock?: number | null;
       inStock: boolean;
-      product_variants?: ProductVariant[];
+      product_variants?: ProductVariantRecord[];
     }
 
-    const normalized: { product_id: string; price: number; quantity: number; name?: string }[] = [];
+    const normalized: { product_id: string; variant_id: string | null; price: number; quantity: number; name?: string }[] = [];
     for (const it of cartItems) {
       const p = products?.find((pr: Product) => pr.id === it.product_id) as Product | undefined;
       if (!p || !p.inStock) {
         return NextResponse.json({ error: 'Produit épuisé' }, { status: 400 });
       }
 
-      const hasVariants = Array.isArray(p.product_variants) && p.product_variants.length > 0;
-      const totalStock = hasVariants ? p.product_variants!.reduce((s, v) => s + (v?.stock || 0), 0) : null;
-      const alreadyReserved = reservedByProduct.get(it.product_id) || 0;
+      const variants = Array.isArray(p.product_variants) ? p.product_variants : [];
+      const selectedVariant = findRequestedVariant(variants, it);
+      if (variants.length > 0 && !selectedVariant) {
+        return NextResponse.json({ error: 'Stock insuffisant' }, { status: 400 });
+      }
+      const totalStock = variants.length > 0
+        ? Number(selectedVariant?.stock || 0)
+        : typeof p.stock === 'number'
+          ? p.stock
+          : null;
+      const alreadyReserved = selectedVariant
+        ? (reservedByVariant.get(selectedVariant.id) || 0) + (reservedByProduct.get(it.product_id) || 0)
+        : reservedByProduct.get(it.product_id) || 0;
 
       if (totalStock !== null && (totalStock - alreadyReserved) < Number(it.quantity || 0)) {
         return NextResponse.json({ error: 'Stock insuffisant' }, { status: 400 });
       }
 
-      const price = typeof p.price === 'string' ? parseFloat(p.price) : p.price;
-      normalized.push({ product_id: it.product_id, price, quantity: Number(it.quantity), name: it.name });
+      const rawPrice = selectedVariant?.price ?? p.price;
+      const price = typeof rawPrice === 'string' ? parseFloat(rawPrice) : rawPrice;
+      normalized.push({
+        product_id: it.product_id,
+        variant_id: selectedVariant?.id || it.variant_id || null,
+        price,
+        quantity: Number(it.quantity),
+        name: it.name,
+      });
     }
 
     // Compute quote
@@ -282,6 +364,7 @@ export async function POST(request: NextRequest) {
       const itemsPayload = normalized.map((it) => ({
         order_id: order.id,
         product_id: it.product_id,
+        variant_id: it.variant_id,
         quantity: it.quantity,
         price: it.price,
       }));
@@ -298,7 +381,7 @@ export async function POST(request: NextRequest) {
     const reservationsPayload = normalized.map((it) => ({
       order_id: order.id,
       product_id: it.product_id,
-      variant_id: null,
+      variant_id: it.variant_id,
       qty: it.quantity,
       expires_at: expiresAt,
     }));

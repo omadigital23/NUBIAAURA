@@ -10,6 +10,43 @@ import { withImageParams } from '@/lib/image-formats';
 
 type Params = { params: Promise<{ locale: string; slug: string }> };
 
+type ProductImage = {
+  url?: string | null;
+  position?: number | null;
+};
+
+type ProductWithImages = {
+  name?: string | null;
+  name_fr?: string | null;
+  name_en?: string | null;
+  description?: string | null;
+  description_fr?: string | null;
+  description_en?: string | null;
+  image?: string | null;
+  image_url?: string | null;
+  product_images?: ProductImage[] | null;
+};
+
+function getPrimaryProductImage(product: ProductWithImages | null | undefined) {
+  const primaryFromGallery = product?.product_images
+    ?.filter((image) => Boolean(image.url))
+    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))[0]?.url;
+
+  return primaryFromGallery || product?.image || product?.image_url || '';
+}
+
+function getLocalizedProductName(product: ProductWithImages | null | undefined, locale: string) {
+  if (!product) return 'Produit';
+  return (locale === 'fr' ? product.name_fr : product.name_en) || product.name || 'Produit';
+}
+
+function getLocalizedProductDescription(product: ProductWithImages | null | undefined, locale: string) {
+  if (!product) return 'Decouvrez nos creations Nubia Aura.';
+  return (locale === 'fr' ? product.description_fr : product.description_en)
+    || product.description
+    || 'Decouvrez nos creations Nubia Aura.';
+}
+
 async function fetchProduct(slug: string) {
   const supabase = getSupabaseServerClient();
   const { data } = await supabase
@@ -17,7 +54,8 @@ async function fetchProduct(slug: string) {
     .select(`
       id, slug, name, name_fr, name_en, image, image_url, price, rating, reviews, inStock, stock,
       description, description_fr, description_en, material, material_fr, material_en, care, care_fr, care_en, sizes, colors, category,
-      product_images(url, alt, position)
+      product_images(url, alt, position),
+      product_variants(id, size, color, price, stock, image)
     `)
     .eq('slug', slug)
     .single();
@@ -26,18 +64,30 @@ async function fetchProduct(slug: string) {
 }
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
-  const { slug } = await params;
+  const { locale, slug } = await params;
   const product = await fetchProduct(slug);
-  const titleBase = product?.name_fr || product?.name_en || product?.name || 'Produit';
-  const description = product?.description || 'Découvrez nos créations Nubia Aura.';
-  const image = product?.image || product?.image_url || undefined;
+  const titleBase = getLocalizedProductName(product, locale);
+  const description = getLocalizedProductDescription(product, locale);
+  const image = getPrimaryProductImage(product);
+  const url = `https://www.nubiaaura.com/${locale}/produit/${slug}`;
   return {
     title: `${titleBase} | Nubia Aura`,
     description,
+    alternates: {
+      canonical: url,
+    },
     openGraph: {
       title: `${titleBase} | Nubia Aura`,
       description,
-      images: image ? [{ url: withImageParams('og', image) }] : undefined,
+      url,
+      type: 'website',
+      images: image ? [{ url: withImageParams('og', image), width: 1200, height: 630, alt: titleBase }] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${titleBase} | Nubia Aura`,
+      description,
+      images: image ? [withImageParams('og', image)] : undefined,
     },
   };
 }
@@ -47,10 +97,13 @@ export default async function ProductDetailsPage({ params }: Params) {
   const product = await fetchProduct(slug);
 
   // Build structured data for SEO
-  const productName = product?.name_fr || product?.name_en || product?.name || 'Produit';
-  const productDescription = product?.description_fr || product?.description || 'Découvrez cette création Nubia Aura.';
-  const productImage = product?.image || product?.image_url || '';
+  const productName = getLocalizedProductName(product, locale);
+  const productDescription = getLocalizedProductDescription(product, locale);
+  const productImage = getPrimaryProductImage(product);
   const productUrl = `https://www.nubiaaura.com/${locale}/produit/${slug}`;
+  const productInStock = product
+    ? (typeof product.stock === 'number' ? product.stock > 0 : product.inStock !== false)
+    : false;
 
   // Product Schema for rich results
   const productSchema = product ? {
@@ -69,7 +122,7 @@ export default async function ProductDetailsPage({ params }: Params) {
       url: productUrl,
       priceCurrency: 'XOF',
       price: product.price,
-      availability: product.inStock
+      availability: productInStock
         ? 'https://schema.org/InStock'
         : 'https://schema.org/OutOfStock',
       seller: {
@@ -154,4 +207,3 @@ export default async function ProductDetailsPage({ params }: Params) {
     </div>
   );
 }
-

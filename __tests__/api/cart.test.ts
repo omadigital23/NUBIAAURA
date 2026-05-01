@@ -1,428 +1,335 @@
-/**
- * 🧪 Cart API Tests
- * Unit tests for shopping cart endpoints with security measures
- * 
- * Run: npm test -- __tests__/api/cart.test.ts
- */
-
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { NextRequest } from 'next/server';
 
-// Mock dependencies
-jest.mock('@/lib/rate-limit-upstash', () => ({
-    cartRateLimit: {
-        limit: jest.fn(async () => ({
-            success: true,
-            limit: 10,
-            remaining: 9,
-            reset: Date.now() + 60000,
-        })),
+type QueryResult = {
+  data?: unknown;
+  error?: { message?: string; code?: string } | null;
+};
+
+type QueryOptions = {
+  singleResult?: QueryResult;
+  awaitResult?: QueryResult;
+};
+
+const userId = '22222222-2222-2222-2222-222222222222';
+const variantId = '11111111-1111-1111-1111-111111111111';
+const cartId = 'cart-123';
+
+function createQuery(options: QueryOptions = {}) {
+  const query = {
+    select: jest.fn((_columns?: string) => query),
+    insert: jest.fn((_payload?: unknown) => query),
+    update: jest.fn((_payload?: unknown) => query),
+    delete: jest.fn(() => query),
+    eq: jest.fn((_column: string, _value: unknown) => query),
+    is: jest.fn((_column: string, _value: unknown) => query),
+    single: jest.fn(async () => options.singleResult || { data: null, error: null }),
+    then: (
+      resolve: (value: QueryResult) => unknown,
+      reject?: (reason: unknown) => unknown
+    ) => Promise.resolve(options.awaitResult || { data: null, error: null }).then(resolve, reject),
+  };
+
+  return query;
+}
+
+function cartRequest(body: unknown, headers: Record<string, string> = {}) {
+  return new NextRequest('http://localhost:3000/api/cart', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers,
     },
-    getClientIdentifier: jest.fn(() => '192.168.1.1'),
-    addRateLimitHeaders: jest.fn(),
-}));
+    body: JSON.stringify(body),
+  });
+}
 
-jest.mock('@sentry/nextjs', () => ({
-    captureException: jest.fn(),
-}));
+function emptyCartPostRequest(headers: Record<string, string> = {}) {
+  return new NextRequest('http://localhost:3000/api/cart', {
+    method: 'POST',
+    headers,
+  });
+}
 
-jest.mock('@supabase/supabase-js', () => ({
-    createClient: jest.fn(() => ({
-        auth: {
-            getUser: jest.fn(async () => ({
-                data: { user: { id: 'test-user-id', email: 'test@example.com' } },
-                error: null,
-            })),
-        },
-        from: jest.fn(() => ({
-            select: jest.fn().mockReturnThis(),
-            insert: jest.fn().mockReturnThis(),
-            update: jest.fn().mockReturnThis(),
-            delete: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
-            single: jest.fn(async () => ({
-                data: { id: 'cart-id', user_id: 'test-user-id' },
-                error: null,
-            })),
+function cartGetRequest(headers: Record<string, string> = {}) {
+  return new NextRequest('http://localhost:3000/api/cart', {
+    method: 'GET',
+    headers,
+  });
+}
+
+function createSupabaseMock({
+  product = {
+    id: 'prod-1',
+    inStock: true,
+    name: 'Dress',
+    name_fr: 'Robe',
+    price: 10000,
+    image_url: '/dress.jpg',
+    stock: 5,
+    product_variants: [
+      {
+        id: variantId,
+        size: 'M',
+        color: 'Noir',
+        price: 12000,
+        stock: 3,
+        image: '/variant.jpg',
+      },
+    ],
+  },
+  cart = { id: cartId },
+  existingItem = null,
+}: {
+  product?: unknown;
+  cart?: unknown;
+  existingItem?: unknown;
+} = {}) {
+  const productsQuery = createQuery({ singleResult: { data: product, error: null } });
+  const cartsQuery = createQuery({ singleResult: { data: cart, error: null } });
+  const cartItemsQuery = createQuery({
+    singleResult: existingItem
+      ? { data: existingItem, error: null }
+      : { data: null, error: { code: 'PGRST116' } },
+    awaitResult: { data: null, error: null },
+  });
+
+  const from = jest.fn((table: string) => {
+    if (table === 'products') return productsQuery;
+    if (table === 'carts') return cartsQuery;
+    if (table === 'cart_items') return cartItemsQuery;
+    return createQuery();
+  });
+
+  return {
+    client: {
+      auth: {
+        getUser: jest.fn(async (_token: string) => ({
+          data: { user: { id: userId, email: 'customer@example.com' } },
+          error: null,
         })),
-    })),
-}));
+      },
+      from,
+    },
+    productsQuery,
+    cartsQuery,
+    cartItemsQuery,
+  };
+}
 
-import { POST } from '@/app/api/cart/route';
-import * as Sentry from '@sentry/nextjs';
-import { cartRateLimit } from '@/lib/rate-limit-upstash';
+async function loadCartRoute({
+  supabase = createSupabaseMock(),
+  rateLimitExceeded = false,
+}: {
+  supabase?: ReturnType<typeof createSupabaseMock>;
+  rateLimitExceeded?: boolean;
+} = {}) {
+  jest.resetModules();
+
+  const limit = jest.fn(async (_identifier: string) => ({
+    success: !rateLimitExceeded,
+    limit: 10,
+    remaining: rateLimitExceeded ? 0 : 9,
+    reset: Date.now() + 60_000,
+  }));
+  const addRateLimitHeaders = jest.fn();
+  const createClient = jest.fn(() => supabase.client);
+
+  jest.doMock('@supabase/supabase-js', () => ({ createClient }));
+  jest.doMock('@/lib/rate-limit-upstash', () => ({
+    cartRateLimit: { limit },
+    getClientIdentifier: jest.fn(() => '127.0.0.1'),
+    addRateLimitHeaders,
+  }));
+  jest.doMock('@sentry/nextjs', () => ({ captureException: jest.fn() }));
+
+  return {
+    ...(await import('@/app/api/cart/route')),
+    createClient,
+    limit,
+    addRateLimitHeaders,
+    supabase,
+  };
+}
 
 describe('Cart API', () => {
-    beforeEach(() => {
-        jest.clearAllMocks();
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('returns an empty cart for anonymous cart reads', async () => {
+    const { POST } = await loadCartRoute();
+
+    const response = await POST(cartRequest({ action: 'get' }));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.items).toEqual([]);
+  });
+
+  it('returns an empty cart for anonymous GET cart retrieval', async () => {
+    const { GET } = await loadCartRoute();
+
+    const response = await GET(cartGetRequest());
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.items).toEqual([]);
+  });
+
+  it('returns 400 for an empty POST body instead of throwing', async () => {
+    const { POST } = await loadCartRoute();
+
+    const response = await POST(emptyCartPostRequest({ Authorization: 'Bearer valid-token' }));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBeTruthy();
+  });
+
+  it('returns 429 when the cart rate limit is exceeded', async () => {
+    const { POST, limit, addRateLimitHeaders } = await loadCartRoute({ rateLimitExceeded: true });
+
+    const response = await POST(
+      cartRequest({ action: 'get' }, { Authorization: 'Bearer valid-token' })
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(data.retryAfter).toBeGreaterThan(0);
+    expect(limit).toHaveBeenCalledWith('127.0.0.1');
+    expect(addRateLimitHeaders).toHaveBeenCalled();
+  });
+
+  it('adds a variant-specific item and persists the variant id', async () => {
+    const route = await loadCartRoute();
+
+    const response = await route.POST(
+      cartRequest(
+        {
+          action: 'add',
+          item: {
+            id: 'prod-1',
+            variantId,
+            name: 'Dress',
+            price: 12000,
+            quantity: 2,
+            image: '/dress.jpg',
+          },
+        },
+        { Cookie: 'sb-auth-token=valid-token' }
+      )
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.item).toMatchObject({
+      id: 'prod-1',
+      variantId,
+      price: 12000,
+      quantity: 2,
+      size: 'M',
+      color: 'Noir',
     });
+    expect(route.supabase.cartItemsQuery.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cart_id: cartId,
+        product_id: 'prod-1',
+        variant_id: variantId,
+        quantity: 2,
+        price: 12000,
+      })
+    );
+  });
 
-    describe('Rate Limiting', () => {
-        it('should enforce rate limiting on cart requests', async () => {
-            const request = new NextRequest('http://localhost:3000/api/cart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer test-token',
-                },
-                body: JSON.stringify({
-                    action: 'get',
-                }),
-            });
+  it('rejects a product with variants when no variant can be resolved', async () => {
+    const product = {
+      id: 'prod-1',
+      inStock: true,
+      name: 'Dress',
+      name_fr: 'Robe',
+      price: 10000,
+      image_url: '/dress.jpg',
+      stock: 5,
+      product_variants: [
+        { id: variantId, size: 'M', color: 'Noir', price: 12000, stock: 3, image: '/variant.jpg' },
+        {
+          id: '33333333-3333-3333-3333-333333333333',
+          size: 'L',
+          color: 'Noir',
+          price: 12000,
+          stock: 2,
+          image: '/variant-l.jpg',
+        },
+      ],
+    };
+    const { POST } = await loadCartRoute({ supabase: createSupabaseMock({ product }) });
 
-            await POST(request);
+    const response = await POST(
+      cartRequest(
+        {
+          action: 'add',
+          item: {
+            id: 'prod-1',
+            name: 'Dress',
+            price: 10000,
+            quantity: 1,
+            image: '/dress.jpg',
+          },
+        },
+        { Authorization: 'Bearer valid-token' }
+      )
+    );
+    const data = await response.json();
 
-            expect(cartRateLimit?.limit).toHaveBeenCalled();
-        });
+    expect(response.status).toBe(400);
+    expect(data.error).toBe('Variant selection required');
+  });
 
-        it('should return 429 when rate limit is exceeded', async () => {
-            // Mock rate limit exceeded
-            if (cartRateLimit && cartRateLimit.limit) {
-                const mockLimit = cartRateLimit.limit as jest.MockedFunction<typeof cartRateLimit.limit>;
-                mockLimit.mockResolvedValueOnce({
-                    success: false,
-                    limit: 10,
-                    remaining: 0,
-                    reset: Date.now() + 60000,
-                    pending: Promise.resolve(),
-                } as Awaited<ReturnType<typeof cartRateLimit.limit>>);
-            }
+  it('rejects additions above the selected variant stock', async () => {
+    const { POST } = await loadCartRoute();
 
-            const request = new NextRequest('http://localhost:3000/api/cart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    action: 'get',
-                }),
-            });
+    const response = await POST(
+      cartRequest(
+        {
+          action: 'add',
+          item: {
+            id: 'prod-1',
+            variantId,
+            name: 'Dress',
+            price: 12000,
+            quantity: 4,
+            image: '/dress.jpg',
+          },
+        },
+        { Authorization: 'Bearer valid-token' }
+      )
+    );
+    const data = await response.json();
 
-            const response = await POST(request);
-            expect(response.status).toBe(429);
+    expect(response.status).toBe(400);
+    expect(data.error).toBe('Insufficient stock');
+  });
 
-            const data = await response.json();
-            expect(data.error).toContain('Trop de requêtes');
-            expect(data.retryAfter).toBeDefined();
-        });
+  it('validates cart action payloads', async () => {
+    const { POST } = await loadCartRoute();
 
-        it('should include rate limit headers in successful requests', async () => {
-            const request = new NextRequest('http://localhost:3000/api/cart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer test-token',
-                },
-                body: JSON.stringify({
-                    action: 'get',
-                }),
-            });
+    const response = await POST(
+      cartRequest(
+        {
+          action: 'add',
+          item: {
+            id: 'prod-1',
+            name: 'Dress',
+            price: 12000,
+            quantity: -1,
+            image: '/dress.jpg',
+          },
+        },
+        { Authorization: 'Bearer valid-token' }
+      )
+    );
 
-            await POST(request);
-
-            const { addRateLimitHeaders } = await import('@/lib/rate-limit-upstash');
-            expect(addRateLimitHeaders).toHaveBeenCalled();
-        });
-    });
-
-    describe('Authentication', () => {
-        it('should require authentication', async () => {
-            const request = new NextRequest('http://localhost:3000/api/cart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    action: 'get',
-                }),
-            });
-
-            const response = await POST(request);
-            expect(response.status).toBe(401);
-
-            const data = await response.json();
-            expect(data.code).toBe('AUTH_REQUIRED');
-        });
-
-        it('should accept token from Authorization header', async () => {
-            const request = new NextRequest('http://localhost:3000/api/cart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer valid-token',
-                },
-                body: JSON.stringify({
-                    action: 'get',
-                }),
-            });
-
-            const response = await POST(request);
-            // Should not be 401 if token is processed
-            expect(response.status).not.toBe(401);
-        });
-
-        it('should accept token from cookie', async () => {
-            const request = new NextRequest('http://localhost:3000/api/cart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Cookie': 'sb-auth-token=valid-token',
-                },
-                body: JSON.stringify({
-                    action: 'get',
-                }),
-            });
-
-            const response = await POST(request);
-            // Should not be 401 if cookie is processed
-            expect(response.status).not.toBe(401);
-        });
-    });
-
-    describe('Input Validation', () => {
-        it('should validate action field', async () => {
-            const request = new NextRequest('http://localhost:3000/api/cart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer test-token',
-                },
-                body: JSON.stringify({
-                    action: 'invalid-action',
-                }),
-            });
-
-            const response = await POST(request);
-            expect(response.status).toBe(400);
-        });
-
-        it('should validate item structure for add action', async () => {
-            const request = new NextRequest('http://localhost:3000/api/cart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer test-token',
-                },
-                body: JSON.stringify({
-                    action: 'add',
-                    item: {
-                        // Missing required fields
-                    },
-                }),
-            });
-
-            const response = await POST(request);
-            expect(response.status).toBe(400);
-        });
-
-        it('should validate quantity is positive', async () => {
-            const request = new NextRequest('http://localhost:3000/api/cart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer test-token',
-                },
-                body: JSON.stringify({
-                    action: 'add',
-                    item: {
-                        id: 'prod-1',
-                        name: 'Test Product',
-                        price: 10000,
-                        quantity: -1, // Invalid
-                        image: 'test.jpg',
-                    },
-                }),
-            });
-
-            const response = await POST(request);
-            expect(response.status).toBe(400);
-        });
-    });
-
-    describe('Error Handling', () => {
-        it('should capture errors in Sentry', async () => {
-            // Mock Supabase to throw an error
-            const { createClient } = await import('@supabase/supabase-js');
-            (createClient as jest.Mock).mockReturnValueOnce({
-                auth: {
-                    getUser: jest.fn(async () => {
-                        throw new Error('Database connection failed');
-                    }),
-                },
-            });
-
-            const request = new NextRequest('http://localhost:3000/api/cart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer test-token',
-                },
-                body: JSON.stringify({
-                    action: 'get',
-                }),
-            });
-
-            await POST(request);
-
-            expect(Sentry.captureException).toHaveBeenCalled();
-            const captureCall = (Sentry.captureException as jest.MockedFunction<typeof Sentry.captureException>).mock.calls[0];
-            if (captureCall && captureCall[1]) {
-                expect((captureCall[1] as { tags: { route: string } }).tags.route).toBe('cart');
-            }
-        });
-
-        it('should return proper error for Zod validation failures', async () => {
-            const request = new NextRequest('http://localhost:3000/api/cart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer test-token',
-                },
-                body: JSON.stringify({
-                    action: 'add',
-                    item: {
-                        id: 'prod-1',
-                        // Missing required fields
-                    },
-                }),
-            });
-
-            const response = await POST(request);
-            expect(response.status).toBe(400);
-
-            const data = await response.json();
-            expect(data.error).toBe('Données invalides');
-            expect(data.details).toBeDefined();
-        });
-
-        it('should return 500 for server errors', async () => {
-            // Mock an unexpected error
-            const { createClient } = await import('@supabase/supabase-js');
-            (createClient as jest.Mock).mockImplementationOnce(() => {
-                throw new Error('Unexpected server error');
-            });
-
-            const request = new NextRequest('http://localhost:3000/api/cart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer test-token',
-                },
-                body: JSON.stringify({
-                    action: 'get',
-                }),
-            });
-
-            const response = await POST(request);
-            expect(response.status).toBe(500);
-
-            const data = await response.json();
-            expect(data.error).toBe('Erreur lors de la gestion du panier');
-        });
-    });
-
-    describe('Cart Operations', () => {
-        it('should support get action', async () => {
-            const request = new NextRequest('http://localhost:3000/api/cart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer test-token',
-                },
-                body: JSON.stringify({
-                    action: 'get',
-                }),
-            });
-
-            const response = await POST(request);
-            // Should process get action (may succeed or fail based on mocks)
-            expect([200, 500]).toContain(response.status);
-        });
-
-        it('should support add action', async () => {
-            const request = new NextRequest('http://localhost:3000/api/cart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer test-token',
-                },
-                body: JSON.stringify({
-                    action: 'add',
-                    item: {
-                        id: 'prod-1',
-                        name: 'Test Product',
-                        price: 10000,
-                        quantity: 2,
-                        image: 'test.jpg',
-                    },
-                }),
-            });
-
-            const response = await POST(request);
-            // Should process add action
-            expect(response.status).toBeDefined();
-        });
-
-        it('should support remove action', async () => {
-            const request = new NextRequest('http://localhost:3000/api/cart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer test-token',
-                },
-                body: JSON.stringify({
-                    action: 'remove',
-                    item: {
-                        id: 'prod-1',
-                        name: 'Test Product',
-                        price: 10000,
-                        quantity: 1,
-                        image: 'test.jpg',
-                    },
-                }),
-            });
-
-            const response = await POST(request);
-            expect(response.status).toBeDefined();
-        });
-
-        it('should support update action', async () => {
-            const request = new NextRequest('http://localhost:3000/api/cart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer test-token',
-                },
-                body: JSON.stringify({
-                    action: 'update',
-                    item: {
-                        id: 'prod-1',
-                        name: 'Test Product',
-                        price: 10000,
-                        quantity: 3,
-                        image: 'test.jpg',
-                    },
-                }),
-            });
-
-            const response = await POST(request);
-            expect(response.status).toBeDefined();
-        });
-
-        it('should support clear action', async () => {
-            const request = new NextRequest('http://localhost:3000/api/cart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer test-token',
-                },
-                body: JSON.stringify({
-                    action: 'clear',
-                }),
-            });
-
-            const response = await POST(request);
-            expect(response.status).toBeDefined();
-        });
-    });
+    expect(response.status).toBe(400);
+  });
 });

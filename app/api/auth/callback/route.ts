@@ -17,12 +17,12 @@ export async function GET(request: NextRequest) {
 
             if (error) {
                 console.error('OAuth callback error:', error);
-                return NextResponse.redirect(new URL(`/fr/auth/login?error=${encodeURIComponent(error.message)}`, request.url));
+                return NextResponse.redirect(new URL(`/fr/auth/login?error=${encodeURIComponent(error.message)}`, request.url), 302);
             }
 
             if (data.session) {
                 // Create response with redirect
-                const response = NextResponse.redirect(new URL(next, request.url));
+                const response = NextResponse.redirect(new URL(next, request.url), 302);
 
                 // Set the auth token cookie
                 response.cookies.set('sb-auth-token', data.session.access_token, {
@@ -35,12 +35,13 @@ export async function GET(request: NextRequest) {
 
                 return response;
             }
-        } catch (err: any) {
-            console.error('OAuth callback exception:', err);
-            return NextResponse.redirect(new URL(`/fr/auth/login?error=${encodeURIComponent(err.message)}`, request.url));
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'OAuth error';
+            console.error('OAuth callback exception:', error);
+            return NextResponse.redirect(new URL(`/fr/auth/login?error=${encodeURIComponent(message)}`, request.url), 302);
         }
     }
 
     // No code provided, redirect to login
-    return NextResponse.redirect(new URL('/fr/auth/login', request.url));
+    return NextResponse.redirect(new URL('/fr/auth/login', request.url), 302);
 }

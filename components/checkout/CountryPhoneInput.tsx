@@ -308,5 +308,7 @@ export function PhoneInput({
     );
 }
 
+const countryPhoneInput = { CountrySelect, PhoneInput, COUNTRIES, getCountryByCode };
+
 // Combined export
-export default { CountrySelect, PhoneInput, COUNTRIES, getCountryByCode };
+export default countryPhoneInput;

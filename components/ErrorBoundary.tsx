@@ -1,6 +1,7 @@
 'use client';
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component } from 'react';
+import type { ComponentType, ErrorInfo, ReactNode } from 'react';
 import * as Sentry from '@sentry/nextjs';
 import { useParams } from 'next/navigation';
 
@@ -154,7 +155,7 @@ export function ErrorBoundary({ children, fallback }: Props) {
  * Higher-order component to wrap components with error boundary
  */
 export function withErrorBoundary<P extends object>(
-    Component: React.ComponentType<P>,
+    Component: ComponentType<P>,
     fallback?: ReactNode
 ) {
     return function WithErrorBoundary(props: P) {

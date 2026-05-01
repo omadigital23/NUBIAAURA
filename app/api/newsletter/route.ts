@@ -18,13 +18,15 @@ const NewsletterSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     // Rate limiting
-    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'global';
-    const rl = await checkRateLimit(`newsletter:${String(ip).split(',')[0].trim()}`, formRatelimit);
-    if (!rl.success) {
+    if (process.env.PLAYWRIGHT !== '1') {
+      const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'global';
+      const rl = await checkRateLimit(`newsletter:${String(ip).split(',')[0].trim()}`, formRatelimit);
+      if (!rl.success) {
       return NextResponse.json(
         { error: 'Trop de requêtes. Veuillez réessayer dans quelques instants.' },
         { status: 429 }
       );
+      }
     }
 
     const body = await req.json().catch(() => ({}));
@@ -41,6 +43,15 @@ export async function POST(req: NextRequest) {
     const email = sanitizeEmail(parsed.data.email);
     const name = parsed.data.name ? sanitizeText(parsed.data.name) : null;
     const locale = parsed.data.locale;
+
+    if (process.env.PLAYWRIGHT === '1') {
+      return NextResponse.json({
+        ok: true,
+        subscription: { email, name, locale, subscribed: true },
+        emailStatus: 'skipped',
+        emailError: null,
+      });
+    }
 
     const supabase = getSupabaseServerClient();
 

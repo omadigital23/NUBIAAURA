@@ -10,7 +10,7 @@ const COUNTRY_GATEWAY_CONFIG: Record<string, { gateway: string; currency: string
 };
 const DEFAULT_GATEWAY_CONFIG = { gateway: 'paydunya', currency: 'USD' }; // International (PayDunya Card)
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Check if pathname starts with a locale

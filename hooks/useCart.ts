@@ -3,37 +3,48 @@
 import { useState, useCallback } from 'react';
 import { useEffect } from 'react';
 import { CartItem, CartState } from '@/lib/types/cart';
-import { useAuthToken } from './useAuthToken';
 
 interface UseCartResult extends CartState {
   addItem: (item: CartItem) => Promise<void>;
-  removeItem: (id: string) => Promise<void>;
-  updateQuantity: (id: string, quantity: number) => Promise<void>;
+  removeItem: (id: string, variantId?: string | null) => Promise<void>;
+  updateQuantity: (id: string, quantity: number, variantId?: string | null) => Promise<void>;
   clearCart: () => Promise<void>;
   refetchCart: () => Promise<void>;
 }
 
+const getCartItemKey = (item: Pick<CartItem, 'id' | 'variantId'>) =>
+  `${item.id}:${item.variantId || 'base'}`;
+
+const isE2E = process.env.NEXT_PUBLIC_E2E === '1';
+const e2eInitialItems: CartItem[] = [
+  {
+    id: 'e2e-product',
+    name: 'Produit E2E',
+    price: 25000,
+    quantity: 1,
+    image: '/images/logo_nubia_aura.png',
+    variantId: null,
+    size: null,
+    color: null,
+  },
+];
+
 export function useCart(): UseCartResult {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [items, setItems] = useState<CartItem[]>(isE2E ? e2eInitialItems : []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { token } = useAuthToken();
 
   // Load initial cart from Supabase on mount
   useEffect(() => {
+    if (isE2E) {
+      return;
+    }
+
     let mounted = true;
     const loadCartFromDB = async () => {
-      // Skip if no token
-      if (!token) {
-        return;
-      }
-
       try {
         setLoading(true);
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-        if (token) {
-          headers.Authorization = `Bearer ${token}`;
-        }
 
         const response = await fetch('/api/cart', {
           method: 'POST',
@@ -43,6 +54,14 @@ export function useCart(): UseCartResult {
         });
 
         if (!response.ok) {
+          if (response.status === 401) {
+            if (mounted) {
+              setItems([]);
+              setError(null);
+            }
+            return;
+          }
+
           console.error('[useCart] Failed to load cart:', response.status);
           return;
         }
@@ -61,14 +80,12 @@ export function useCart(): UseCartResult {
 
     loadCartFromDB();
 
-    // Listen for token changes (e.g., after login)
+    // Listen for session changes (e.g., after login)
     const handleTokenChange = (e: CustomEvent) => {
-      console.log('[useCart] Token changed event received:', e.detail ? 'token present' : 'token cleared');
+      console.log('[useCart] Session changed event received:', e.detail ? 'session present' : 'session cleared');
       if (e.detail && mounted) {
-        // Token was set, reload cart
         loadCartFromDB();
       } else if (!e.detail && mounted) {
-        // Token was cleared, clear cart
         setItems([]);
       }
     };
@@ -79,7 +96,7 @@ export function useCart(): UseCartResult {
       mounted = false;
       window.removeEventListener('token-changed', handleTokenChange as EventListener);
     };
-  }, [token]); // Only depend on token, not getAuthHeaders
+  }, []);
 
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -89,9 +106,6 @@ export function useCart(): UseCartResult {
       console.log('[useCart] Adding item:', item);
 
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
 
       const response = await fetch('/api/cart', {
         method: 'POST',
@@ -112,7 +126,8 @@ export function useCart(): UseCartResult {
       // Mettre à jour l'état local immédiatement
       if (data.success && data.item) {
         setItems(prevItems => {
-          const existingIndex = prevItems.findIndex(i => i.id === data.item.id);
+          const incomingKey = getCartItemKey(data.item);
+          const existingIndex = prevItems.findIndex(i => getCartItemKey(i) === incomingKey);
           if (existingIndex >= 0) {
             // Mettre à jour la quantité si l'item existe déjà
             const updatedItems = [...prevItems];
@@ -135,21 +150,18 @@ export function useCart(): UseCartResult {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
-  const removeItem = useCallback(async (id: string) => {
+  const removeItem = useCallback(async (id: string, variantId?: string | null) => {
     try {
       setLoading(true);
 
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
 
       const response = await fetch('/api/cart', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ action: 'remove', item: { id } }),
+        body: JSON.stringify({ action: 'remove', item: { id, variantId: variantId || null } }),
         credentials: 'include',
       });
 
@@ -161,9 +173,6 @@ export function useCart(): UseCartResult {
 
       // Recharger le panier depuis la DB après suppression
       const cartHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) {
-        cartHeaders.Authorization = `Bearer ${token}`;
-      }
 
       const cartResponse = await fetch('/api/cart', {
         method: 'POST',
@@ -186,21 +195,18 @@ export function useCart(): UseCartResult {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
-  const updateQuantity = useCallback(async (id: string, quantity: number) => {
+  const updateQuantity = useCallback(async (id: string, quantity: number, variantId?: string | null) => {
     try {
       setLoading(true);
 
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
 
       const response = await fetch('/api/cart', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ action: 'update', item: { id, quantity, name: '', price: 0, image: '' } }),
+        body: JSON.stringify({ action: 'update', item: { id, variantId: variantId || null, quantity, name: '', price: 0, image: '' } }),
         credentials: 'include',
       });
 
@@ -212,9 +218,6 @@ export function useCart(): UseCartResult {
 
       // Recharger le panier depuis la DB après mise à jour
       const cartHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) {
-        cartHeaders.Authorization = `Bearer ${token}`;
-      }
 
       const cartResponse = await fetch('/api/cart', {
         method: 'POST',
@@ -237,16 +240,19 @@ export function useCart(): UseCartResult {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   const clearCart = useCallback(async () => {
+    if (isE2E) {
+      setItems([]);
+      setError(null);
+      return;
+    }
+
     try {
       setLoading(true);
 
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
 
       const response = await fetch('/api/cart/clear', {
         method: 'POST',
@@ -269,15 +275,12 @@ export function useCart(): UseCartResult {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   const refetchCart = useCallback(async () => {
     try {
       setLoading(true);
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
 
       const response = await fetch('/api/cart', {
         method: 'POST',
@@ -287,6 +290,12 @@ export function useCart(): UseCartResult {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          setItems([]);
+          setError(null);
+          return;
+        }
+
         console.error('[useCart] Failed to refetch cart:', response.status);
         return;
       }
@@ -301,7 +310,7 @@ export function useCart(): UseCartResult {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   return {
     items,

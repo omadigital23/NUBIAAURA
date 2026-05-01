@@ -51,6 +51,19 @@
       "cod_failed": "Error creating order (COD)",
       "select_payment": "Please select a payment method"
     },
+    "empty_cart": "Your cart is empty",
+    "quantity": "Quantity",
+    "summary": {
+      "subtotal": "Subtotal",
+      "shipping": "Shipping",
+      "tax": "Taxes",
+      "total": "Total",
+      "free": "Free"
+    },
+    "promo": {
+      "invalid": "Invalid code",
+      "validation_error": "Validation error"
+    },
     "order_summary": "Order Summary"
   },
   "title": "Checkout",

@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Mail, Lock, AlertCircle, Loader } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
-import { useAuthToken } from '@/hooks/useAuthToken';
 
 export default function LoginFormClient() {
   const [email, setEmail] = useState('');
@@ -14,8 +13,15 @@ export default function LoginFormClient() {
   const [error, setError] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { saveToken } = useAuthToken();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+
+  const localizePath = (path: string | null) => {
+    if (!path) return `/${locale}/client/dashboard`;
+    if (/^https?:\/\//i.test(path)) return path;
+    if (path.startsWith(`/${locale}/`)) return path;
+    if (path.startsWith('/')) return `/${locale}${path}`;
+    return path;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +33,7 @@ export default function LoginFormClient() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
+        credentials: 'include',
       });
 
       const data = await response.json();
@@ -35,15 +42,12 @@ export default function LoginFormClient() {
         throw new Error(data.error || t('auth.error_login_failed'));
       }
 
-      // Save token to localStorage
-      if (data.token) {
-        saveToken(data.token);
-      }
+      window.dispatchEvent(new CustomEvent('token-changed', { detail: true }));
 
       // Redirect to target if provided, else to client dashboard
       const callbackUrl = searchParams?.get('callbackUrl');
       const redirect = searchParams?.get('redirect');
-      router.push(callbackUrl || redirect || '/client/dashboard');
+      router.push(localizePath(callbackUrl || redirect));
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -121,14 +125,14 @@ export default function LoginFormClient() {
           </button>
 
           <div className="flex flex-col items-center gap-3 mt-4">
-            <a
-              href="/auth/forgot-password"
+            <Link
+              href={`/${locale}/auth/forgot-password`}
               className="text-sm text-nubia-gold hover:text-nubia-gold/70 hover:underline font-medium"
             >
               {t('auth.forgot_password')}
-            </a>
+            </Link>
             <Link
-              href="/auth/magic-link"
+              href={`/${locale}/auth/magic-link`}
               className="text-sm text-nubia-black/70 hover:text-nubia-gold transition-colors"
             >
               🔗 {t('auth.use_magic_link', 'Connexion par lien magique')}
@@ -141,7 +145,7 @@ export default function LoginFormClient() {
             {t('auth.no_account')}
           </p>
           <Link
-            href="/auth/signup"
+            href={`/${locale}/auth/signup`}
             className="block w-full py-3 border-2 border-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-gold/10 transition-all text-center"
           >
             {t('auth.create_account')}
@@ -150,7 +154,7 @@ export default function LoginFormClient() {
 
         <div className="mt-6 text-center">
           <Link
-            href="/contact"
+            href={`/${locale}/contact`}
             className="text-sm text-nubia-gold hover:underline"
           >
             {t('auth.need_help')}

@@ -51,11 +51,10 @@ test.describe('Cart', () => {
     await page.goto('/fr');
     await page.waitForLoadState('domcontentloaded');
 
-    const cartLink = page.locator('a[href*="panier"], button[aria-label*="panier"], a[aria-label*="cart"]').first();
+    const cartLink = page.locator('header a[href*="panier"], header button[aria-label*="panier"], header a[aria-label*="cart"]').first();
     if (await cartLink.count() > 0) {
       await cartLink.click();
-      await page.waitForLoadState('domcontentloaded');
-      expect(page.url()).toContain('panier');
+      await expect(page).toHaveURL(/panier/);
     }
   });
 

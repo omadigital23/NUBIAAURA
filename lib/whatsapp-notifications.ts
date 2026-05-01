@@ -34,7 +34,7 @@ async function sendWhatsAppNotification(data: WhatsAppNotification): Promise<boo
     // Préparer le message pour CallMeBot:
     // 1. Remplacer les \n littéraux par de vrais sauts de ligne puis encoder
     // 2. Limiter la longueur (CallMeBot a une limite ~1500 chars)
-    let message = data.message
+    const message = data.message
       .replace(/\\n/g, '\n')  // Convert literal \n to actual newlines
       .substring(0, 1500);    // Limit length
 

@@ -29,14 +29,14 @@ export default function LanguageSwitcher() {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-nubia-gold/10 transition-colors"
+        className="flex items-center gap-1 px-2 py-2 rounded-lg hover:bg-nubia-gold/10 transition-colors sm:gap-2 sm:px-3"
         aria-label="Changer la langue / Change language"
         aria-expanded={isOpen}
         aria-haspopup="true"
         title="Changer la langue / Change language"
       >
-        <Globe size={20} className="text-nubia-gold" />
-        <span className="text-sm font-medium uppercase">{currentLocale}</span>
+        <Globe size={18} className="text-nubia-gold sm:h-5 sm:w-5" />
+        <span className="text-xs font-medium uppercase sm:text-sm">{currentLocale}</span>
       </button>
 
       {isOpen && (

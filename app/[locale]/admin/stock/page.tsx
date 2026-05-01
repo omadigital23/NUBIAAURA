@@ -54,6 +54,8 @@ export default function StockManagementPage() {
     if (isAuthenticated) {
       loadData();
     }
+    // loadData validates the current admin token each time authentication becomes ready.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
   const loadData = async () => {
@@ -79,7 +81,7 @@ export default function StockManagementPage() {
           router.push(`/${locale}/admin/login`);
           return;
         }
-        throw new Error('Failed to load stocks');
+        throw new Error(t('admin.stock.load_error', 'Impossible de charger les stocks'));
       }
       const stockData = await stockRes.json();
 
@@ -88,8 +90,8 @@ export default function StockManagementPage() {
       const items: StockItem[] = productsArray.map((p: any) => ({
         id: p.id,
         slug: p.slug,
-        name_fr: p.name_fr || p.name || 'Produit',
-        name_en: p.name_en || p.name || 'Product',
+        name_fr: p.name_fr || p.name || t('admin.stock.product_fallback', 'Produit'),
+        name_en: p.name_en || p.name || t('admin.stock.product_fallback_en', 'Product'),
         stock: p.stock || 0,
         inStock: p.inStock,
         reserved: 0, // À calculer
@@ -125,7 +127,7 @@ export default function StockManagementPage() {
         })));
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to load data');
+      setError(err.message || t('admin.stock.load_data_error', 'Impossible de charger les donnees'));
     } finally {
       setLoading(false);
     }
@@ -218,12 +220,12 @@ export default function StockManagementPage() {
                 <table className="w-full text-sm">
                   <thead className="bg-nubia-cream">
                     <tr>
-                      <th className="text-left p-3">Produit</th>
-                      <th className="text-left p-3">Catégorie</th>
-                      <th className="text-right p-3">Stock Total</th>
-                      <th className="text-right p-3">Réservé</th>
-                      <th className="text-right p-3">Disponible</th>
-                      <th className="text-center p-3">Statut</th>
+                      <th className="text-left p-3">{t('admin.stock.table.product', 'Produit')}</th>
+                      <th className="text-left p-3">{t('admin.stock.table.category', 'Categorie')}</th>
+                      <th className="text-right p-3">{t('admin.stock.table.total_stock', 'Stock total')}</th>
+                      <th className="text-right p-3">{t('admin.stock.table.reserved', 'Reserve')}</th>
+                      <th className="text-right p-3">{t('admin.stock.table.available', 'Disponible')}</th>
+                      <th className="text-center p-3">{t('admin.stock.table.status', 'Statut')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -246,12 +248,12 @@ export default function StockManagementPage() {
                           {item.available <= 0 ? (
                             <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium">
                               <TrendingDown className="w-3 h-3" />
-                              Rupture
+                              {t('admin.stock.status.out', 'Rupture')}
                             </span>
                           ) : item.available <= 5 ? (
                             <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-medium">
                               <AlertCircle className="w-3 h-3" />
-                              Faible
+                              {t('admin.stock.status.low', 'Faible')}
                             </span>
                           ) : (
                             <span className="inline-flex px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">
@@ -279,11 +281,11 @@ export default function StockManagementPage() {
                 <table className="w-full text-sm">
                   <thead className="bg-nubia-cream">
                     <tr>
-                      <th className="text-left p-3">Produit</th>
-                      <th className="text-right p-3">Quantité</th>
-                      <th className="text-left p-3">Statut</th>
-                      <th className="text-left p-3">Créée le</th>
-                      <th className="text-left p-3">Expire le</th>
+                      <th className="text-left p-3">{t('admin.stock.table.product', 'Produit')}</th>
+                      <th className="text-right p-3">{t('admin.stock.table.quantity', 'Quantite')}</th>
+                      <th className="text-left p-3">{t('admin.stock.table.status', 'Statut')}</th>
+                      <th className="text-left p-3">{t('admin.stock.table.created_at', 'Creee le')}</th>
+                      <th className="text-left p-3">{t('admin.stock.table.expires_at', 'Expire le')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -294,7 +296,7 @@ export default function StockManagementPage() {
                       return (
                         <tr key={res.id} className="border-t hover:bg-gray-50">
                           <td className="p-3 font-medium">
-                            {product?.name_fr || 'Produit inconnu'}
+                            {product?.name_fr || t('admin.stock.unknown_product', 'Produit inconnu')}
                           </td>
                           <td className="p-3 text-right font-semibold">{res.qty}</td>
                           <td className="p-3">
@@ -303,9 +305,9 @@ export default function StockManagementPage() {
                                 isExpired ? 'bg-red-100 text-red-700' :
                                   'bg-blue-100 text-blue-700'
                               }`}>
-                              {res.status === 'finalized' ? 'Finalisée' :
-                                res.status === 'released' ? 'Libérée' :
-                                  isExpired ? 'Expirée' : 'Active'}
+                              {res.status === 'finalized' ? t('admin.stock.reservation.finalized', 'Finalisee') :
+                                res.status === 'released' ? t('admin.stock.reservation.released', 'Liberee') :
+                                  isExpired ? t('admin.stock.reservation.expired', 'Expiree') : t('admin.stock.reservation.active', 'Active')}
                             </span>
                           </td>
                           <td className="p-3 text-gray-600 text-xs">

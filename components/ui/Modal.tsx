@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
+import type { ReactNode } from 'react';
 import { clsx } from 'clsx';
 import { X } from 'lucide-react';
 
@@ -13,8 +14,8 @@ export interface ModalProps {
     showCloseButton?: boolean;
     closeOnOverlayClick?: boolean;
     closeOnEscape?: boolean;
-    children: React.ReactNode;
-    footer?: React.ReactNode;
+    children: ReactNode;
+    footer?: ReactNode;
 }
 
 export function Modal({

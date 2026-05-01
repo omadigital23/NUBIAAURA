@@ -28,6 +28,9 @@ export const OrderSchema = z.object({
   shippingMethod: z.enum(['standard', 'express']),
   items: z.array(z.object({
     product_id: z.string().uuid(),
+    variant_id: z.string().uuid().nullable().optional(),
+    size: z.string().nullable().optional(),
+    color: z.string().nullable().optional(),
     quantity: z.number().min(1).max(100),
     price: z.number().positive(),
   })).min(1, 'Panier vide'),

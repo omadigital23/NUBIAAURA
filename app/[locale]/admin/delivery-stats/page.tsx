@@ -27,7 +27,7 @@ interface OrderStatus {
 
 export default function AdminDeliveryStatsPage() {
   const router = useRouter();
-  const { locale } = useTranslation();
+  const { locale, t } = useTranslation();
   const [stats, setStats] = useState<DeliveryStats | null>(null);
   const [orderStatuses, setOrderStatuses] = useState<OrderStatus[]>([]);
   const [loading, setLoading] = useState(true);
@@ -162,11 +162,11 @@ export default function AdminDeliveryStatsPage() {
 
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
-      pending: 'En attente',
-      processing: 'En traitement',
-      shipped: 'Expédiée',
-      delivered: 'Livrée',
-      cancelled: 'Annulée',
+      pending: t('admin.status.pending', 'En attente'),
+      processing: t('admin.status.processing', 'En traitement'),
+      shipped: t('admin.status.shipped', 'Expediee'),
+      delivered: t('admin.status.delivered', 'Livree'),
+      cancelled: t('admin.status.cancelled', 'Annulee'),
     };
     return labels[status] || status;
   };
@@ -187,10 +187,10 @@ export default function AdminDeliveryStatsPage() {
             </button>
             <div>
               <h1 className="font-playfair text-4xl font-bold text-nubia-black">
-                Statistiques de Livraison
+                {t('admin.delivery_stats.title', 'Statistiques de Livraison')}
               </h1>
               <p className="text-nubia-black/60 mt-1">
-                Analyse des performances de livraison et des retours
+                {t('admin.delivery_stats.subtitle', 'Analyse des performances de livraison et des retours')}
               </p>
             </div>
           </div>
@@ -205,7 +205,7 @@ export default function AdminDeliveryStatsPage() {
           {/* Loading */}
           {loading ? (
             <div className="text-center py-12">
-              <p className="text-nubia-black/70">Chargement des statistiques...</p>
+              <p className="text-nubia-black/70">{t('admin.delivery_stats.loading', 'Chargement des statistiques...')}</p>
             </div>
           ) : stats ? (
             <div className="space-y-8">
@@ -215,7 +215,7 @@ export default function AdminDeliveryStatsPage() {
                 <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-semibold text-blue-700">
-                      Commandes totales
+                      {t('admin.delivery_stats.total_orders', 'Commandes totales')}
                     </h3>
                     <TrendingUp size={24} className="text-blue-600" />
                   </div>
@@ -228,7 +228,7 @@ export default function AdminDeliveryStatsPage() {
                 <div className="bg-purple-50 border-2 border-purple-200 rounded-lg p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-semibold text-purple-700">
-                      Expédiées
+                      {t('admin.delivery_stats.shipped_orders', 'Expediees')}
                     </h3>
                     <Clock size={24} className="text-purple-600" />
                   </div>
@@ -241,7 +241,7 @@ export default function AdminDeliveryStatsPage() {
                 <div className="bg-green-50 border-2 border-green-200 rounded-lg p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-semibold text-green-700">
-                      Livrées
+                      {t('admin.delivery_stats.delivered_orders', 'Livrees')}
                     </h3>
                     <CheckCircle size={24} className="text-green-600" />
                   </div>
@@ -254,7 +254,7 @@ export default function AdminDeliveryStatsPage() {
                 <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-semibold text-red-700">
-                      En retard
+                      {t('admin.delivery_stats.overdue_orders', 'En retard')}
                     </h3>
                     <AlertCircle size={24} className="text-red-600" />
                   </div>
@@ -269,18 +269,18 @@ export default function AdminDeliveryStatsPage() {
                 {/* Average Delivery Time */}
                 <div className="bg-white border-2 border-nubia-gold/20 rounded-lg p-6">
                   <h3 className="font-semibold text-nubia-black mb-4">
-                    Temps moyen de livraison
+                    {t('admin.delivery_stats.average_delivery_time', 'Temps moyen de livraison')}
                   </h3>
                   <p className="text-4xl font-bold text-nubia-gold mb-2">
                     {stats.averageDeliveryTime}
                   </p>
-                  <p className="text-nubia-black/60">jours</p>
+                  <p className="text-nubia-black/60">{t('admin.orders.days', 'jours')}</p>
                 </div>
 
                 {/* On-Time Percentage */}
                 <div className="bg-white border-2 border-nubia-gold/20 rounded-lg p-6">
                   <h3 className="font-semibold text-nubia-black mb-4">
-                    Taux de livraison à temps
+                    {t('admin.delivery_stats.on_time_rate', 'Taux de livraison a temps')}
                   </h3>
                   <p className="text-4xl font-bold text-nubia-gold mb-2">
                     {stats.onTimePercentage}%
@@ -297,7 +297,7 @@ export default function AdminDeliveryStatsPage() {
               {/* Order Status Distribution */}
               <div className="bg-white border-2 border-nubia-gold/20 rounded-lg p-6">
                 <h3 className="font-semibold text-nubia-black mb-6">
-                  Distribution des statuts
+                  {t('admin.delivery_stats.status_distribution', 'Distribution des statuts')}
                 </h3>
                 <div className="space-y-4">
                   {orderStatuses.map((status) => (
@@ -330,7 +330,7 @@ export default function AdminDeliveryStatsPage() {
                 {/* Total Returns */}
                 <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-6">
                   <h3 className="text-sm font-semibold text-orange-700 mb-4">
-                    Demandes de retour
+                    {t('admin.delivery_stats.return_requests', 'Demandes de retour')}
                   </h3>
                   <p className="text-3xl font-bold text-orange-900">
                     {stats.returnRequests}
@@ -340,7 +340,7 @@ export default function AdminDeliveryStatsPage() {
                 {/* Approved Returns */}
                 <div className="bg-green-50 border-2 border-green-200 rounded-lg p-6">
                   <h3 className="text-sm font-semibold text-green-700 mb-4">
-                    Retours approuvés
+                    {t('admin.delivery_stats.approved_returns', 'Retours approuves')}
                   </h3>
                   <p className="text-3xl font-bold text-green-900">
                     {stats.approvedReturns}
@@ -350,7 +350,7 @@ export default function AdminDeliveryStatsPage() {
                 {/* Rejected Returns */}
                 <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6">
                   <h3 className="text-sm font-semibold text-red-700 mb-4">
-                    Retours rejetés
+                    {t('admin.delivery_stats.rejected_returns', 'Retours rejetes')}
                   </h3>
                   <p className="text-3xl font-bold text-red-900">
                     {stats.rejectedReturns}
