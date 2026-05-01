@@ -87,6 +87,13 @@ test-*.js
 *-test.js
 test-cart-api.js
 scripts/tests/
+__tests__/
+*.test.js
+*.spec.js
+*.test.ts
+*.spec.ts
+*.test.tsx
+*.spec.tsx
 
 # Security audit files (keep local)
 scripts/SECURITY_AUDIT.md
@@ -101,3 +108,7 @@ public/images/
 # Playwright
 playwright-report/
 test-results/
+
+# Antigravity artifacts
+artifacts/
+.gemini/
