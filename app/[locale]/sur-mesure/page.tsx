@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import {
   AlertCircle,
+  ArrowRight,
   CheckCircle,
   Clock3,
   FileText,
@@ -101,6 +102,7 @@ export default function CustomOrderPage() {
       href: `/${locale}/catalogue/robes-mariage?inspiration=true`,
       asset: productAsset('images/banners/category/robes-mariage.png'),
       price: '100 000',
+      tag: locale === 'fr' ? 'Mariage' : 'Bridal',
       offer: t('custom.wedding_offer', 'Veil offered with every custom order.'),
     },
     {
@@ -109,6 +111,7 @@ export default function CustomOrderPage() {
       href: `/${locale}/catalogue/robes-ceremonie?inspiration=true`,
       asset: productAsset('images/banners/category/robes-ceremonie.png'),
       price: '20 000',
+      tag: locale === 'fr' ? 'Ceremonie' : 'Ceremony',
       offer: t('custom.ceremony_offer', 'Custom order.'),
     },
     {
@@ -117,6 +120,7 @@ export default function CustomOrderPage() {
       href: `/${locale}/catalogue/costumes-africains?inspiration=true`,
       asset: productAsset('images/banners/category/costumes-africains.png'),
       price: '20 000',
+      tag: locale === 'fr' ? 'Costumes' : 'Suits',
       offer: t('custom.suit_offer', 'Prices vary based on model chosen.'),
     },
   ];
@@ -279,26 +283,34 @@ export default function CustomOrderPage() {
         </div>
       </section>
 
-      <section className="py-16 md:py-20 bg-nubia-white">
+      <section className="relative overflow-hidden bg-gradient-to-b from-nubia-white via-nubia-cream/35 to-nubia-white py-16 md:py-20">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-nubia-gold/40 to-transparent" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-12 max-w-3xl">
-            <p className="mb-3 text-sm font-bold uppercase tracking-[0.16em] text-nubia-gold">
-              {t('custom.inspiration_kicker', 'Inspiration')}
-            </p>
-            <h2 className="font-playfair text-3xl md:text-5xl font-bold text-nubia-black">
-              {t('custom.intro_title', 'Which creation interests you?')}
-            </h2>
-            <p className="mt-4 text-lg leading-8 text-nubia-black/70">
-              {t('custom.intro_desc', 'Explore our main categories. Each can be customized according to your wishes and budget.')}
-            </p>
+          <div className="mb-10 flex flex-col gap-5 md:mb-12 md:flex-row md:items-end md:justify-between">
+            <div className="max-w-3xl">
+              <p className="mb-3 text-sm font-bold uppercase tracking-[0.16em] text-nubia-gold">
+                {t('custom.inspiration_kicker', 'Inspiration')}
+              </p>
+              <h2 className="font-playfair text-3xl md:text-5xl font-bold text-nubia-black">
+                {t('custom.intro_title', 'Which creation interests you?')}
+              </h2>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-nubia-black/68 md:text-lg md:leading-8">
+                {t('custom.intro_desc', 'Explore our main categories. Each can be customized according to your wishes and budget.')}
+              </p>
+            </div>
+            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-nubia-gold/30 bg-nubia-white px-4 py-2 text-sm font-bold text-nubia-black shadow-sm">
+              <Sparkles className="h-4 w-4 text-nubia-gold" aria-hidden="true" />
+              <span className="whitespace-nowrap">{locale === 'fr' ? '3 univers sur mesure' : '3 custom universes'}</span>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {categories.map((category) => (
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3 lg:gap-6">
+            {categories.map((category, index) => (
               <Link
                 key={category.title}
                 href={category.href}
-                className="group relative block min-h-[340px] overflow-hidden rounded-lg border border-nubia-gold/25 bg-nubia-black shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-nubia-gold/70 hover:shadow-2xl"
+                aria-label={`${category.title} - ${locale === 'fr' ? 'voir les inspirations' : 'view inspirations'}`}
+                className="group relative flex min-h-[500px] overflow-hidden rounded-lg border border-nubia-gold/25 bg-nubia-black shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-nubia-gold/70 hover:shadow-2xl hover:shadow-nubia-black/20 focus:outline-none focus:ring-4 focus:ring-nubia-gold/20 md:min-h-[540px]"
               >
                 <img
                   src={category.asset.src}
@@ -306,20 +318,36 @@ export default function CustomOrderPage() {
                   onError={(event) => handleImageError(event, category.asset.fallback)}
                   className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-nubia-black via-nubia-black/42 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 p-6">
-                  <p className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-nubia-gold">
-                    {t('custom.starting_from', 'From')} {category.price} FCFA
-                  </p>
-                  <h3 className="font-playfair text-3xl font-bold leading-tight text-white">
-                    {category.title}
-                  </h3>
-                  <p className="mt-3 text-sm leading-6 text-white/82">
-                    {category.desc}
-                  </p>
-                  <p className="mt-4 border-t border-white/15 pt-4 text-sm font-semibold text-nubia-gold">
-                    {category.offer}
-                  </p>
+                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.08)_0%,rgba(0,0,0,0.18)_42%,rgba(0,0,0,0.9)_100%)]" />
+                <div className="absolute left-4 right-4 top-4 flex items-center justify-between gap-3">
+                  <span className="rounded-full border border-white/20 bg-nubia-black/55 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-white backdrop-blur">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <span className="rounded-full bg-nubia-gold px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-nubia-black shadow-lg shadow-nubia-black/20">
+                    {category.tag}
+                  </span>
+                </div>
+                <div className="relative mt-auto w-full p-5 sm:p-6">
+                  <div className="rounded-lg border border-white/12 bg-nubia-black/72 p-5 shadow-2xl backdrop-blur-md">
+                    <p className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-nubia-gold">
+                      {t('custom.starting_from', 'From')} {category.price} FCFA
+                    </p>
+                    <h3 className="font-playfair text-2xl font-bold leading-tight text-white sm:text-3xl">
+                      {category.title}
+                    </h3>
+                    <p className="mt-3 min-h-[48px] text-sm leading-6 text-white/82">
+                      {category.desc}
+                    </p>
+                    <div className="mt-5 border-t border-white/15 pt-4">
+                      <p className="text-sm font-semibold leading-6 text-nubia-gold">
+                        {category.offer}
+                      </p>
+                      <span className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-nubia-white px-4 py-3 text-sm font-bold text-nubia-black transition-all duration-300 group-hover:bg-nubia-gold">
+                        {locale === 'fr' ? 'Voir les inspirations' : 'View inspirations'}
+                        <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </Link>
             ))}

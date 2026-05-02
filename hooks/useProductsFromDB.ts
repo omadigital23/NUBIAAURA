@@ -10,8 +10,10 @@ export function useProductsFromDB(options?: { category?: string; categories?: st
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const categories = useMemo(() => options?.categories || [], [options?.categories]);
-  const excludeCategories = useMemo(() => options?.excludeCategories || [], [options?.excludeCategories]);
+  const categoriesKey = (options?.categories || []).join('\u001f');
+  const excludeCategoriesKey = (options?.excludeCategories || []).join('\u001f');
+  const categories = useMemo(() => (categoriesKey ? categoriesKey.split('\u001f') : []), [categoriesKey]);
+  const excludeCategories = useMemo(() => (excludeCategoriesKey ? excludeCategoriesKey.split('\u001f') : []), [excludeCategoriesKey]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -89,7 +91,7 @@ export function useProductsFromDB(options?: { category?: string; categories?: st
     };
 
     fetchProducts();
-  }, [options?.category, categories, options?.search, options?.sort, options?.priceMin, options?.priceMax, excludeCategories]);
+  }, [options?.category, categoriesKey, options?.search, options?.sort, options?.priceMin, options?.priceMax, excludeCategoriesKey, categories, excludeCategories]);
 
   return { products, loading, error };
 }
