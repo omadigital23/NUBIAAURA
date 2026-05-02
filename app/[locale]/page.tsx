@@ -20,7 +20,6 @@ import Header from '@/components/Header';
 import FeaturedProducts from '@/components/FeaturedProducts';
 import AnimatedSection from '@/components/AnimatedSection';
 import { useTranslation } from '@/hooks/useTranslation';
-import WhatsAppButton from '@/components/WhatsAppButton';
 import { getProductImageUrl } from '@/lib/media';
 
 const WhyChooseUs = dynamic(() => import('@/components/WhyChooseUs'), {
@@ -345,8 +344,6 @@ export default function Home() {
           </div>
         </section>
       </AnimatedSection>
-
-      <WhatsAppButton />
       <Footer />
     </div>
   );

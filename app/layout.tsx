@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from 'next/font/google';
 import '@/app/globals.css';
 import { CartProvider } from '@/contexts/CartContext';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
+import WhatsAppButton from '@/components/WhatsAppButton';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' });
@@ -157,6 +158,7 @@ export default function RootLayout({
       <body className="font-inter bg-nubia-white text-nubia-black antialiased">
         <CartProvider>
           {children}
+          <WhatsAppButton />
         </CartProvider>
       </body>
     </html>

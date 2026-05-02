@@ -45,15 +45,15 @@ export default function WhatsAppButton() {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="group fixed bottom-5 right-5 z-40 grid h-14 w-14 place-items-center rounded-full bg-[#25D366] text-white shadow-[0_18px_36px_rgba(7,94,84,0.28)] ring-1 ring-white/45 transition-all duration-300 hover:-translate-y-1 hover:scale-105 hover:bg-[#1FC45C] hover:shadow-[0_22px_44px_rgba(7,94,84,0.36)] focus:outline-none focus:ring-4 focus:ring-[#25D366]/35 focus:ring-offset-2 sm:bottom-8 sm:right-8 sm:h-16 sm:w-16"
+      className="group fixed bottom-5 right-5 z-40 grid h-14 w-14 place-items-center rounded-full bg-[#25D366] text-white shadow-[0_16px_30px_rgba(7,94,84,0.28)] ring-1 ring-white/45 transition-all duration-300 hover:-translate-y-1 hover:scale-105 hover:bg-[#1FC45C] hover:shadow-[0_20px_38px_rgba(7,94,84,0.34)] focus:outline-none focus:ring-4 focus:ring-[#25D366]/35 focus:ring-offset-2 sm:bottom-8 sm:right-8"
       aria-label="Contactez-nous sur WhatsApp"
       title="Contactez-nous sur WhatsApp"
     >
       <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-full bg-[#25D366] opacity-25 motion-safe:animate-ping" />
-      <span aria-hidden="true" className="pointer-events-none absolute inset-[-8px] rounded-full bg-[#25D366]/20 blur-md" />
+      <span aria-hidden="true" className="pointer-events-none absolute inset-[-6px] rounded-full bg-[#25D366]/20 blur-md" />
       <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-full bg-white/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-      <span aria-hidden="true" className="pointer-events-none absolute inset-[-5px] rounded-full border border-[#25D366]/55 shadow-[0_0_26px_rgba(37,211,102,0.55)]" />
-      <WhatsAppMark className="relative h-7 w-7 drop-shadow-sm sm:h-8 sm:w-8" />
+      <span aria-hidden="true" className="pointer-events-none absolute inset-[-4px] rounded-full border border-[#25D366]/55 shadow-[0_0_22px_rgba(37,211,102,0.5)]" />
+      <WhatsAppMark className="relative h-7 w-7 drop-shadow-sm" />
     </a>
   );
 }
