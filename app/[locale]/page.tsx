@@ -47,8 +47,8 @@ type ProductAsset = {
 const productAsset = (path: string): ProductAsset => {
   const cleanPath = path.replace(/^\/+/, '');
   return {
-    src: `/${cleanPath}`,
-    fallback: getProductImageUrl(cleanPath),
+    src: getProductImageUrl(cleanPath),
+    fallback: `/${cleanPath}`,
   };
 };
 
