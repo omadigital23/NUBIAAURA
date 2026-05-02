@@ -99,6 +99,6 @@ export function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     // Match all paths except static files, API routes, and verification files
-    '/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|google[a-z0-9]*.html|images/).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|favicon-48x48.png|apple-touch-icon.png|manifest.json|sw.js|offline.html|robots.txt|sitemap.xml|google[a-z0-9]*.html|images/|icons/).*)',
   ],
 };

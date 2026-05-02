@@ -152,7 +152,8 @@ export default async function LocaleLayout({
     inLanguage: locale,
     description: seo.structuredDescription,
     url: `https://www.nubiaaura.com/${locale}`,
-    image: 'https://www.nubiaaura.com/images/logo.png',
+    image: 'https://www.nubiaaura.com/images/logo_nubia_aura.png',
+    logo: 'https://www.nubiaaura.com/icons/icon-512x512.png',
     address: {
       '@type': 'PostalAddress',
       addressLocality: 'Dakar',
