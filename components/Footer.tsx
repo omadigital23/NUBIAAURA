@@ -8,6 +8,9 @@ import SocialIcon from '@/components/SocialIcon';
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const { t, locale } = useTranslation();
+  const copyrightText = locale === 'fr'
+    ? `© ${currentYear} Nubia Aura. Tous droits réservés.`
+    : `© ${currentYear} Nubia Aura. All rights reserved.`;
 
   const paymentMethods = [
     { name: 'Visa', logo: '/images/visa.png' },
@@ -188,7 +191,7 @@ export default function Footer() {
 
         {/* Copyright */}
         <div className="border-t border-nubia-gold/20 pt-8 text-center text-sm text-nubia-black/70">
-          <p className="text-nubia-black/85">{t('footer.copyright', `© ${currentYear} Nubia Aura. Tous droits réservés. Développé par OMA Digital`)}</p>
+          <p className="text-nubia-black/85">{copyrightText}</p>
         </div>
       </div>
     </footer>

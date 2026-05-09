@@ -18,6 +18,7 @@ import {
 import { useTranslation } from '@/hooks/useTranslation';
 import SocialIcon from '@/components/SocialIcon';
 import { getProductImageUrl } from '@/lib/media';
+import { getWhatsAppHref } from '@/lib/whatsapp-link';
 
 type ProductAsset = {
   src: string;
@@ -56,6 +57,7 @@ export default function ContactPage() {
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
   const contactImage = productAsset('images/banners/hero/hero-3.png');
+  const whatsappHref = getWhatsAppHref();
 
   const contactMethods = [
     {
@@ -71,6 +73,13 @@ export default function ContactPage() {
       value: '+221 77 143 01 37',
       href: 'tel:+221771430137',
       detail: t('contact.phone_detail', 'Best for urgent delivery or fitting questions.'),
+    },
+    {
+      icon: MessageSquare,
+      title: 'WhatsApp',
+      value: '+221 77 143 01 37',
+      href: whatsappHref,
+      detail: t('contact.whatsapp_text', 'Send references, measurements or delivery questions directly.'),
     },
     {
       icon: MapPin,
@@ -180,7 +189,9 @@ export default function ContactPage() {
                   {t('contact.write_us', 'Write to us')}
                 </a>
                 <a
-                  href="https://wa.me/221771430137"
+                  href={whatsappHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2 rounded-lg border border-nubia-white/25 px-6 py-4 font-semibold text-nubia-white transition-all duration-300 hover:border-nubia-gold hover:bg-nubia-white/10"
                 >
                   <MessageSquare size={19} aria-hidden="true" />
@@ -210,7 +221,7 @@ export default function ContactPage() {
 
       <section className="py-14 md:py-16 bg-nubia-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
             {contactMethods.map((method) => {
               const Icon = method.icon;
               return (
@@ -406,7 +417,9 @@ export default function ContactPage() {
                   </h3>
                   <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <a
-                      href="https://wa.me/221771430137"
+                      href={whatsappHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="flex items-center gap-3 rounded-lg border border-nubia-gold/25 p-4 font-semibold text-nubia-black transition-colors hover:bg-nubia-gold/10"
                     >
                       <MessageSquare className="text-nubia-gold" size={23} aria-hidden="true" />

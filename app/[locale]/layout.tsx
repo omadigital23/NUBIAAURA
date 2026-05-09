@@ -1,9 +1,12 @@
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 
 // Generate static params for locales
 export function generateStaticParams() {
   return [{ locale: 'fr' }, { locale: 'en' }];
 }
+
+export const dynamicParams = true;
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -233,8 +236,10 @@ export default async function LocaleLayout({
         </>
       )}
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      <script
+      <Script
+        id={`store-schema-${locale}`}
         type="application/ld+json"
+        strategy="beforeInteractive"
         suppressHydrationWarning
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />

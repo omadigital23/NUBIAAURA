@@ -65,13 +65,14 @@ export default function Header() {
 
           {/* Right Icons */}
           <div className="flex items-center gap-0 sm:gap-2 md:gap-4">
-            <button
+            <Link
+              href={`/${locale}/catalogue#catalog-search`}
               className="p-2 sm:p-3 text-nubia-gold hover:text-nubia-white transition-colors focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2 focus:ring-offset-nubia-black rounded"
               aria-label={t('nav.search', 'Rechercher')}
               title={t('nav.search', 'Rechercher')}
             >
               <Search size={20} className="sm:w-5 sm:h-5" />
-            </button>
+            </Link>
             <LanguageSwitcher />
             <Link
               href={`/${locale}/panier`}
@@ -130,6 +131,13 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
+            <Link
+              href={`/${locale}/catalogue#catalog-search`}
+              className="block rounded bg-nubia-gold/10 px-4 py-2 font-semibold text-nubia-gold transition-colors hover:bg-nubia-gold/15 focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2 focus:ring-offset-nubia-black"
+              onClick={() => setIsOpen(false)}
+            >
+              {t('catalog.search_placeholder', 'Rechercher un produit...')}
+            </Link>
           </nav>
         )}
       </div>

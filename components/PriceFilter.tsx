@@ -38,11 +38,12 @@ export function PriceFilter() {
           value={minPrice}
           onChange={(e) => setMinPrice(e.target.value)}
           placeholder={t('catalog.min_price', 'Min')}
+          aria-label={t('catalog.min_price_label', 'Prix minimum')}
           className="w-24 px-3 py-2 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"
           min="0"
         />
       </div>
-      <span>-</span>
+      <span aria-hidden="true">-</span>
       <div className="relative">
         <input
           type="number"
@@ -50,6 +51,7 @@ export function PriceFilter() {
           value={maxPrice}
           onChange={(e) => setMaxPrice(e.target.value)}
           placeholder={t('catalog.max_price', 'Max')}
+          aria-label={t('catalog.max_price_label', 'Prix maximum')}
           className="w-24 px-3 py-2 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold"
           min={minPrice || '0'}
         />

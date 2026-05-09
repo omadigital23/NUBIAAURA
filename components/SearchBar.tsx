@@ -94,6 +94,7 @@ export function SearchBar({ initialSearch = '', className = '' }: { initialSearc
             <button
               type="button"
               onClick={handleClear}
+              aria-label={t('common.clear', 'Effacer')}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-nubia-black/40 hover:text-nubia-black"
             >
               <X size={18} />

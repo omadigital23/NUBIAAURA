@@ -132,7 +132,7 @@ export default function Home() {
         aria-label={t('home.hero_aria', 'Nubia Aura homepage hero')}
       >
         <div className="absolute inset-0 bg-[linear-gradient(118deg,rgba(212,175,55,0.18),transparent_36%,rgba(255,255,255,0.08)_76%,transparent)]" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20">
           <div className="grid grid-cols-1 lg:grid-cols-[0.92fr_1.08fr] gap-12 lg:gap-16 items-center">
             <div className="max-w-2xl">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-nubia-gold/45 bg-nubia-gold/15 px-4 py-2 text-sm font-bold uppercase tracking-[0.14em] text-nubia-gold">
@@ -186,7 +186,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="grid h-[430px] grid-cols-5 grid-rows-6 gap-3 md:h-[540px]">
+            <div className="grid h-[360px] grid-cols-5 grid-rows-6 gap-3 md:h-[500px]">
               {heroImages.map((image) => (
                 <div
                   key={image.alt}

@@ -1,5 +1,7 @@
 'use client';
 
+import { DEFAULT_WHATSAPP_MESSAGE, getWhatsAppHref } from '@/lib/whatsapp-link';
+
 type WhatsAppMarkProps = {
   className?: string;
 };
@@ -31,8 +33,7 @@ function WhatsAppMark({ className }: WhatsAppMarkProps) {
 
 export default function WhatsAppButton() {
   const phone = process.env.NEXT_PUBLIC_WHATSAPP_PHONE;
-  const defaultMsg = 'Bonjour Nubia Aura, je viens de visiter votre site et un ou plusieurs articles m\'intéressent. Pouvez-vous me contacter pour en parler plus en détail ?';
-  const message = process.env.NEXT_PUBLIC_WHATSAPP_MESSAGE || defaultMsg;
+  const message = process.env.NEXT_PUBLIC_WHATSAPP_MESSAGE || DEFAULT_WHATSAPP_MESSAGE;
   
   if (!phone) {
     console.error('NEXT_PUBLIC_WHATSAPP_PHONE is not configured');
@@ -45,7 +46,7 @@ export default function WhatsAppButton() {
     return null;
   }
 
-  const href = `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
+  const href = getWhatsAppHref({ phone, message });
 
   return (
     <a

@@ -1,5 +1,6 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import Script from 'next/script';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import ProductDetailsClient from '@/components/ProductDetailsClient';
 import ProductShipping from '@/components/ProductShipping';
@@ -177,13 +178,17 @@ export default async function ProductDetailsPage({ params }: Params) {
     <div className="min-h-screen bg-nubia-white flex flex-col">
       {/* SEO Structured Data */}
       {productSchema && (
-        <script
+        <Script
+          id={`product-schema-${slug}`}
           type="application/ld+json"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
         />
       )}
-      <script
+      <Script
+        id={`breadcrumb-schema-${slug}`}
         type="application/ld+json"
+        strategy="beforeInteractive"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
 

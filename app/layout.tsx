@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter, Playfair_Display } from 'next/font/google';
+import Script from 'next/script';
 import '@/app/globals.css';
 import { CartProvider } from '@/contexts/CartContext';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
@@ -112,7 +113,9 @@ export default function RootLayout({
   return (
     <html lang="fr" data-scroll-behavior="smooth" suppressHydrationWarning className={`${inter.variable} ${playfair.variable}`}>
       <head>
-        <script
+        <Script
+          id="set-document-language"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `document.documentElement.lang = location.pathname.startsWith('/en') ? 'en' : 'fr';`,
           }}
@@ -125,7 +128,9 @@ export default function RootLayout({
         <GoogleAnalytics />
         {/* Service Worker Registration */}
         {process.env.NODE_ENV !== 'production' && (
-          <script
+          <Script
+            id="disable-development-service-worker"
+            strategy="afterInteractive"
             dangerouslySetInnerHTML={{
               __html: `
               if ('serviceWorker' in navigator) {
@@ -140,7 +145,9 @@ export default function RootLayout({
           />
         )}
         {process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_E2E !== '1' && (
-          <script
+          <Script
+            id="register-service-worker"
+            strategy="afterInteractive"
             dangerouslySetInnerHTML={{
               __html: `
               if ('serviceWorker' in navigator) {

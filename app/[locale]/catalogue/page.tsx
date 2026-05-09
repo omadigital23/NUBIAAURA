@@ -204,7 +204,7 @@ function CatalogueContent() {
       )}
 
       {/* Search & Filter Bar */}
-      <section className="bg-nubia-white/95 border-b border-nubia-gold/20 py-4 backdrop-blur supports-[backdrop-filter]:sticky supports-[backdrop-filter]:top-20 supports-[backdrop-filter]:z-30">
+      <section id="catalog-search" className="scroll-mt-24 bg-nubia-white/95 border-b border-nubia-gold/20 py-4 backdrop-blur supports-[backdrop-filter]:sticky supports-[backdrop-filter]:top-20 supports-[backdrop-filter]:z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             {/* Search */}
@@ -242,11 +242,11 @@ function CatalogueContent() {
               <h2 className="font-playfair text-xl sm:text-2xl md:text-3xl font-bold text-nubia-black mb-4 sm:mb-6">
                 {t(`categories.${cat}`, cat)}
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8 justify-center justify-items-center">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-3 xl:grid-cols-4 justify-center justify-items-center">
                 {list.map((product) => (
                   <div
                     key={product.id}
-                    className="group bg-nubia-white border border-nubia-gold/20 rounded-lg overflow-hidden hover:shadow-2xl hover:border-nubia-gold/60 transition-all duration-300 transform hover:-translate-y-2 flex flex-col min-h-[500px] sm:min-h-[550px] md:min-h-[600px] lg:min-h-[650px]"
+                    className="group flex w-full flex-col overflow-hidden rounded-lg border border-nubia-gold/20 bg-nubia-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-nubia-gold/60 hover:shadow-2xl"
                   >
                     {/* Image */}
                     {(() => {
@@ -261,12 +261,12 @@ function CatalogueContent() {
                       const imageUrl = firstProductImage || product.image || (product as any).image_url;
 
                       return imageUrl ? (
-                        <div className="relative w-full h-64 sm:h-80 md:h-96 lg:h-[480px] bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                        <div className="relative flex aspect-[4/5] w-full flex-shrink-0 items-center justify-center overflow-hidden bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5">
                           <OptimizedImage
                             src={withImageParams('catalog', imageUrl as string)}
                             alt={(locale === 'fr' ? (product as any).name_fr : (product as any).name_en) || product.name}
                             fill
-                            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
                             priority
                             loading="eager"
                             className="group-hover:scale-110 transition-transform duration-500"
@@ -277,7 +277,7 @@ function CatalogueContent() {
                     })()}
 
                     {/* Content */}
-                    <div className="p-3 sm:p-4 flex flex-col flex-1 justify-between">
+                    <div className="p-4 flex flex-col flex-1 justify-between">
                       <div>
                         <h3 className="font-playfair text-base sm:text-lg font-bold text-nubia-black mb-1 line-clamp-2 group-hover:text-nubia-gold transition-colors duration-300">
                           {(locale === 'fr' ? (product as any).name_fr : (product as any).name_en) || product.name}
@@ -292,7 +292,7 @@ function CatalogueContent() {
                       </div>
 
                       <div className="space-y-2 sm:space-y-3">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-3">
                           <span className="text-lg sm:text-xl font-bold text-nubia-gold group-hover:scale-110 transition-transform duration-300 origin-left">
                             {Number(product.price).toLocaleString('fr-FR')} {t('common.currency', 'FCFA')}
                           </span>
