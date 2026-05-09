@@ -439,7 +439,7 @@ export default function CustomOrderPage() {
                         onChange={handleChange}
                         required
                         className={fieldClass}
-                        placeholder={t('custom.phone_placeholder', '+221 77 123 45 67')}
+                        placeholder={t('custom.phone_placeholder', '+221 77 143 01 37')}
                       />
                     </div>
 

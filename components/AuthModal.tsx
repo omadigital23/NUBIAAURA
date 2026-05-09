@@ -291,7 +291,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
                     value={signupData.phone}
                     onChange={(e) => setSignupData({ ...signupData, phone: e.target.value })}
                     className="w-full pl-12 pr-4 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold focus:ring-2 focus:ring-nubia-gold/20"
-                    placeholder={t('auth.phone_placeholder', '+221 77 123 45 67')}
+                    placeholder={t('auth.phone_placeholder', '+221 77 143 01 37')}
                   />
                 </div>
               </div>

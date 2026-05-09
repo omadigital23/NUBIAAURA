@@ -68,8 +68,8 @@ export default function ContactPage() {
     {
       icon: Phone,
       title: t('contact.phone_label', 'Phone'),
-      value: '+221 77 123 45 67',
-      href: 'tel:+221771234567',
+      value: '+221 77 143 01 37',
+      href: 'tel:+221771430137',
       detail: t('contact.phone_detail', 'Best for urgent delivery or fitting questions.'),
     },
     {
@@ -180,7 +180,7 @@ export default function ContactPage() {
                   {t('contact.write_us', 'Write to us')}
                 </a>
                 <a
-                  href="https://wa.me/221771234567"
+                  href="https://wa.me/221771430137"
                   className="inline-flex items-center justify-center gap-2 rounded-lg border border-nubia-white/25 px-6 py-4 font-semibold text-nubia-white transition-all duration-300 hover:border-nubia-gold hover:bg-nubia-white/10"
                 >
                   <MessageSquare size={19} aria-hidden="true" />
@@ -307,7 +307,7 @@ export default function ContactPage() {
                         value={formData.phone}
                         onChange={handleChange}
                         className={fieldClass}
-                        placeholder={t('contact.phone_placeholder', '+221 77 123 45 67')}
+                        placeholder={t('contact.phone_placeholder', '+221 77 143 01 37')}
                       />
                     </div>
 
@@ -406,7 +406,7 @@ export default function ContactPage() {
                   </h3>
                   <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <a
-                      href="https://wa.me/221771234567"
+                      href="https://wa.me/221771430137"
                       className="flex items-center gap-3 rounded-lg border border-nubia-gold/25 p-4 font-semibold text-nubia-black transition-colors hover:bg-nubia-gold/10"
                     >
                       <MessageSquare className="text-nubia-gold" size={23} aria-hidden="true" />

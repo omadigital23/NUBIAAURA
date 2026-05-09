@@ -18,11 +18,15 @@ export async function storeValidationToken(orderId: string, token: string): Prom
     try {
         // Option 1 : Redis (préféré si disponible)
         if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-            const redis = Redis.fromEnv();
-            const key = `order:validation:${orderId}`;
-            await redis.set(key, token, { ex: 86400 }); // 24h en secondes
-            console.log(`[Token] Stored in Redis for order ${orderId}`);
-            return true;
+            try {
+                const redis = Redis.fromEnv();
+                const key = `order:validation:${orderId}`;
+                await redis.set(key, token, { ex: 86400 }); // 24h en secondes
+                console.log(`[Token] Stored in Redis for order ${orderId}`);
+                return true;
+            } catch (redisError) {
+                console.warn('[Token] Redis unavailable, falling back to Supabase:', redisError);
+            }
         }
 
         // Option 2 : Supabase (fallback)
@@ -68,12 +72,16 @@ export async function verifyValidationToken(orderId: string, token: string): Pro
     try {
         // Option 1 : Redis
         if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-            const redis = Redis.fromEnv();
-            const key = `order:validation:${orderId}`;
-            const storedToken = await redis.get(key);
-            const isValid = storedToken === token;
-            console.log(`[Token] Redis verification for ${orderId}: ${isValid}`);
-            return isValid;
+            try {
+                const redis = Redis.fromEnv();
+                const key = `order:validation:${orderId}`;
+                const storedToken = await redis.get(key);
+                const isValid = storedToken === token;
+                console.log(`[Token] Redis verification for ${orderId}: ${isValid}`);
+                return isValid;
+            } catch (redisError) {
+                console.warn('[Token] Redis unavailable, falling back to Supabase verification:', redisError);
+            }
         }
 
         // Option 2 : Supabase
@@ -90,10 +98,10 @@ export async function verifyValidationToken(orderId: string, token: string): Pro
             .single();
 
         if (error) {
-            // Si la table n'existe pas encore, on autorise (graceful degradation)
+            // Si la table n'existe pas encore, on refuse: la route de validation est publique.
             if (error.code === '42P01' || error.message?.includes('does not exist')) {
-                console.warn(`[Token] Table not found, allowing validation (graceful degradation)`);
-                return true;
+                console.warn(`[Token] Table not found, refusing validation`);
+                return false;
             }
             console.log(`[Token] Supabase verification for ${orderId}: false (error: ${error.message})`);
             return false;
@@ -121,9 +129,9 @@ export async function verifyValidationToken(orderId: string, token: string): Pro
         return true;
     } catch (error: any) {
         console.error('[Token] Error verifying validation token:', error);
-        // En cas d'erreur, on autorise (graceful degradation)
-        console.warn('[Token] Allowing validation due to verification error (graceful degradation)');
-        return true;
+        // En cas d'erreur, on refuse: la route de validation est publique.
+        console.warn('[Token] Refusing validation due to verification error');
+        return false;
     }
 }
 
@@ -134,11 +142,15 @@ export async function invalidateValidationToken(orderId: string): Promise<void> 
     try {
         // Option 1 : Redis
         if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-            const redis = Redis.fromEnv();
-            const key = `order:validation:${orderId}`;
-            await redis.del(key);
-            console.log(`[Token] Invalidated in Redis for order ${orderId}`);
-            return;
+            try {
+                const redis = Redis.fromEnv();
+                const key = `order:validation:${orderId}`;
+                await redis.del(key);
+                console.log(`[Token] Invalidated in Redis for order ${orderId}`);
+                return;
+            } catch (redisError) {
+                console.warn('[Token] Redis unavailable, falling back to Supabase invalidation:', redisError);
+            }
         }
 
         // Option 2 : Supabase - marquer comme utilisé au lieu de supprimer (pour audit)

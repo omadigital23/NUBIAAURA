@@ -29,7 +29,7 @@ export interface CountryData {
 // Comprehensive list of countries
 export const COUNTRIES: CountryData[] = [
     // Africa - Primary markets
-    { code: 'SN', name: 'Sénégal', flag: '🇸🇳', phoneCode: '+221', phoneFormat: '77 XXX XX XX', phonePlaceholder: '77 123 45 67', paymentGateway: 'paytech', currency: 'XOF' },
+    { code: 'SN', name: 'Sénégal', flag: '🇸🇳', phoneCode: '+221', phoneFormat: '77 XXX XX XX', phonePlaceholder: '77 143 01 37', paymentGateway: 'paytech', currency: 'XOF' },
     { code: 'MA', name: 'Maroc', flag: '🇲🇦', phoneCode: '+212', phoneFormat: '6XX XX XX XX', phonePlaceholder: '612 34 56 78', paymentGateway: 'paytech', currency: 'MAD' },
     { code: 'CI', name: 'Côte d\'Ivoire', flag: '🇨🇮', phoneCode: '+225', phoneFormat: '07 XX XX XX XX', phonePlaceholder: '07 12 34 56 78', paymentGateway: 'paytech', currency: 'XOF' },
     { code: 'ML', name: 'Mali', flag: '🇲🇱', phoneCode: '+223', phoneFormat: '7X XX XX XX', phonePlaceholder: '76 12 34 56', paymentGateway: 'paytech', currency: 'XOF' },

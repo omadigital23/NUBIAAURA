@@ -67,7 +67,7 @@ test.describe('Checkout Flow', () => {
       'input[name="firstName"], input[name="first_name"]': 'Amadou',
       'input[name="lastName"], input[name="last_name"]': 'Diallo',
       'input[name="email"], input[type="email"]': 'test@example.com',
-      'input[name="phone"], input[type="tel"]': '+221771234567',
+      'input[name="phone"], input[type="tel"]': '+221771430137',
       'input[name="address"]': '123 Boulevard du Centenaire',
       'input[name="city"]': 'Dakar',
     };

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { apiRateLimit, getClientIdentifier, addRateLimitHeaders } from '@/lib/rate-limit-upstash';
+import { apiRateLimit, getClientIdentifier, addRateLimitHeaders, checkRateLimit } from '@/lib/rate-limit-upstash';
 import { sanitizeText } from '@/lib/sanitize';
 import * as Sentry from '@sentry/nextjs';
 
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
         // Rate limiting
         if (apiRateLimit) {
             const identifier = getClientIdentifier(request);
-            const { success, limit, remaining, reset } = await apiRateLimit.limit(identifier);
+            const { success, limit, remaining, reset } = await checkRateLimit(identifier, apiRateLimit);
             if (!success) {
                 const response = NextResponse.json(
                     { error: 'Trop de requêtes. Veuillez réessayer dans quelques instants.' },

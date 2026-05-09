@@ -236,7 +236,7 @@ export class PaydunyaProvider implements IPaymentProvider {
                 store: {
                     name: 'NUBIA AURA',
                     tagline: 'Mode africaine authentique',
-                    phone: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '+221781234567',
+                    phone: process.env.NEXT_PUBLIC_WHATSAPP_PHONE || process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '+221771430137',
                     postal_address: 'Dakar, Sénégal',
                     website_url: appBaseUrl,
                     logo_url: `${appBaseUrl}/images/logo.png`,

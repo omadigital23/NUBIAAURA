@@ -68,8 +68,8 @@ Ajoutez dans `.env.local` :
 ```env
 # WhatsApp Notifications (CallMeBot)
 CALLMEBOT_API_KEY=123456
-MANAGER_WHATSAPP=+212701193811
-NEXT_PUBLIC_WHATSAPP_PHONE=+212701193811
+MANAGER_WHATSAPP=+221771430137
+NEXT_PUBLIC_WHATSAPP_PHONE=+221771430137
 ```
 
 ⚠️ **Important** : Le numéro doit être au format international (+221...)

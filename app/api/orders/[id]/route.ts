@@ -31,7 +31,7 @@ export async function GET(
             city: 'Dakar',
             zipCode: '10000',
             country: 'SN',
-            phone: '+221 77 123 45 67',
+            phone: '+221 77 143 01 37',
             email: 'checkout-e2e@example.com',
           },
           order_items: [

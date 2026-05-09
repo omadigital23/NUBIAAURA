@@ -110,8 +110,8 @@ export default function Footer() {
                 </li>
                 <li className="flex items-center space-x-2 text-nubia-black/85">
                   <Phone size={16} />
-                  <a href="tel:+221771234567" className="hover:text-nubia-gold transition-colors focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2 rounded">
-                    {t('footer.phone', '+221 77 123 45 67')}
+                  <a href="tel:+221771430137" className="hover:text-nubia-gold transition-colors focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2 rounded">
+                    {t('footer.phone', '+221 77 143 01 37')}
                   </a>
                 </li>
                 <li className="flex items-start space-x-2 text-nubia-black/85">

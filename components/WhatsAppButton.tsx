@@ -38,7 +38,14 @@ export default function WhatsAppButton() {
     console.error('NEXT_PUBLIC_WHATSAPP_PHONE is not configured');
     return null;
   }
-  const href = `https://wa.me/${encodeURIComponent(phone)}?text=${encodeURIComponent(message)}`;
+
+  const normalizedPhone = phone.replace(/\D/g, '');
+  if (!normalizedPhone) {
+    console.error('NEXT_PUBLIC_WHATSAPP_PHONE is invalid');
+    return null;
+  }
+
+  const href = `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
 
   return (
     <a

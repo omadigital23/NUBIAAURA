@@ -169,7 +169,7 @@ export default async function LocaleLayout({
       name: seo.areaServed,
     },
     priceRange: '$$',
-    telephone: '+221771234567',
+    telephone: '+221771430137',
     openingHours: 'Mo-Sa 09:00-19:00',
     makesOffer: [
       {

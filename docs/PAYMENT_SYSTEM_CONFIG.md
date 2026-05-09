@@ -75,7 +75,7 @@ Pour passer en mode production:
    - Justificatif de domicile
    - Numéro de téléphone
 
-3. Délai: ~48h. Appelez **+221 77 125 57 99** pour le suivi.
+3. Délai: ~48h. Appelez **+221 77 143 01 37** pour le suivi.
 
 ---
 

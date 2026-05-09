@@ -83,7 +83,7 @@ Skip (log)   Envoi WhatsApp
 Préparez la commande rapidement !
 ```
 
-Envoyé automatiquement au numéro: **+212701193811**
+Envoyé automatiquement au numéro: **+221771430137**
 
 ---
 
@@ -159,7 +159,7 @@ Lors de la création d'une commande, vérifier la console:
 ```
 [OrderNotification] ✅ Sent notification for order: ORD-xxx
 [Redis] ✅ Marked notification as sent for order: xxx
-✅ WhatsApp notification sent to: +212701193811
+✅ WhatsApp notification sent to: +221771430137
 ```
 
 ### Logs de Doublons (Normal)

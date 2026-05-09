@@ -43,7 +43,7 @@ Le manager reçoit des notifications WhatsApp en temps réel via CallMeBot (grat
 **Configuration requise :**
 ```env
 CALLMEBOT_API_KEY=votre_cle
-MANAGER_WHATSAPP=+212701193811
+MANAGER_WHATSAPP=+221771430137
 ```
 
 ---
@@ -129,7 +129,7 @@ MANAGER_EMAIL=admin@nubiaaura.com
 # 3. Copier la clé API reçue
 
 CALLMEBOT_API_KEY=123456
-MANAGER_WHATSAPP=+212701193811
+MANAGER_WHATSAPP=+221771430137
 ```
 
 ### **3. Déploiement**

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { authRateLimit, getClientIdentifier, addRateLimitHeaders } from '@/lib/rate-limit-upstash';
+import { authRateLimit, getClientIdentifier, addRateLimitHeaders, checkRateLimit } from '@/lib/rate-limit-upstash';
 import { sanitizeEmail } from '@/lib/sanitize';
 import * as Sentry from '@sentry/nextjs';
 
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     if (authRateLimit) {
       const identifier = getClientIdentifier(request);
-      const { success, limit, remaining, reset } = await authRateLimit.limit(identifier);
+      const { success, limit, remaining, reset } = await checkRateLimit(identifier, authRateLimit);
 
       if (!success) {
         console.warn(`[Auth] Rate limit exceeded for ${identifier}`);

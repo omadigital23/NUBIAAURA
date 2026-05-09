@@ -6,7 +6,7 @@ import { getCustomOrderConfirmationEmail, getCustomOrderManagerNotification } fr
 import { notifyManagerNewCustomOrder } from '@/lib/whatsapp-notifications';
 import { generateValidationToken, storeValidationToken } from '@/lib/order-validation-tokens';
 import { calculateDeliveryDuration } from '@/lib/delivery-calculator';
-import { apiRateLimit, getClientIdentifier, addRateLimitHeaders } from '@/lib/rate-limit-upstash';
+import { apiRateLimit, getClientIdentifier, addRateLimitHeaders, checkRateLimit } from '@/lib/rate-limit-upstash';
 import { sanitizeText, sanitizeEmail, sanitizePhone } from '@/lib/sanitize';
 import * as Sentry from '@sentry/nextjs';
 
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     // Rate limiting
     if (apiRateLimit) {
       const identifier = getClientIdentifier(request);
-      const { success, limit, remaining, reset } = await apiRateLimit.limit(identifier);
+      const { success, limit, remaining, reset } = await checkRateLimit(identifier, apiRateLimit);
       if (!success) {
         const response = NextResponse.json(
           { error: 'Trop de requêtes. Veuillez réessayer dans quelques instants.' },
@@ -85,8 +85,12 @@ export async function POST(request: NextRequest) {
 
     // Générer et stocker le token de validation sécurisé
     const validationToken = generateValidationToken(customOrder.id);
-    await storeValidationToken(customOrder.id, validationToken);
-    console.log(`[CustomOrder] Generated validation token for custom order ${customOrder.id}`);
+    const tokenStored = await storeValidationToken(customOrder.id, validationToken);
+    if (tokenStored) {
+      console.log(`[CustomOrder] Generated validation token for custom order ${customOrder.id}`);
+    } else {
+      console.warn(`[CustomOrder] Validation token was not stored for custom order ${customOrder.id}`);
+    }
 
     // Envoyer email de confirmation au client
     try {
@@ -130,8 +134,8 @@ export async function POST(request: NextRequest) {
         preferences: validated.preferences,
         budget: validated.budget,
         reference,
-        customOrderId: customOrder.id,
-        validationToken: validationToken,
+        customOrderId: tokenStored ? customOrder.id : undefined,
+        validationToken: tokenStored ? validationToken : undefined,
       });
     } catch (whatsappError) {
       console.error('Erreur notification WhatsApp:', whatsappError);

@@ -162,7 +162,7 @@ export default function AddressForm({ address, onSuccess, onCancel }: AddressFor
           value={formData.phone}
           onChange={handleChange}
           className={inputClass}
-          placeholder="+221 77 123 45 67"
+          placeholder="+221 77 143 01 37"
         />
       </div>
 

@@ -88,7 +88,7 @@ Intégration dans le flux de création de commandes :
 ```bash
 # WhatsApp Notifications
 CALLMEBOT_API_KEY=5693680
-MANAGER_WHATSAPP=212701193811
+MANAGER_WHATSAPP=+221771430137
 
 # Upstash Redis
 UPSTASH_REDIS_REST_URL="https://mighty-troll-40243.upstash.io"

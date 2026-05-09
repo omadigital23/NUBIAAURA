@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminCredentials, createAdminToken } from '@/lib/auth-admin';
 import { z } from 'zod';
-import { adminRateLimit, getClientIdentifier, addRateLimitHeaders } from '@/lib/rate-limit-upstash';
+import { adminRateLimit, getClientIdentifier, addRateLimitHeaders, checkRateLimit } from '@/lib/rate-limit-upstash';
 import { sanitizeText } from '@/lib/sanitize';
 import { verifyTOTPCode } from '@/lib/totp';
 import * as Sentry from '@sentry/nextjs';
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     // Rate limiting check (stricter for admin)
     if (adminRateLimit) {
       const identifier = getClientIdentifier(request);
-      const { success, limit, remaining, reset } = await adminRateLimit.limit(identifier);
+      const { success, limit, remaining, reset } = await checkRateLimit(identifier, adminRateLimit);
 
       if (!success) {
         console.warn(`[Admin] Rate limit exceeded for ${identifier}`);
@@ -116,4 +116,3 @@ async function handleAdminLogin(request: NextRequest) {
     { status: 200 }
   );
 }
-

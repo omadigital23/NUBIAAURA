@@ -12,7 +12,7 @@ async function fillAddressStep(page: Page, email = 'test@example.com') {
   await page.fill('input[name="lastName"]', 'Test');
   await page.fill('input[name="email"]', email);
   await selectCountry(page);
-  await page.fill('input[type="tel"]', '77 123 45 67');
+  await page.fill('input[type="tel"]', '77 143 01 37');
   await page.fill('input[name="address"]', '123 Rue Test');
   await page.fill('input[name="city"]', 'Dakar');
   await page.fill('input[name="zipCode"]', '18000');
@@ -72,7 +72,7 @@ test.describe('Payment Flow E2E Tests', () => {
 
     await expect(page.locator('input[name="firstName"]')).toHaveValue('Amadou');
     await expect(page.locator('input[name="email"]')).toHaveValue('test@example.com');
-    await expect(page.locator('input[type="tel"]')).toHaveValue('77 123 45 67');
+    await expect(page.locator('input[type="tel"]')).toHaveValue('77 143 01 37');
   });
 
   // Skipped until the card payment provider is activated.

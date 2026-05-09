@@ -286,7 +286,7 @@ export const InvoiceDocument = ({ data }: { data: InvoiceData }) => (
             {/* Footer */}
             <View style={styles.footer}>
                 <Text>NUBIA AURA - Mode Africaine Éthique & Sur-Mesure</Text>
-                <Text>Dakar, Sénégal | contact@nubiaaura.com | +221 77 XXX XX XX</Text>
+                <Text>Dakar, Sénégal | contact@nubiaaura.com | +221 77 143 01 37</Text>
                 <Text style={{ marginTop: 8 }}>Merci pour votre confiance !</Text>
             </View>
         </Page>

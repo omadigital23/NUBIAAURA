@@ -105,8 +105,8 @@ export const ORDER_STATUS = {
 // Contact
 export const CONTACT = {
   email: 'contact@nubiaaura.com',
-  phone: '+221 77 123 45 67',
-  whatsapp: '+221771234567',
+  phone: '+221 77 143 01 37',
+  whatsapp: '+221771430137',
   address: 'Dakar, Sénégal',
   social: {
     instagram: 'https://instagram.com/nubiaaura',

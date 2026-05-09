@@ -152,7 +152,7 @@ export function getContactConfirmationEmail(data: ContactEmailData) {
               <p>Si votre demande est urgente, n'hésitez pas à nous contacter directement :</p>
               <ul>
                 <li>📧 Email : supports@nubiaaura.com</li>
-                <li>📱 WhatsApp : +221 77 123 45 67</li>
+                <li>📱 WhatsApp : +221 77 143 01 37</li>
               </ul>
 
               <p>Cordialement,</p>
@@ -286,7 +286,7 @@ export function getCustomOrderConfirmationEmail(data: CustomOrderEmailData) {
               <p>Pour toute question :</p>
               <ul>
                 <li>📧 Email : supports@nubiaaura.com</li>
-                <li>📱 WhatsApp : +221 77 123 45 67</li>
+                <li>📱 WhatsApp : +221 77 143 01 37</li>
               </ul>
 
               <p>Cordialement,</p>
@@ -507,7 +507,7 @@ export function getShippingUpdateEmail(data: ShippingUpdateEmailData) {
               <p>Pour toute question :</p>
               <ul>
                 <li>📧 Email : supports@nubiaaura.com</li>
-                <li>📱 WhatsApp : +221 77 123 45 67</li>
+                <li>📱 WhatsApp : +221 77 143 01 37</li>
               </ul>
 
               <p>Cordialement,</p>

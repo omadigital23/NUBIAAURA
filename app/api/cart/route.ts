@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { cartRateLimit, getClientIdentifier, addRateLimitHeaders } from '@/lib/rate-limit-upstash';
+import { cartRateLimit, getClientIdentifier, addRateLimitHeaders, checkRateLimit } from '@/lib/rate-limit-upstash';
 import * as Sentry from '@sentry/nextjs';
 
 const AddItemSchema = z.object({
@@ -108,7 +108,7 @@ async function handleCartRoute(request: NextRequest, bodyOverride?: unknown) {
     if (cartRateLimit) {
       try {
         const identifier = getClientIdentifier(request);
-        const { success, limit, remaining, reset } = await cartRateLimit.limit(identifier);
+        const { success, limit, remaining, reset } = await checkRateLimit(identifier, cartRateLimit);
 
         if (!success) {
           console.warn(`[Cart] Rate limit exceeded for ${identifier}`);

@@ -296,7 +296,7 @@ function ThankYouContent() {
         {/* Additional Info */}
         <div className="mt-8 text-center">
           <p className="text-nubia-black/60 text-sm">
-            {t('merci.support_info', 'Pour toute question concernant votre commande, contactez notre service client à service@nubia-aura.com ou appelez-nous au +221 33 123 45 67')}
+            {t('merci.support_info', 'Pour toute question concernant votre commande, contactez notre service client à service@nubia-aura.com ou appelez-nous au +221 77 143 01 37')}
           </p>
         </div>
       </div>

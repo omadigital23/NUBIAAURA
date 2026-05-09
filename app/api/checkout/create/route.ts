@@ -3,7 +3,7 @@ import { getSupabaseServerClient } from '@/lib/supabase';
 import { CheckoutSchema } from '@/lib/checkout-validation';
 import { createOrder, verifyStock } from '@/lib/order-service';
 import { getTranslations, getTranslationKey } from '@/lib/i18n';
-import { paymentRateLimit, getClientIdentifier, addRateLimitHeaders } from '@/lib/rate-limit-upstash';
+import { paymentRateLimit, getClientIdentifier, addRateLimitHeaders, checkRateLimit } from '@/lib/rate-limit-upstash';
 import { sanitizeText, sanitizeEmail, sanitizePhone } from '@/lib/sanitize';
 import * as Sentry from '@sentry/nextjs';
 
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     // Rate limiting (payment-level: strict)
     if (paymentRateLimit) {
       const identifier = getClientIdentifier(request);
-      const { success, limit, remaining, reset } = await paymentRateLimit.limit(identifier);
+      const { success, limit, remaining, reset } = await checkRateLimit(identifier, paymentRateLimit);
       if (!success) {
         const response = NextResponse.json(
           { error: 'Trop de requêtes. Veuillez réessayer dans quelques instants.' },

@@ -100,7 +100,7 @@ export function formatPhone(phone: string): string {
   const cleaned = phone.replace(/\D/g, '');
   
   if (cleaned.startsWith('221')) {
-    // Sénégal: +221 77 123 45 67
+    // Sénégal: +221 77 143 01 37
     return `+221 ${cleaned.slice(3, 5)} ${cleaned.slice(5, 8)} ${cleaned.slice(8, 10)} ${cleaned.slice(10)}`;
   } else if (cleaned.startsWith('212')) {
     // Maroc: +212 6 12 34 56 78
