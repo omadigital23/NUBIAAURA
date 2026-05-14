@@ -206,16 +206,19 @@ export default function FeaturedProducts() {
         aria-label={`${t('home.discover', 'Discover')} ${name}`}
       >
         <div className={`relative overflow-hidden bg-nubia-cream/35 ${featuredCard ? 'h-[420px] md:h-[580px]' : 'h-72 md:h-80'}`}>
+          {/* Skeleton shimmer — visible until image loads */}
+          <div className="absolute inset-0 bg-gradient-to-r from-nubia-gold/5 via-nubia-gold/15 to-nubia-gold/5 animate-pulse z-0" />
           {displayImageSrc && (
             <img
               src={displayImageSrc}
               alt={name}
               onError={(event) => handleImageError(event, fallback)}
               loading="eager"
-              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+              className="relative z-10 h-full w-full object-cover transition-all duration-700 group-hover:scale-105 opacity-0 [&.loaded]:opacity-100"
+              onLoad={(e) => e.currentTarget.classList.add('loaded')}
             />
           )}
-          <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-nubia-black/55 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+          <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-nubia-black/55 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 z-20" />
         </div>
 
         <div className={featuredCard ? 'p-6 md:p-7' : 'p-4'}>

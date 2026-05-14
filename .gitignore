@@ -82,18 +82,11 @@ test-admin-auth.js
 *-test-credentials.js
 *-with-secrets.js
 
-# Test files
+# Test runner files (not test source code)
 test-*.js
 *-test.js
 test-cart-api.js
 scripts/tests/
-__tests__/
-*.test.js
-*.spec.js
-*.test.ts
-*.spec.ts
-*.test.tsx
-*.spec.tsx
 
 # Security audit files (keep local)
 scripts/SECURITY_AUDIT.md
@@ -112,3 +105,61 @@ test-results/
 # Antigravity artifacts
 artifacts/
 .gemini/
+
+# ── Debug logs ──────────────────────────────────────────────────
+devserver.*.log
+devserver.log
+build-err.txt
+build-log.txt
+build-output.txt
+build-final.txt
+build_log.txt
+build_output.txt
+new-build.txt
+full-build.txt
+error.log
+tsc_errors.txt
+*.codex.*.log
+
+# ── Temp work / report files ───────────────────────────────────
+ADMIN_ORDERS_*.md
+ADMIN_ORDERS_*.txt
+ADMIN_ORDERS_*.html
+ADMIN_ORDERS_*.ps1
+CHANGES_LOG_*.md
+DIAGNOSTIC_*.md
+VERIFICATION_*.md
+VERIFICATION_*.txt
+COMPLETION_REPORT.txt
+PHASE3_*.txt
+FINAL_SUMMARY.txt
+VISUAL_SUMMARY.txt
+RESUME_CORRECTIONS.txt
+IMPLEMENTATION_COMPLETE.md
+IMPROVEMENTS_PROGRESS.md
+GUIDE_CONFIGURATION_*.md
+NOTIFICATIONS_*.md
+REALTIME_*.md
+REALTIME_*.txt
+AUDIT_*.md
+MOBILE_FIRST_*.md
+SECURITY.md
+COMPREHENSIVE_IMPLEMENTATION_AUDIT.md
+DATABASE_IMPLEMENTATION_CHECKLIST.md
+DATABASE_IMPROVEMENTS.md
+FIX_SUPABASE_SECURITY.txt
+SUPABASE_SECURITY_FIX.txt
+EXECUTE_MIGRATIONS_NOW.txt
+00_ADMIN_ORDERS_READ_ME_FIRST.txt
+checkout-diagnostic-report.json
+
+# ── One-off fix scripts ────────────────────────────────────────
+fix-*.js
+smart-fix-*.js
+update-*.js
+run-*.js
+
+# ── SQL files (protect migrations) ─────────────────────────────
+*.sql
+!migrations/**/*.sql
+!supabase/**/*.sql

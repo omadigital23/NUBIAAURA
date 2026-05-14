@@ -1,13 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
-import { AlertCircle, ArrowLeft, Package } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Package, Bell } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
+import toast from 'react-hot-toast';
 
 interface Order {
   id: string;
@@ -39,6 +41,67 @@ export default function OrdersPage() {
       fetchOrders();
     }
   }, [isAuthenticated, user]);
+
+  // ── Supabase Realtime: listen for order status updates ───────
+  const channelRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseAnonKey) return;
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+    const channel = supabase
+      .channel('user-orders')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const updated = payload.new as Order;
+          const oldStatus = (payload.old as any)?.status;
+          const newStatus = updated.status;
+
+          // Update local state
+          setOrders((prev) =>
+            prev.map((o) => (o.id === updated.id ? { ...o, ...updated } : o))
+          );
+
+          // Show toast notification if status changed
+          if (oldStatus && oldStatus !== newStatus) {
+            const label = getStatusLabel(newStatus);
+            toast.success(
+              `${t('orders.status_updated', 'Statut mis à jour')} : ${label}`,
+              {
+                icon: '📦',
+                duration: 5000,
+                style: {
+                  background: '#1A1A1A',
+                  color: '#D4AF37',
+                  border: '1px solid rgba(212,175,55,0.3)',
+                },
+              }
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    channelRef.current = channel;
+
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+      }
+    };
+  }, [isAuthenticated, user, t]);
 
   const fetchOrders = async () => {
     try {

@@ -1,11 +1,11 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import Link from 'next/link';
 import { withImageParams } from '@/lib/image-formats';
-import OptimizedImage from '@/components/OptimizedImage';
+import { AnimatePresence, motion } from 'framer-motion';
 
 type ProductImage = {
   url: string | null;
@@ -35,8 +35,10 @@ export default function HeroSlider() {
   const { t, locale } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlay, setIsAutoPlay] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
   const [items, setItems] = useState<DBProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [direction, setDirection] = useState(1);
   const heroSlugs = useMemo(
     () =>
       (process.env.NEXT_PUBLIC_HERO_SLUGS || '')
@@ -94,27 +96,31 @@ export default function HeroSlider() {
   }, [heroSlugs]);
 
   useEffect(() => {
-    if (!isAutoPlay || items.length === 0) return;
+    if (!isAutoPlay || isHovered || items.length === 0) return;
     const interval = setInterval(() => {
+      setDirection(1);
       setCurrentIndex((prev) => (prev + 1) % items.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, [isAutoPlay, items.length]);
+  }, [isAutoPlay, isHovered, items.length]);
 
-  const goToPrevious = () => {
+  const goToPrevious = useCallback(() => {
     setIsAutoPlay(false);
+    setDirection(-1);
     setCurrentIndex((prev) => (items.length === 0 ? 0 : prev === 0 ? items.length - 1 : prev - 1));
-  };
+  }, [items.length]);
 
-  const goToNext = () => {
+  const goToNext = useCallback(() => {
     setIsAutoPlay(false);
+    setDirection(1);
     setCurrentIndex((prev) => (items.length === 0 ? 0 : (prev + 1) % items.length));
-  };
+  }, [items.length]);
 
-  const goToSlide = (index: number) => {
+  const goToSlide = useCallback((index: number) => {
     setIsAutoPlay(false);
+    setDirection(index > currentIndex ? 1 : -1);
     setCurrentIndex(index);
-  };
+  }, [currentIndex]);
 
   const currentProduct = items[currentIndex];
   const displayName = currentProduct
@@ -126,88 +132,161 @@ export default function HeroSlider() {
   const price = currentProduct?.price || 0;
   const rating = currentProduct?.rating ?? 5;
 
+  // Crossfade animation variants
+  const slideVariants = {
+    enter: {
+      opacity: 0,
+      scale: 1.02,
+    },
+    center: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        opacity: { duration: 0.8, ease: 'easeInOut' },
+        scale: { duration: 0.8, ease: 'easeOut' },
+      },
+    },
+    exit: {
+      opacity: 0,
+      scale: 0.98,
+      transition: {
+        opacity: { duration: 0.6, ease: 'easeInOut' },
+        scale: { duration: 0.6, ease: 'easeIn' },
+      },
+    },
+  };
 
+  // Loading skeleton
+  if (loading) {
+    return (
+      <div className="relative h-full min-h-[500px] md:min-h-[600px] bg-gradient-to-br from-nubia-gold/10 to-nubia-gold/5 rounded-2xl overflow-hidden border border-nubia-gold/30">
+        <div className="absolute inset-0 bg-nubia-gold/10 animate-pulse" />
+        <div className="absolute bottom-0 left-0 right-0 p-6">
+          <div className="h-8 bg-nubia-gold/20 rounded-lg w-2/3 mb-3 animate-pulse" />
+          <div className="h-5 bg-nubia-gold/15 rounded-lg w-1/3 animate-pulse" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="relative h-full min-h-screen bg-gradient-to-br from-nubia-gold/20 to-nubia-gold/5 rounded-2xl overflow-hidden border border-nubia-gold/30 group">
-      {/* Main Image */}
-      <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
-        {imageSrc ? (
-          <OptimizedImage
-            src={withImageParams('hero', imageSrc)}
-            alt={displayName}
-            fill
-            sizes="100vw"
-            priority
-            loading="eager"
-            objectFit="contain"
-            className="transition-opacity duration-500"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-nubia-cream/40" />
-        )}
+    <div
+      className="relative h-full min-h-[500px] md:min-h-[600px] bg-gradient-to-br from-nubia-black to-nubia-dark rounded-2xl overflow-hidden border border-nubia-gold/30 group"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Animated background slides with Ken Burns */}
+      <div className="absolute inset-0 overflow-hidden">
+        <AnimatePresence mode="sync" initial={false}>
+          <motion.div
+            key={`slide-${currentIndex}`}
+            className="absolute inset-0"
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+          >
+            {imageSrc ? (
+              <motion.img
+                src={withImageParams('hero', imageSrc)}
+                alt={displayName}
+                className="h-full w-full object-cover"
+                // Ken Burns — slow zoom over the slide duration
+                initial={{ scale: 1.0 }}
+                animate={{ scale: 1.08 }}
+                transition={{ duration: 6, ease: 'linear' }}
+                loading="eager"
+              />
+            ) : (
+              <div className="w-full h-full bg-nubia-cream/40" />
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
-        {/* Overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-nubia-black/40 to-transparent" />
+      {/* Overlay gradient */}
+      <div className="absolute inset-0 bg-gradient-to-t from-nubia-black/70 via-nubia-black/20 to-transparent z-10" />
+      <div className="absolute inset-0 bg-gradient-to-r from-nubia-black/40 to-transparent z-10" />
 
-        {/* Product Info */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 text-nubia-white">
-          <h3 className="font-playfair text-2xl font-bold mb-2">{loading ? t('common.loading') : displayName}</h3>
+      {/* Product Info — animated */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={`info-${currentIndex}`}
+          className="absolute bottom-0 left-0 right-0 p-6 md:p-8 z-20 text-nubia-white"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <h3 className="font-playfair text-2xl md:text-3xl lg:text-4xl font-bold mb-2 drop-shadow-lg">
+            {displayName}
+          </h3>
           <div className="flex items-center justify-between mb-4">
-            <span className="text-lg font-semibold">
+            <span className="text-lg md:text-xl font-semibold text-nubia-gold drop-shadow">
               {price.toLocaleString('fr-FR')} {t('common.currency')}
             </span>
-            <span className="text-sm" role="img" aria-label={`${Math.max(1, Math.min(5, rating))} étoiles sur 5`}>
+            <span
+              className="text-sm"
+              role="img"
+              aria-label={`${Math.max(1, Math.min(5, rating))} ${t('common.stars', 'étoiles sur 5')}`}
+            >
               {'⭐'.repeat(Math.max(1, Math.min(5, rating)))}
             </span>
           </div>
           {currentProduct && (
-            <Link
-              href={`/${locale}/produit/${currentProduct.slug}`}
-              className="inline-block px-6 py-2 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2"
-              aria-label={`Découvrir ${displayName}`}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.4 }}
             >
-              {t('home.discover', 'Découvrir')}
-            </Link>
+              <Link
+                href={`/${locale}/produit/${currentProduct.slug}`}
+                className="inline-block px-6 py-3 bg-nubia-gold text-nubia-black font-semibold rounded-lg hover:bg-nubia-white transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2 shadow-lg"
+                aria-label={`${t('home.discover', 'Découvrir')} ${displayName}`}
+              >
+                {t('home.discover', 'Découvrir')}
+              </Link>
+            </motion.div>
           )}
-        </div>
-      </div>
+        </motion.div>
+      </AnimatePresence>
 
       {/* Previous Button */}
       <button
         onClick={goToPrevious}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-nubia-gold/80 hover:bg-nubia-gold text-nubia-black p-2 rounded-full transition-all duration-300 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transform hover:scale-110"
+        className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 z-30 bg-nubia-black/50 hover:bg-nubia-gold text-nubia-white hover:text-nubia-black p-2 md:p-3 rounded-full transition-all duration-300 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transform hover:scale-110 backdrop-blur-sm"
         aria-label={t('common.previous')}
       >
-        <ChevronLeft size={24} />
+        <ChevronLeft size={22} />
       </button>
 
       {/* Next Button */}
       <button
         onClick={goToNext}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-nubia-gold/80 hover:bg-nubia-gold text-nubia-black p-2 rounded-full transition-all duration-300 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transform hover:scale-110"
+        className="absolute right-3 md:right-4 top-1/2 -translate-y-1/2 z-30 bg-nubia-black/50 hover:bg-nubia-gold text-nubia-white hover:text-nubia-black p-2 md:p-3 rounded-full transition-all duration-300 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transform hover:scale-110 backdrop-blur-sm"
         aria-label={t('common.next')}
       >
-        <ChevronRight size={24} />
+        <ChevronRight size={22} />
       </button>
 
-      {/* Dots Navigation */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+      {/* Dots Navigation — gold themed */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex gap-2">
         {items.map((_, index) => (
           <button
             key={index}
             onClick={() => goToSlide(index)}
-            className={`h-2 rounded-full transition-all duration-300 ${index === currentIndex
-              ? 'bg-nubia-gold w-8'
-              : 'bg-nubia-white/50 hover:bg-nubia-white/80 w-2'
-              }`}
-            aria-label={`Aller à la diapositive ${index + 1}`}
+            className={`rounded-full transition-all duration-500 ${
+              index === currentIndex
+                ? 'bg-nubia-gold w-8 h-2.5 shadow-[0_0_8px_rgba(212,175,55,0.5)]'
+                : 'bg-nubia-white/40 hover:bg-nubia-white/70 w-2.5 h-2.5'
+            }`}
+            aria-label={`${t('common.go_to_slide', 'Aller à la diapositive')} ${index + 1}`}
           />
         ))}
       </div>
 
-      {/* Counter */}
-      <div className="absolute top-4 right-4 z-20 bg-nubia-black/60 text-nubia-gold px-3 py-1 rounded-full text-sm font-semibold">
+      {/* Counter badge */}
+      <div className="absolute top-4 right-4 z-30 bg-nubia-black/60 text-nubia-gold px-3 py-1 rounded-full text-sm font-semibold backdrop-blur-sm border border-nubia-gold/30">
         {items.length === 0 ? 0 : currentIndex + 1} / {items.length}
       </div>
     </div>

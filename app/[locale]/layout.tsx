@@ -1,5 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
+import { validateEnv } from '@/lib/env-check';
+
+// Validate environment variables at server startup
+validateEnv();
 
 // Generate static params for locales
 export function generateStaticParams() {

@@ -81,7 +81,18 @@ export async function GET(request: NextRequest) {
       query = query.gte('created_at', from);
     }
     if (to) {
-      query = query.lte('created_at', to);
+      // Add end-of-day to include the entire 'to' date
+      const toDate = to.includes('T') ? to : `${to}T23:59:59.999Z`;
+      query = query.lte('created_at', toDate);
+    }
+    // Amount range filters
+    const minAmount = searchParams.get('minAmount');
+    const maxAmount = searchParams.get('maxAmount');
+    if (minAmount) {
+      query = query.gte('total', parseFloat(minAmount));
+    }
+    if (maxAmount) {
+      query = query.lte('total', parseFloat(maxAmount));
     }
     if (search) {
       query = query.or(`order_number.ilike.%${search}%,shipping_address->>email.ilike.%${search}%`);

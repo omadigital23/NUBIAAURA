@@ -6,6 +6,8 @@ import {
   getPasswordResetPageUrl,
   PasswordResetLocale,
 } from '@/lib/password-reset-config';
+import { authRateLimit, checkRateLimit } from '@/lib/rate-limit-upstash';
+import { resetPasswordRequestSchema } from '@/lib/schemas';
 
 function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -132,15 +134,29 @@ function buildResetPasswordEmail(
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, locale: rawLocale } = await request.json();
-    const locale: PasswordResetLocale = rawLocale === 'en' ? 'en' : 'fr';
-    const passwordResetConfig = getPasswordResetConfig(locale);
+    const body = await request.json();
 
-    if (!email || !email.includes('@')) {
-      return NextResponse.json({ error: 'Email invalide' }, { status: 400 });
+    // Zod validation
+    const parsed = resetPasswordRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.errors[0]?.message || 'Données invalides' },
+        { status: 400 }
+      );
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const { email: normalizedEmail, locale } = parsed.data;
+    const passwordResetConfig = getPasswordResetConfig(locale as PasswordResetLocale);
+
+    // Rate limiting — 3 requests per 15 minutes per email
+    const rateLimitResult = await checkRateLimit(`reset-otp:${normalizedEmail}`, authRateLimit);
+    if (!rateLimitResult.success) {
+      console.warn('[Reset OTP] Rate limited for:', normalizedEmail);
+      return NextResponse.json(
+        { error: 'Trop de tentatives. Veuillez réessayer dans quelques minutes.' },
+        { status: 429 }
+      );
+    }
 
     console.log('[Reset OTP] Processing request for:', normalizedEmail);
 

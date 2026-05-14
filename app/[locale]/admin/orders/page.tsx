@@ -66,6 +66,10 @@ export default function AdminOrdersPage() {
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [minAmount, setMinAmount] = useState('');
+  const [maxAmount, setMaxAmount] = useState('');
   const limit = 10;
   
   const subscriptionRef = useRef<any>(null);
@@ -256,6 +260,19 @@ export default function AdminOrdersPage() {
 
       if (searchQuery) {
         url += `&search=${encodeURIComponent(searchQuery)}`;
+      }
+
+      if (dateFrom) {
+        url += `&from=${dateFrom}`;
+      }
+      if (dateTo) {
+        url += `&to=${dateTo}`;
+      }
+      if (minAmount) {
+        url += `&minAmount=${minAmount}`;
+      }
+      if (maxAmount) {
+        url += `&maxAmount=${maxAmount}`;
       }
 
       const response = await fetch(url, {
@@ -724,6 +741,63 @@ export default function AdminOrdersPage() {
                   {status === 'all' ? t('admin.orders.filter_all', 'Toutes') : getStatusLabel(status)}
                 </button>
               ))}
+            </div>
+
+            {/* Advanced filters: date range + amount range */}
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center flex-wrap">
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-nubia-black/50 whitespace-nowrap font-medium">{t('admin.orders.date_from', 'Du')}</label>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="px-3 py-1.5 border border-nubia-gold/30 rounded-lg text-sm focus:outline-none focus:border-nubia-gold"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-nubia-black/50 whitespace-nowrap font-medium">{t('admin.orders.date_to', 'Au')}</label>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="px-3 py-1.5 border border-nubia-gold/30 rounded-lg text-sm focus:outline-none focus:border-nubia-gold"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-nubia-black/50 whitespace-nowrap font-medium">{t('admin.orders.min_amount', 'Min FCFA')}</label>
+                <input
+                  type="number"
+                  value={minAmount}
+                  onChange={(e) => setMinAmount(e.target.value)}
+                  placeholder="0"
+                  className="w-24 px-3 py-1.5 border border-nubia-gold/30 rounded-lg text-sm focus:outline-none focus:border-nubia-gold"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-nubia-black/50 whitespace-nowrap font-medium">{t('admin.orders.max_amount', 'Max FCFA')}</label>
+                <input
+                  type="number"
+                  value={maxAmount}
+                  onChange={(e) => setMaxAmount(e.target.value)}
+                  placeholder="999999"
+                  className="w-24 px-3 py-1.5 border border-nubia-gold/30 rounded-lg text-sm focus:outline-none focus:border-nubia-gold"
+                />
+              </div>
+              {(dateFrom || dateTo || minAmount || maxAmount) && (
+                <button
+                  onClick={() => {
+                    setDateFrom('');
+                    setDateTo('');
+                    setMinAmount('');
+                    setMaxAmount('');
+                    setPage(1);
+                    setTimeout(() => loadOrders(1), 0);
+                  }}
+                  className="px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+                >
+                  {t('admin.orders.clear_filters', 'Effacer filtres')}
+                </button>
+              )}
             </div>
           </div>
 

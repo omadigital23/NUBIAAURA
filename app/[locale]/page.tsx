@@ -2,7 +2,8 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import type { SyntheticEvent } from 'react';
+import Image from 'next/image';
+
 import {
   ArrowRight,
   Award,
@@ -17,6 +18,7 @@ import {
   Truck,
 } from 'lucide-react';
 import Header from '@/components/Header';
+import HeroSlider from '@/components/HeroSlider';
 import FeaturedProducts from '@/components/FeaturedProducts';
 import AnimatedSection from '@/components/AnimatedSection';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -51,15 +53,7 @@ const productAsset = (path: string): ProductAsset => {
   };
 };
 
-const handleImageError = (
-  event: SyntheticEvent<HTMLImageElement>,
-  fallback: string,
-) => {
-  const image = event.currentTarget;
-  if (image.dataset.fallbackApplied === 'true') return;
-  image.dataset.fallbackApplied = 'true';
-  image.src = fallback;
-};
+
 
 export default function Home() {
   const { t, locale } = useTranslation();
@@ -186,21 +180,8 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="grid h-[360px] grid-cols-5 grid-rows-6 gap-3 md:h-[500px]">
-              {heroImages.map((image) => (
-                <div
-                  key={image.alt}
-                  className={`${image.className} overflow-hidden rounded-lg border border-nubia-white/15 bg-nubia-white/5 shadow-2xl`}
-                >
-                  <img
-                    src={image.asset.src}
-                    alt={image.alt}
-                    onError={(event) => handleImageError(event, image.asset.fallback)}
-                    className="h-full w-full object-cover transition-transform duration-700 motion-safe:hover:scale-105"
-                    loading="eager"
-                  />
-                </div>
-              ))}
+            <div className="h-[400px] md:h-[540px]">
+              <HeroSlider />
             </div>
           </div>
         </div>
@@ -211,12 +192,14 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-10 lg:gap-16 items-center">
               <div className="relative overflow-hidden rounded-lg border border-nubia-gold/20 bg-nubia-cream shadow-sm">
-                <img
+                <Image
                   src={productAsset('images/chemises/wax/chemise-wax-grande/03-detail.png').src}
                   alt={t('home.about_image_alt', 'Wax shirt detail')}
-                  onError={(event) => handleImageError(event, productAsset('images/chemises/wax/chemise-wax-grande/03-detail.png').fallback)}
+                  width={600}
+                  height={420}
                   className="h-[420px] w-full object-cover"
                   loading="lazy"
+                  unoptimized={process.env.NODE_ENV === 'development'}
                 />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-nubia-black/85 to-transparent p-7">
                   <p className="max-w-sm text-sm font-semibold leading-6 text-nubia-white/90">
