@@ -9,9 +9,14 @@ import {
   CheckCircle2,
   Loader2,
   Lock,
+  MessageCircle,
+  RotateCcw,
+  Ruler,
+  ShieldCheck,
   Sparkles,
   Star,
   Timer,
+  Truck,
   WashingMachine,
 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -23,6 +28,7 @@ import { withImageParams } from "@/lib/image-formats";
 import { trackAddToCart, trackProductView } from "@/lib/analytics-config";
 import OptimizedImage from "@/components/OptimizedImage";
 import ProductReviews from "@/components/ProductReviews";
+import { getWhatsAppHref } from "@/lib/whatsapp-link";
 
 type ProductImage = {
   url: string;
@@ -245,7 +251,15 @@ export default function ProductDetailsClient({
   }, [imageSrc, product]);
 
   const currentImage = gallery[activeImageIndex] || imageSrc;
+  const currentImageSrc = currentImage ? withImageParams("cover", currentImage) : "";
+  const currentImageIsSupabaseStorage = currentImageSrc.includes(".supabase.co/storage/");
   const displayPrice = selectedVariant?.price ?? Number(product?.price || 0);
+  const productUrl = product?.slug ? `https://www.nubiaaura.com/${locale}/produit/${product.slug}` : "https://www.nubiaaura.com";
+  const whatsappProductHref = getWhatsAppHref({
+    message: locale === "fr"
+      ? `Bonjour Nubia Aura, je viens de voir l'article "${name}" sur votre site. Pouvez-vous me conseiller sur la taille, la disponibilité et les détails ? ${productUrl}`
+      : `Hello Nubia Aura, I just saw "${name}" on your website. Could you advise me on size, availability and details? ${productUrl}`,
+  });
   const canAdd = Boolean(product)
     && inStock
     && availableStock > 0
@@ -403,6 +417,28 @@ export default function ProductDetailsClient({
       content: care,
     },
   ].filter((item) => Boolean(item.content));
+  const purchaseAssurances = [
+    {
+      icon: ShieldCheck,
+      title: locale === "fr" ? "Paiement sécurisé" : "Secure payment",
+      content: locale === "fr" ? "PayDunya, Wave, Orange Money et carte." : "PayDunya, Wave, Orange Money and card.",
+    },
+    {
+      icon: Truck,
+      title: locale === "fr" ? "Livraison suivie" : "Tracked delivery",
+      content: locale === "fr" ? "Préparation contrôlée puis suivi de commande." : "Checked preparation and order tracking.",
+    },
+    {
+      icon: RotateCcw,
+      title: locale === "fr" ? "Retours clairs" : "Clear returns",
+      content: locale === "fr" ? "Conditions simples selon la zone de livraison." : "Simple conditions based on delivery location.",
+    },
+    {
+      icon: Ruler,
+      title: locale === "fr" ? "Conseil taille" : "Sizing advice",
+      content: locale === "fr" ? "Aide atelier avant commande si vous hésitez." : "Atelier help before ordering if needed.",
+    },
+  ];
 
   return (
     <motion.div className="space-y-12">
@@ -481,9 +517,9 @@ export default function ProductDetailsClient({
                 className="relative h-[62vh] min-h-[360px] max-h-[560px] overflow-hidden rounded-lg border border-nubia-gold/15 bg-nubia-cream/45 shadow-[0_24px_70px_rgba(0,0,0,0.08)] lg:h-[min(76vh,760px)] lg:max-h-[760px]"
               >
                 <AnimatePresence mode="wait">
-                  {currentImage && (
+                  {currentImageSrc && (
                     <motion.div
-                      key={currentImage}
+                      key={currentImageSrc}
                       initial={{ opacity: 0, scale: 1.025 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.985 }}
@@ -491,12 +527,12 @@ export default function ProductDetailsClient({
                       className="absolute inset-0"
                     >
                       <Image
-                        src={withImageParams("cover", currentImage)}
+                        src={currentImageSrc}
                         alt={name}
                         fill
                         sizes="(max-width: 1024px) 100vw, 58vw"
                         priority
-                        unoptimized={process.env.NODE_ENV === "development"}
+                        unoptimized={process.env.NODE_ENV === "development" || currentImageIsSupabaseStorage}
                         style={{ objectFit: "contain" }}
                         className="object-contain"
                       />
@@ -663,7 +699,7 @@ export default function ProductDetailsClient({
                 <motion.button
                   type="button"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  aria-label={locale === "fr" ? "Diminuer la quantite" : "Decrease quantity"}
+                  aria-label={locale === "fr" ? "Diminuer la quantité" : "Decrease quantity"}
                   className="inline-flex h-11 w-11 items-center justify-center text-nubia-black transition-colors hover:bg-nubia-gold/10 disabled:opacity-40"
                   disabled={quantity <= 1}
                   whileTap={{ scale: 0.92 }}
@@ -675,7 +711,7 @@ export default function ProductDetailsClient({
                   type="button"
                   onClick={() => setQuantity(Math.min(availableStock, quantity + 1))}
                   disabled={quantity >= availableStock}
-                  aria-label={locale === "fr" ? "Augmenter la quantite" : "Increase quantity"}
+                  aria-label={locale === "fr" ? "Augmenter la quantité" : "Increase quantity"}
                   className="inline-flex h-11 w-11 items-center justify-center text-nubia-black transition-colors hover:bg-nubia-gold/10 disabled:opacity-40"
                   whileTap={{ scale: 0.92 }}
                 >
@@ -757,19 +793,35 @@ export default function ProductDetailsClient({
               />
             </div>
 
+            {whatsappProductHref && (
+              <a
+                href={whatsappProductHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-green-500/35 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800 transition-all duration-300 hover:-translate-y-0.5 hover:border-green-600 hover:bg-green-100 focus:outline-none focus:ring-4 focus:ring-green-500/20"
+              >
+                <MessageCircle size={18} aria-hidden="true" />
+                {locale === "fr" ? "Demander conseil sur WhatsApp" : "Ask for advice on WhatsApp"}
+              </a>
+            )}
+
             {!inStock && (
               <span className="mt-3 block px-1 text-sm text-red-600">{t("product.out_of_stock", "Rupture de stock")}</span>
             )}
 
-            <div className="mt-6 grid grid-cols-2 gap-2 border-t border-nubia-gold/15 pt-5 text-xs text-nubia-black/65">
-              <span className="inline-flex items-center gap-2">
-                <CheckCircle2 size={15} className="text-nubia-gold" />
-                {locale === "fr" ? "Paiement sécurisé" : "Secure payment"}
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <Timer size={15} className="text-nubia-gold" />
-                {locale === "fr" ? "Stock vérifié" : "Verified stock"}
-              </span>
+            <div className="mt-6 grid grid-cols-1 gap-2 border-t border-nubia-gold/15 pt-5 sm:grid-cols-2">
+              {purchaseAssurances.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div key={item.title} className="rounded-lg bg-nubia-cream/20 p-3">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-nubia-black">
+                      <Icon size={16} className="text-nubia-gold" aria-hidden="true" />
+                      {item.title}
+                    </div>
+                    <p className="mt-1 text-xs leading-5 text-nubia-black/60">{item.content}</p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </motion.aside>

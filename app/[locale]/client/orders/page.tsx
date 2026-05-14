@@ -7,7 +7,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
-import { AlertCircle, ArrowLeft, Package, Bell } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Package } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import toast from 'react-hot-toast';
 

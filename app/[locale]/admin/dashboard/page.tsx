@@ -437,7 +437,7 @@ export default function AdminDashboardPage() {
                               ))}
                             </Pie>
                             <Tooltip
-                              formatter={(value: number) => [value, '']}
+                              formatter={(value) => [value ?? 0, '']}
                               contentStyle={{ background: '#1A1A1A', border: '1px solid rgba(212,175,55,0.3)', borderRadius: 8, color: '#D4AF37' }}
                               itemStyle={{ color: '#fff' }}
                             />

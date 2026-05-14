@@ -29,6 +29,11 @@ const e2eInitialItems: CartItem[] = [
   },
 ];
 
+const isAbortError = (err: unknown) =>
+  err instanceof Error && err.name === 'AbortError';
+
+const shouldLogCartDiagnostics = process.env.NODE_ENV !== 'production';
+
 export function useCart(): UseCartResult {
   const [items, setItems] = useState<CartItem[]>(isE2E ? e2eInitialItems : []);
   const [loading, setLoading] = useState(false);
@@ -41,7 +46,13 @@ export function useCart(): UseCartResult {
     }
 
     let mounted = true;
+    let currentController: AbortController | null = null;
+
     const loadCartFromDB = async () => {
+      currentController?.abort();
+      const controller = new AbortController();
+      currentController = controller;
+
       try {
         setLoading(true);
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -51,18 +62,23 @@ export function useCart(): UseCartResult {
           headers,
           body: JSON.stringify({ action: 'get' }),
           credentials: 'include',
+          signal: controller.signal,
         });
+
+        if (!mounted || controller.signal.aborted) {
+          return;
+        }
 
         if (!response.ok) {
           if (response.status === 401) {
-            if (mounted) {
-              setItems([]);
-              setError(null);
-            }
+            setItems([]);
+            setError(null);
             return;
           }
 
-          console.error('[useCart] Failed to load cart:', response.status);
+          if (shouldLogCartDiagnostics) {
+            console.error('[useCart] Failed to load cart:', response.status);
+          }
           return;
         }
 
@@ -72,9 +88,15 @@ export function useCart(): UseCartResult {
           console.log('[useCart] Cart loaded successfully:', data.items.length, 'items');
         }
       } catch (err) {
-        console.error('[useCart] Error loading cart:', err);
+        if (!mounted || isAbortError(err)) {
+          return;
+        }
+
+        if (shouldLogCartDiagnostics) {
+          console.error('[useCart] Error loading cart:', err);
+        }
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted && currentController === controller) setLoading(false);
       }
     };
 
@@ -94,6 +116,7 @@ export function useCart(): UseCartResult {
 
     return () => {
       mounted = false;
+      currentController?.abort();
       window.removeEventListener('token-changed', handleTokenChange as EventListener);
     };
   }, []);
@@ -296,7 +319,9 @@ export function useCart(): UseCartResult {
           return;
         }
 
-        console.error('[useCart] Failed to refetch cart:', response.status);
+        if (shouldLogCartDiagnostics) {
+          console.error('[useCart] Failed to refetch cart:', response.status);
+        }
         return;
       }
 
@@ -306,7 +331,9 @@ export function useCart(): UseCartResult {
         console.log('[useCart] Cart refetched successfully:', data.items.length, 'items');
       }
     } catch (err) {
-      console.error('[useCart] Error refetching cart:', err);
+      if (shouldLogCartDiagnostics) {
+        console.error('[useCart] Error refetching cart:', err);
+      }
     } finally {
       setLoading(false);
     }

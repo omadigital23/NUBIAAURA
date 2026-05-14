@@ -74,7 +74,8 @@ export default function OptimizedImage({
     // Normalize the source URL
     const normalizedSrc = normalizeImageUrl(src);
     const displaySrc = process.env.NEXT_PUBLIC_E2E === '1' || hasError ? fallbackSrc : normalizedSrc;
-    const unoptimized = process.env.NODE_ENV === 'development';
+    const isSupabaseStorageImage = normalizedSrc.includes('.supabase.co/storage/');
+    const unoptimized = process.env.NODE_ENV === 'development' || isSupabaseStorageImage;
 
     const handleLoad = () => {
         onLoad?.();

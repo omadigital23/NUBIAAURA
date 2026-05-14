@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AuthModal from '@/components/AuthModal';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Lock, ShoppingBag, Truck, Undo2 } from 'lucide-react';
 import { useCartContext } from '@/contexts/CartContext';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,10 +15,10 @@ import { CountrySelect, PhoneInput, type CountryData } from '@/components/checko
 import { PaymentMethodsSelector } from '@/components/checkout/PaymentMethodsSelector';
 import { getPriceForCountry, getCurrencyForCountry } from '@/lib/utils/currency-converter';
 import { supabase } from '@/lib/supabase';
+import CommerceTrustBar from '@/components/CommerceTrustBar';
 
 export default function CheckoutPage() {
-  const router = useRouter();
-  const { items: cartItems, clearCart, loading: cartLoading } = useCartContext();
+  const { items: cartItems, clearCart } = useCartContext();
   const { t, locale } = useTranslation();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const hasTrackedBeginCheckout = useRef(false);
@@ -32,7 +32,6 @@ export default function CheckoutPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isProcessingOrder, setIsProcessingOrder] = useState(false);
   const [shippingMethod, setShippingMethod] = useState('standard');
   const [paymentMethod, setPaymentMethod] = useState<'paydunya' | 'cod' | ''>('');
   const [paymentSubMethod, setPaymentSubMethod] = useState<string>('');
@@ -180,15 +179,6 @@ export default function CheckoutPage() {
     }
   }, [authLoading, cartItems]);
 
-  // Redirect to catalog if cart empty (only after cart finished loading)
-  // BUT NOT if we're processing an order (to allow redirect to thank you page)
-  useEffect(() => {
-    if (!cartLoading && cartItems.length === 0 && !isProcessingOrder) {
-      console.log('[Checkout] Panier vide et pas de commande en cours, redirection vers catalogue');
-      router.push(`/${locale}/catalogue`);
-    }
-  }, [cartItems, cartLoading, isProcessingOrder, router, locale]);
-
   useEffect(() => {
     let aborted = false;
     const run = async () => {
@@ -313,9 +303,6 @@ export default function CheckoutPage() {
       console.log('[Checkout] handleSubmit called');
       console.log('[Checkout] Selected payment method (from state):', paymentMethod);
       console.log('[Checkout] Step:', step);
-
-      // Marquer qu'on traite une commande pour éviter la redirection automatique
-      setIsProcessingOrder(true);
 
       // Require explicit payment method selection
       if (step === 3 && (!paymentMethod || (paymentMethod !== 'cod' && paymentMethod !== 'paydunya'))) {
@@ -495,6 +482,24 @@ export default function CheckoutPage() {
     };
   }, [formData.country, subtotal, shipping, tax, total, locale]);
 
+  const checkoutAssurances = [
+    {
+      icon: Lock,
+      title: locale === 'fr' ? 'Paiement protégé' : 'Protected payment',
+      description: locale === 'fr' ? 'Données chiffrées et redirection sécurisée.' : 'Encrypted data and secure redirect.',
+    },
+    {
+      icon: Truck,
+      title: locale === 'fr' ? 'Livraison suivie' : 'Tracked delivery',
+      description: locale === 'fr' ? 'Standard ou express selon votre pays.' : 'Standard or express depending on your country.',
+    },
+    {
+      icon: Undo2,
+      title: locale === 'fr' ? 'Retour encadré' : 'Clear returns',
+      description: locale === 'fr' ? 'Conditions visibles avant validation.' : 'Conditions visible before confirmation.',
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-nubia-white flex flex-col">
       <Header />
@@ -502,8 +507,67 @@ export default function CheckoutPage() {
       {/* Checkout Section */}
       <section className="flex-1 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="font-playfair text-4xl font-bold text-nubia-black mb-12">{t('checkout.title', 'Paiement')}</h1>
+          <div className="mb-10 grid gap-5 lg:grid-cols-[1fr_0.95fr] lg:items-end">
+            <div>
+              <p className="mb-3 text-sm font-bold uppercase tracking-[0.16em] text-nubia-gold">
+                {locale === 'fr' ? 'Commande sécurisée' : 'Secure order'}
+              </p>
+              <h1 className="font-playfair text-4xl font-bold text-nubia-black md:text-5xl">
+                {t('checkout.title', 'Paiement')}
+              </h1>
+              <p className="mt-4 max-w-2xl text-sm leading-6 text-nubia-black/65 md:text-base">
+                {locale === 'fr'
+                  ? 'Finalisez votre commande avec un parcours clair, des options de livraison visibles et un paiement protégé.'
+                  : 'Complete your order with clear steps, visible delivery options and protected payment.'}
+              </p>
+            </div>
 
+            <CommerceTrustBar variant="compact" limit={2} />
+          </div>
+
+          {cartItems.length === 0 ? (
+            <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr] lg:items-start">
+              <div className="rounded-lg border border-nubia-gold/20 bg-nubia-cream/20 p-8 text-center sm:p-10">
+                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-nubia-gold/10 text-nubia-gold">
+                  <ShoppingBag size={30} aria-hidden="true" />
+                </div>
+                <h2 className="font-playfair text-2xl font-bold text-nubia-black">
+                  {t('checkout.empty_cart', 'Votre panier est vide')}
+                </h2>
+                <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-nubia-black/65">
+                  {locale === 'fr'
+                    ? 'Ajoutez une pièce au panier avant de passer au paiement. Le récapitulatif et les options de livraison apparaîtront ici.'
+                    : 'Add an item to your cart before checkout. Your summary and delivery options will appear here.'}
+                </p>
+                <Link
+                  href={`/${locale}/catalogue`}
+                  className="mt-6 inline-flex items-center justify-center gap-2 rounded-lg bg-nubia-gold px-6 py-3 font-bold text-nubia-black transition-all duration-300 hover:bg-nubia-white hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-nubia-gold/20"
+                >
+                  {t('nav.catalog', 'Catalogue')}
+                </Link>
+              </div>
+
+              <div className="rounded-lg border border-nubia-gold/20 bg-nubia-white p-6 shadow-sm">
+                <h2 className="font-playfair text-2xl font-bold text-nubia-black">
+                  {locale === 'fr' ? 'Pourquoi commander ici ?' : 'Why order here?'}
+                </h2>
+                <div className="mt-5 space-y-3">
+                  {checkoutAssurances.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={item.title} className="flex gap-3 rounded-lg bg-nubia-cream/20 p-4">
+                        <Icon className="mt-0.5 flex-shrink-0 text-nubia-gold" size={20} aria-hidden="true" />
+                        <div>
+                          <h3 className="text-sm font-bold text-nubia-black">{item.title}</h3>
+                          <p className="mt-1 text-xs leading-5 text-nubia-black/65">{item.description}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             {/* Form */}
             <div className="md:col-span-2">
@@ -512,6 +576,8 @@ export default function CheckoutPage() {
                 {[1, 2, 3].map((s) => (
                   <div key={s} className="flex-1">
                     <button
+                      type="button"
+                      aria-current={step === s ? 'step' : undefined}
                       onClick={() => {
                         if (s <= 1) return setStep(1);
                         if (s === 2) return setStep(2);
@@ -887,10 +953,25 @@ export default function CheckoutPage() {
                       {priceDisplay.formatPrice(total - (promoDiscount?.amount || 0))}
                     </span>
                   </div>
+
+                  <div className="mt-6 space-y-2 border-t border-nubia-gold/20 pt-5">
+                    {checkoutAssurances.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <div key={item.title} className="flex gap-2 text-xs leading-5 text-nubia-black/65">
+                          <Icon className="mt-0.5 flex-shrink-0 text-nubia-gold" size={15} aria-hidden="true" />
+                          <span>
+                            <strong className="text-nubia-black">{item.title}</strong> {item.description}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </>
               )}
             </div>
           </div>
+          )}
         </div>
       </section>
 

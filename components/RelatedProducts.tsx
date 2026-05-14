@@ -81,7 +81,7 @@ export default function RelatedProducts({
     return () => { mounted = false; };
   }, [category, excludeId]);
 
-  if (!category) return null;
+  if (!category || (!loading && items.length === 0)) return null;
 
   return (
     <motion.section

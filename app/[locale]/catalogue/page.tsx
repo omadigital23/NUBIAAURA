@@ -17,6 +17,7 @@ import { PriceFilter } from '@/components/PriceFilter';
 import { SortSelect } from '@/components/SortSelect';
 import OptimizedImage from '@/components/OptimizedImage';
 import { CUSTOM_ONLY_CATEGORIES } from '@/lib/custom-categories';
+import CommerceTrustBar from '@/components/CommerceTrustBar';
 
 const DEFAULT_CATALOG_CATEGORIES = ['chemises-wax', 'robes-ville', 'robes-wax', 'super100'];
 
@@ -179,7 +180,7 @@ function CatalogueContent() {
                   {/* Banner Image */}
                   <OptimizedImage
                     src={getProductImageUrl(`images/banners/category/${cat}.png`)}
-                    alt={t(`categories.${cat}`, cat)}
+                    alt=""
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 200px"
                     priority
@@ -218,6 +219,12 @@ function CatalogueContent() {
             {/* Sort */}
             <SortSelect />
           </div>
+        </div>
+      </section>
+
+      <section className="border-b border-nubia-gold/20 bg-nubia-white py-5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <CommerceTrustBar limit={4} />
         </div>
       </section>
 

@@ -6,6 +6,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import Link from 'next/link';
 import { withImageParams } from '@/lib/image-formats';
 import { AnimatePresence, motion } from 'framer-motion';
+import type { Variants } from 'framer-motion';
 
 type ProductImage = {
   url: string | null;
@@ -38,7 +39,6 @@ export default function HeroSlider() {
   const [isHovered, setIsHovered] = useState(false);
   const [items, setItems] = useState<DBProduct[]>([]);
   const [loading, setLoading] = useState(true);
-  const [direction, setDirection] = useState(1);
   const heroSlugs = useMemo(
     () =>
       (process.env.NEXT_PUBLIC_HERO_SLUGS || '')
@@ -98,7 +98,6 @@ export default function HeroSlider() {
   useEffect(() => {
     if (!isAutoPlay || isHovered || items.length === 0) return;
     const interval = setInterval(() => {
-      setDirection(1);
       setCurrentIndex((prev) => (prev + 1) % items.length);
     }, 5000);
     return () => clearInterval(interval);
@@ -106,21 +105,18 @@ export default function HeroSlider() {
 
   const goToPrevious = useCallback(() => {
     setIsAutoPlay(false);
-    setDirection(-1);
     setCurrentIndex((prev) => (items.length === 0 ? 0 : prev === 0 ? items.length - 1 : prev - 1));
   }, [items.length]);
 
   const goToNext = useCallback(() => {
     setIsAutoPlay(false);
-    setDirection(1);
     setCurrentIndex((prev) => (items.length === 0 ? 0 : (prev + 1) % items.length));
   }, [items.length]);
 
   const goToSlide = useCallback((index: number) => {
     setIsAutoPlay(false);
-    setDirection(index > currentIndex ? 1 : -1);
     setCurrentIndex(index);
-  }, [currentIndex]);
+  }, []);
 
   const currentProduct = items[currentIndex];
   const displayName = currentProduct
@@ -133,7 +129,7 @@ export default function HeroSlider() {
   const rating = currentProduct?.rating ?? 5;
 
   // Crossfade animation variants
-  const slideVariants = {
+  const slideVariants: Variants = {
     enter: {
       opacity: 0,
       scale: 1.02,

@@ -64,6 +64,20 @@ function withVariantFilter(query: any, variantId?: string | null) {
   return variantId ? query.eq('variant_id', variantId) : query.is('variant_id', null);
 }
 
+function hasCartAuthToken(request: NextRequest) {
+  const authHeader = request.headers.get('Authorization');
+  return Boolean(authHeader?.startsWith('Bearer ') || request.cookies.get('sb-auth-token')?.value);
+}
+
+function isCartRead(body: unknown) {
+  return Boolean(
+    body &&
+    typeof body === 'object' &&
+    'action' in body &&
+    (body as { action?: unknown }).action === 'get'
+  );
+}
+
 function findRequestedVariant(variants: ProductVariantRecord[], item: CartVariantInput) {
   if (!variants.length) return null;
 
@@ -102,6 +116,12 @@ async function handleCartRoute(request: NextRequest, bodyOverride?: unknown) {
       );
     }
 
+    const body = bodyOverride ?? await readJsonBody(request);
+
+    if (isCartRead(body) && !hasCartAuthToken(request)) {
+      return NextResponse.json({ items: [] });
+    }
+
     let rateLimitHeaders: { limit: number; remaining: number; reset: number } | null = null;
 
     // Rate limiting check
@@ -129,7 +149,7 @@ async function handleCartRoute(request: NextRequest, bodyOverride?: unknown) {
       }
     }
 
-    const response = await handleCartRequest(request, bodyOverride);
+    const response = await handleCartRequest(request, body);
 
     if (rateLimitHeaders) {
       addRateLimitHeaders(response.headers, rateLimitHeaders);

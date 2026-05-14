@@ -42,7 +42,7 @@ export function SearchBar({ initialSearch = '', className = '' }: { initialSearc
 
     const searchParams = new URLSearchParams();
     searchParams.set('q', query.trim());
-    router.push(`/${locale}/catalogue?${searchParams.toString()}`);
+    router.push(`/${locale}/catalogue/recherche?${searchParams.toString()}`);
   };
 
   const handleSuggestionClick = (slug: string) => {
@@ -87,6 +87,7 @@ export function SearchBar({ initialSearch = '', className = '' }: { initialSearc
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setIsFocused(true)}
             placeholder={t('catalog.search_placeholder', 'Rechercher...')}
+            aria-label={t('catalog.search_placeholder', 'Rechercher un produit')}
             className="w-full pl-10 pr-10 py-3 border border-nubia-gold/30 rounded-lg focus:outline-none focus:border-nubia-gold bg-white"
             autoComplete="off"
           />

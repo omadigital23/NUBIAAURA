@@ -25,6 +25,34 @@ const presets: Record<ImageUsage, { w?: number; h?: number; fit?: string; sizes?
 
 const isExternal = (src: string) => /^https?:\/\//i.test(src);
 
+function toLocalPublicImagePath(src: string) {
+  const normalized = src.replace(/^https?:/, '');
+  const publicProductsMarker = '/storage/v1/object/public/products/images/';
+
+  if (normalized.includes(publicProductsMarker)) {
+    const [, imagePath] = normalized.split(publicProductsMarker);
+    return imagePath ? `/images/${imagePath}` : '';
+  }
+
+  if (src.startsWith('products/images/')) {
+    return `/${src.replace(/^products\//, '')}`;
+  }
+
+  if (src.startsWith('/products/images/')) {
+    return src.replace(/^\/products\//, '/');
+  }
+
+  if (src.startsWith('images/')) {
+    return `/${src}`;
+  }
+
+  if (src.startsWith('/images/')) {
+    return src;
+  }
+
+  return '';
+}
+
 function adjustLocalPathForUsage(usage: ImageUsage, src: string) {
   // Only rewrite if path looks like our public schema and contains a size folder
   // Expected folders: petite / moyenne / grande
@@ -63,6 +91,11 @@ export function withImageParams(usage: ImageUsage, src: string) {
   // Fix protocol-relative URLs (// -> https://)
   if (src.startsWith('//')) {
     src = 'https:' + src;
+  }
+
+  const localPublicPath = usage === 'og' ? '' : toLocalPublicImagePath(src);
+  if (localPublicPath) {
+    return adjustLocalPathForUsage(usage, localPublicPath);
   }
 
   const base = process.env.NEXT_PUBLIC_IMAGE_BASE || 'https://exjtjbciznzyyqrfctsc.supabase.co/storage/v1/object/public';

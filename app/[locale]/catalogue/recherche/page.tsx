@@ -8,6 +8,8 @@ import { useSearchParams } from 'next/navigation';
 import { ArrowRight, Loader } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import CommerceTrustBar from '@/components/CommerceTrustBar';
+import OptimizedImage from '@/components/OptimizedImage';
 import { PriceFilter } from '@/components/PriceFilter';
 import { SearchBar } from '@/components/SearchBar';
 import { SortSelect } from '@/components/SortSelect';
@@ -95,6 +97,12 @@ function CatalogueSearchResultsContent() {
         </div>
       </section>
 
+      <section className="border-b border-nubia-gold/20 bg-nubia-white py-5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <CommerceTrustBar limit={4} />
+        </div>
+      </section>
+
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
         {loading ? (
           <div className="flex justify-center items-center py-16">
@@ -142,10 +150,13 @@ function CatalogueSearchResultsContent() {
                       >
                         <div className="relative aspect-[4/5] w-full overflow-hidden bg-nubia-cream/35">
                           {imageUrl ? (
-                            <img
+                            <OptimizedImage
                               src={withImageParams('catalog', imageUrl as string)}
                               alt={productName}
-                              className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
+                              fill
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                              objectFit="contain"
+                              className="transition-transform duration-500 group-hover:scale-105"
                             />
                           ) : (
                             <div className="flex h-full items-center justify-center text-sm font-semibold text-nubia-black/45">

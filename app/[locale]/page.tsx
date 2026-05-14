@@ -20,9 +20,9 @@ import {
 import Header from '@/components/Header';
 import HeroSlider from '@/components/HeroSlider';
 import FeaturedProducts from '@/components/FeaturedProducts';
+import CommerceTrustBar from '@/components/CommerceTrustBar';
 import AnimatedSection from '@/components/AnimatedSection';
 import { useTranslation } from '@/hooks/useTranslation';
-import { getProductImageUrl } from '@/lib/media';
 
 const WhyChooseUs = dynamic(() => import('@/components/WhyChooseUs'), {
   loading: () => <div className="py-16 bg-nubia-cream/20"><div className="h-64 animate-pulse" /></div>,
@@ -42,14 +42,12 @@ const Footer = dynamic(() => import('@/components/Footer'), {
 
 type ProductAsset = {
   src: string;
-  fallback: string;
 };
 
 const productAsset = (path: string): ProductAsset => {
   const cleanPath = path.replace(/^\/+/, '');
   return {
-    src: getProductImageUrl(cleanPath),
-    fallback: `/${cleanPath}`,
+    src: `/${cleanPath}`,
   };
 };
 
@@ -57,24 +55,6 @@ const productAsset = (path: string): ProductAsset => {
 
 export default function Home() {
   const { t, locale } = useTranslation();
-
-  const heroImages = [
-    {
-      asset: productAsset('images/banners/category/robes-mariage.png'),
-      alt: t('home.hero_image_primary', 'Nubia Aura wedding dress'),
-      className: 'col-span-3 row-span-6',
-    },
-    {
-      asset: productAsset('images/robes/ceremonie/longues/robe-ceremonie-longue-doree/grande/01-main.png'),
-      alt: t('home.hero_image_ceremony', 'Gold ceremony dress'),
-      className: 'col-span-2 row-span-3',
-    },
-    {
-      asset: productAsset('images/costumes/africains/costume-vert/grande/01-main.png'),
-      alt: t('home.hero_image_suit', 'Green African suit'),
-      className: 'col-span-2 row-span-3',
-    },
-  ];
 
   const proofPoints = [
     {
@@ -116,6 +96,8 @@ export default function Home() {
       description: t('home.authenticity_desc'),
     },
   ];
+  const aboutImage = productAsset('images/chemises/wax/chemise-wax-grande/03-detail.png');
+  const aboutImageIsSupabaseStorage = aboutImage.src.includes('.supabase.co/storage/');
 
   return (
     <div className="min-h-screen bg-nubia-white flex flex-col">
@@ -187,19 +169,25 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="border-b border-nubia-gold/20 bg-nubia-white py-5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <CommerceTrustBar />
+        </div>
+      </section>
+
       <AnimatedSection>
         <section className="py-16 md:py-20 bg-nubia-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-10 lg:gap-16 items-center">
               <div className="relative overflow-hidden rounded-lg border border-nubia-gold/20 bg-nubia-cream shadow-sm">
                 <Image
-                  src={productAsset('images/chemises/wax/chemise-wax-grande/03-detail.png').src}
+                  src={aboutImage.src}
                   alt={t('home.about_image_alt', 'Wax shirt detail')}
                   width={600}
                   height={420}
                   className="h-[420px] w-full object-cover"
                   loading="lazy"
-                  unoptimized={process.env.NODE_ENV === 'development'}
+                  unoptimized={process.env.NODE_ENV === 'development' || aboutImageIsSupabaseStorage}
                 />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-nubia-black/85 to-transparent p-7">
                   <p className="max-w-sm text-sm font-semibold leading-6 text-nubia-white/90">

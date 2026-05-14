@@ -36,6 +36,15 @@ function logReviewsWarning(message: string, error: unknown) {
     }
 }
 
+function getMeaningfulReviewText(value: string | null) {
+    const trimmed = value?.trim();
+    if (!trimmed || trimmed.length < 12) {
+        return null;
+    }
+
+    return trimmed;
+}
+
 export function ProductReviews({ productId }: ProductReviewsProps) {
     const { t } = useTranslation();
     const { user, isAuthenticated } = useAuth();
@@ -339,12 +348,16 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
 
                                     <StarRating rating={review.rating} size={16} />
 
-                                    {review.title && (
-                                        <h4 className="font-medium mt-2">{review.title}</h4>
+                                    {getMeaningfulReviewText(review.title) && (
+                                        <h4 className="font-medium mt-2">{getMeaningfulReviewText(review.title)}</h4>
                                     )}
 
-                                    {review.comment && (
-                                        <p className="text-nubia-black/70 mt-2">{review.comment}</p>
+                                    {getMeaningfulReviewText(review.comment) ? (
+                                        <p className="text-nubia-black/70 mt-2">{getMeaningfulReviewText(review.comment)}</p>
+                                    ) : !getMeaningfulReviewText(review.title) && (
+                                        <p className="text-nubia-black/60 mt-2">
+                                            {t('reviews.no_detailed_comment', 'Avis verifie sans commentaire detaille.')}
+                                        </p>
                                     )}
                                 </div>
                             </div>

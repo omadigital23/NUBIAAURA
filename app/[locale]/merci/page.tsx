@@ -2,7 +2,7 @@
 
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Loader, Package, Truck, Clock } from 'lucide-react';
@@ -114,7 +114,6 @@ function GoldParticles() {
 
 function ThankYouContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const { t, locale } = useTranslation();
   const [orderId, setOrderId] = useState<string | null>(null);
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
