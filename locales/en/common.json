@@ -556,6 +556,7 @@
   "pwa.install": "Install App",
   "pwa.install_short": "Install",
   "pwa.install_ios_hint": "On iPhone/iPad: use Share, then Add to Home Screen.",
+  "pwa.install_browser_hint": "If the browser allows installation, the prompt opens here. Otherwise use the install icon or the browser menu.",
   "pwa.installed": "App Installed",
   "auth.login_title": "Login",
   "auth.signup_title": "Sign Up",

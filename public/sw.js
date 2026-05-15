@@ -1,11 +1,13 @@
-const VERSION = '2026-05-15';
+const VERSION = '2026-05-15-2';
 const CORE_CACHE = `nubia-aura-core-${VERSION}`;
 const RUNTIME_CACHE = `nubia-aura-runtime-${VERSION}`;
 const IMAGE_CACHE = `nubia-aura-images-${VERSION}`;
+const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
   '/fr',
-  '/offline.html',
+  '/en',
+  OFFLINE_URL,
   '/manifest.json',
   '/favicon.ico',
   '/apple-touch-icon.png',
@@ -99,8 +101,8 @@ async function navigationResponse(event) {
     // Continue with normal navigation handling.
   }
 
-  const response = await networkFirst(event.request, '/offline.html');
-  return response || caches.match('/offline.html');
+  const response = await networkFirst(event.request, OFFLINE_URL);
+  return response || caches.match(OFFLINE_URL);
 }
 
 self.addEventListener('install', (event) => {
@@ -137,6 +139,7 @@ self.addEventListener('fetch', (event) => {
 
   const isSameOrigin = url.origin === self.location.origin;
   if (isSameOrigin && url.pathname.startsWith('/api/')) return;
+  if (isSameOrigin && url.pathname.startsWith('/_next/webpack-hmr')) return;
   if (isSameOrigin && url.searchParams.has('_rsc')) return;
 
   if (request.mode === 'navigate') {

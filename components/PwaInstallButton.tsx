@@ -47,11 +47,13 @@ export default function PwaInstallButton({ variant = 'desktop' }: PwaInstallButt
   const { t } = useTranslation();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [canShowIosHint, setCanShowIosHint] = useState(false);
-  const [showIosHint, setShowIosHint] = useState(false);
+  const [showInstallHint, setShowInstallHint] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isPrompting, setIsPrompting] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
+    setIsReady(true);
     setIsInstalled(isStandaloneDisplay());
     setCanShowIosHint(isIosSafariInstallFallback());
 
@@ -64,7 +66,7 @@ export default function PwaInstallButton({ variant = 'desktop' }: PwaInstallButt
 
     const handleAppInstalled = () => {
       setDeferredPrompt(null);
-      setShowIosHint(false);
+      setShowInstallHint(false);
       setIsInstalled(true);
     };
 
@@ -83,14 +85,17 @@ export default function PwaInstallButton({ variant = 'desktop' }: PwaInstallButt
     'pwa.install_ios_hint',
     "Sur iPhone/iPad: utilisez Partager puis Ajouter a l'ecran d'accueil."
   );
+  const browserHint = t(
+    'pwa.install_browser_hint',
+    "Si le navigateur autorise l'installation, la demande s'ouvre ici. Sinon utilisez l'icone d'installation ou le menu du navigateur."
+  );
+  const installHint = canShowIosHint ? iosHint : browserHint;
 
   const handleInstall = useCallback(async () => {
     if (isInstalled || isPrompting) return;
 
     if (!deferredPrompt) {
-      if (canShowIosHint) {
-        setShowIosHint((current) => !current);
-      }
+      setShowInstallHint((current) => !current);
       return;
     }
 
@@ -100,14 +105,15 @@ export default function PwaInstallButton({ variant = 'desktop' }: PwaInstallButt
       const choice = await deferredPrompt.userChoice;
       setDeferredPrompt(null);
       setIsInstalled(choice.outcome === 'accepted');
+      setShowInstallHint(choice.outcome !== 'accepted');
     } finally {
       setIsPrompting(false);
     }
-  }, [canShowIosHint, deferredPrompt, isInstalled, isPrompting]);
+  }, [deferredPrompt, isInstalled, isPrompting]);
 
   const shouldRender = useMemo(
-    () => !isInstalled && (Boolean(deferredPrompt) || (variant === 'mobile' && canShowIosHint)),
-    [canShowIosHint, deferredPrompt, isInstalled, variant]
+    () => isReady && !isInstalled,
+    [isInstalled, isReady]
   );
 
   if (!shouldRender) return null;
@@ -126,9 +132,9 @@ export default function PwaInstallButton({ variant = 'desktop' }: PwaInstallButt
           <Smartphone size={18} aria-hidden="true" />
           <span>{installLabel}</span>
         </button>
-        {showIosHint && (
+        {showInstallHint && (
           <p className="rounded-lg border border-nubia-gold/25 bg-nubia-gold/10 px-3 py-2 text-xs leading-5 text-nubia-white/82">
-            {iosHint}
+            {installHint}
           </p>
         )}
       </div>
@@ -136,16 +142,26 @@ export default function PwaInstallButton({ variant = 'desktop' }: PwaInstallButt
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleInstall}
-      className="hidden items-center gap-2 rounded-lg border border-nubia-gold/35 bg-nubia-gold/10 px-3 py-2 text-sm font-semibold text-nubia-gold transition-colors hover:border-nubia-gold hover:bg-nubia-gold hover:text-nubia-black focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2 focus:ring-offset-nubia-black disabled:cursor-wait disabled:opacity-75 lg:inline-flex"
-      disabled={isPrompting}
-      aria-label={installTitle}
-      title={installTitle}
-    >
-      <Download size={17} aria-hidden="true" />
-      <span className="hidden lg:inline">{installLabel}</span>
-    </button>
+    <div className="relative hidden lg:inline-flex">
+      <button
+        type="button"
+        onClick={handleInstall}
+        className="inline-flex items-center gap-2 rounded-lg border border-nubia-gold/35 bg-nubia-gold/10 px-3 py-2 text-sm font-semibold text-nubia-gold transition-colors hover:border-nubia-gold hover:bg-nubia-gold hover:text-nubia-black focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2 focus:ring-offset-nubia-black disabled:cursor-wait disabled:opacity-75"
+        disabled={isPrompting}
+        aria-label={installTitle}
+        title={installTitle}
+      >
+        <Download size={17} aria-hidden="true" />
+        <span>{installLabel}</span>
+      </button>
+      {showInstallHint && (
+        <p
+          className="absolute right-0 top-full z-50 mt-3 w-72 rounded-lg border border-nubia-gold/25 bg-nubia-black px-4 py-3 text-xs leading-5 text-nubia-white shadow-xl"
+          role="status"
+        >
+          {installHint}
+        </p>
+      )}
+    </div>
   );
 }

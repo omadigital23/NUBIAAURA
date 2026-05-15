@@ -540,6 +540,7 @@
   "pwa.install": "Installer l'application",
   "pwa.install_short": "Installer",
   "pwa.install_ios_hint": "Sur iPhone/iPad: utilisez Partager puis Ajouter à l'écran d'accueil.",
+  "pwa.install_browser_hint": "Si le navigateur autorise l'installation, la demande s'ouvre ici. Sinon utilisez l'icône d'installation ou le menu du navigateur.",
   "pwa.installed": "Application installée",
   "returns.select_reason": "Sélectionnez une raison",
   "returns.defective_product": "Produit défectueux",
