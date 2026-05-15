@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import SocialIcon from '@/components/SocialIcon';
+import { getProductImageUrl } from '@/lib/media';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -13,12 +14,12 @@ export default function Footer() {
     : `© ${currentYear} Nubia Aura. All rights reserved.`;
 
   const paymentMethods = [
-    { name: 'Visa', logo: '/images/visa.png' },
-    { name: 'Mastercard', logo: '/images/mastercard.png' },
-    { name: 'CMI', logo: '/images/cmi.png' },
-    { name: 'Orange Money', logo: '/images/orange-money.png' },
-    { name: 'Wave', logo: '/images/wave.png' },
-    { name: 'PayPal', logo: '/images/paypal.png' },
+    { name: 'Visa', logo: getProductImageUrl('images/visa.png') },
+    { name: 'Mastercard', logo: getProductImageUrl('images/mastercard.png') },
+    { name: 'CMI', logo: getProductImageUrl('images/cmi.png') },
+    { name: 'Orange Money', logo: getProductImageUrl('images/orange-money.png') },
+    { name: 'Wave', logo: getProductImageUrl('images/wave.png') },
+    { name: 'PayPal', logo: getProductImageUrl('images/paypal.png') },
   ];
 
   return (

@@ -25,32 +25,41 @@ const presets: Record<ImageUsage, { w?: number; h?: number; fit?: string; sizes?
 
 const isExternal = (src: string) => /^https?:\/\//i.test(src);
 
-function toLocalPublicImagePath(src: string) {
+function toProductBucketImagePath(src: string) {
   const normalized = src.replace(/^https?:/, '');
-  const publicProductsMarker = '/storage/v1/object/public/products/images/';
+  const publicProductsMarker = '/storage/v1/object/public/products/';
 
   if (normalized.includes(publicProductsMarker)) {
-    const [, imagePath] = normalized.split(publicProductsMarker);
-    return imagePath ? `/images/${imagePath}` : '';
+    const [, productPath] = normalized.split(publicProductsMarker);
+    return productPath || '';
   }
 
   if (src.startsWith('products/images/')) {
-    return `/${src.replace(/^products\//, '')}`;
+    return src.replace(/^products\//, '');
   }
 
   if (src.startsWith('/products/images/')) {
-    return src.replace(/^\/products\//, '/');
+    return src.replace(/^\/products\//, '');
   }
 
   if (src.startsWith('images/')) {
-    return `/${src}`;
-  }
-
-  if (src.startsWith('/images/')) {
     return src;
   }
 
+  if (src.startsWith('/images/')) {
+    return src.replace(/^\/+/, '');
+  }
+
   return '';
+}
+
+function buildProductStorageUrl(path: string) {
+  const base = process.env.NEXT_PUBLIC_IMAGE_BASE || 'https://exjtjbciznzyyqrfctsc.supabase.co/storage/v1/object/public';
+  const bucket = process.env.NEXT_PUBLIC_IMAGE_BUCKET || 'products';
+  const cleanedBase = base.replace(/\/$/, '').replace(/^\/\//, 'https://');
+  const cleanPath = path.replace(/^\/+/, '').replace(new RegExp(`^${bucket}/`), '');
+
+  return `${cleanedBase}/${bucket}/${cleanPath}`;
 }
 
 function adjustLocalPathForUsage(usage: ImageUsage, src: string) {
@@ -93,9 +102,10 @@ export function withImageParams(usage: ImageUsage, src: string) {
     src = 'https:' + src;
   }
 
-  const localPublicPath = usage === 'og' ? '' : toLocalPublicImagePath(src);
-  if (localPublicPath) {
-    return adjustLocalPathForUsage(usage, localPublicPath);
+  const productBucketPath = toProductBucketImagePath(src);
+  if (productBucketPath) {
+    const adjustedPath = adjustLocalPathForUsage(usage, productBucketPath);
+    return buildProductStorageUrl(adjustedPath);
   }
 
   const base = process.env.NEXT_PUBLIC_IMAGE_BASE || 'https://exjtjbciznzyyqrfctsc.supabase.co/storage/v1/object/public';

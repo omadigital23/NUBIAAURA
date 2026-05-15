@@ -23,6 +23,7 @@ import FeaturedProducts from '@/components/FeaturedProducts';
 import CommerceTrustBar from '@/components/CommerceTrustBar';
 import AnimatedSection from '@/components/AnimatedSection';
 import { useTranslation } from '@/hooks/useTranslation';
+import { getProductImageUrl } from '@/lib/media';
 
 const WhyChooseUs = dynamic(() => import('@/components/WhyChooseUs'), {
   loading: () => <div className="py-16 bg-nubia-cream/20"><div className="h-64 animate-pulse" /></div>,
@@ -47,7 +48,7 @@ type ProductAsset = {
 const productAsset = (path: string): ProductAsset => {
   const cleanPath = path.replace(/^\/+/, '');
   return {
-    src: `/${cleanPath}`,
+    src: getProductImageUrl(cleanPath),
   };
 };
 

@@ -4,6 +4,7 @@ import { useEffect, useState, type SyntheticEvent } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Star } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
+import { withImageParams } from '@/lib/image-formats';
 
 type ProductImage = {
   url: string | null;
@@ -113,13 +114,6 @@ function getPrimaryProductImage(product: DBProduct) {
   return galleryImage || product.image_url || product.image || '';
 }
 
-function toLocalProductPath(src: string) {
-  const marker = '/storage/v1/object/public/products/';
-  const index = src.indexOf(marker);
-  if (index >= 0) return `/${src.slice(index + marker.length)}`;
-  return src.startsWith('/images/') ? src : '';
-}
-
 function handleImageError(event: SyntheticEvent<HTMLImageElement>, fallback: string) {
   const image = event.currentTarget;
   if (!fallback || image.dataset.fallbackApplied === 'true') return;
@@ -193,9 +187,7 @@ export default function FeaturedProducts() {
   const productCard = (product: DBProduct, featuredCard = false) => {
     const name = productName(product);
     const imageSrc = getPrimaryProductImage(product);
-    const localImageSrc = toLocalProductPath(imageSrc);
-    const displayImageSrc = localImageSrc || imageSrc;
-    const fallback = localImageSrc && localImageSrc !== imageSrc ? imageSrc : '';
+    const displayImageSrc = imageSrc ? withImageParams(featuredCard ? 'cover' : 'catalog', imageSrc) : '';
     const rating = Math.max(1, Math.min(5, product.rating ?? 5));
 
     return (
@@ -212,7 +204,7 @@ export default function FeaturedProducts() {
             <img
               src={displayImageSrc}
               alt={name}
-              onError={(event) => handleImageError(event, fallback)}
+              onError={(event) => handleImageError(event, imageSrc)}
               loading="eager"
               className="relative z-10 h-full w-full object-cover transition-all duration-700 group-hover:scale-105 opacity-0 [&.loaded]:opacity-100"
               onLoad={(e) => e.currentTarget.classList.add('loaded')}

@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
+import { getProductImageUrl } from '@/lib/media';
 
 interface OptimizedImageProps {
     src: string;
@@ -69,7 +70,7 @@ export default function OptimizedImage({
     };
 
     // Fallback image for errors
-    const fallbackSrc = '/images/logo_nubia_aura.png';
+    const fallbackSrc = getProductImageUrl('images/logo.png');
 
     // Normalize the source URL
     const normalizedSrc = normalizeImageUrl(src);
