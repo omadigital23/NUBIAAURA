@@ -2,100 +2,103 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#D4AF37">
-  <title>Hors ligne - NUBIA AURA</title>
+  <title>Hors ligne - Nubia Aura</title>
   <style>
     * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
     }
-    
+
     body {
-      font-family: 'Playfair Display', Georgia, serif;
-      background: linear-gradient(135deg, #FFFBF5 0%, #F5E6D3 100%);
       min-height: 100vh;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 24px;
+      background: #fffbf5;
+      color: #121212;
+      font-family: Inter, Arial, sans-serif;
       text-align: center;
     }
-    
-    .container {
-      max-width: 400px;
+
+    main {
+      width: min(100%, 420px);
     }
-    
-    .logo {
-      font-size: 3rem;
-      color: #D4AF37;
-      margin-bottom: 1rem;
+
+    .mark {
+      width: 96px;
+      height: 96px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 24px;
+      border: 2px solid #d4af37;
+      border-radius: 999px;
+      background: #0b0b0b;
+      color: #f7dc75;
+      font-family: Georgia, serif;
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
     }
-    
+
     h1 {
-      font-size: 2rem;
-      color: #1a1a1a;
-      margin-bottom: 1rem;
+      margin-bottom: 12px;
+      font-family: Georgia, serif;
+      font-size: clamp(32px, 9vw, 48px);
+      line-height: 1;
     }
-    
+
     p {
-      color: #666;
-      line-height: 1.6;
-      margin-bottom: 2rem;
+      margin: 0 auto 24px;
+      color: rgba(18, 18, 18, 0.72);
+      font-size: 16px;
+      line-height: 1.65;
     }
-    
-    .icon {
-      font-size: 4rem;
-      margin-bottom: 1rem;
-    }
-    
+
     button {
-      background: #D4AF37;
-      color: #1a1a1a;
-      border: none;
-      padding: 12px 24px;
-      font-size: 1rem;
-      font-weight: 600;
+      min-height: 48px;
+      border: 0;
       border-radius: 8px;
+      background: #d4af37;
+      color: #0b0b0b;
       cursor: pointer;
-      transition: opacity 0.2s;
+      font: 700 16px/1 Inter, Arial, sans-serif;
+      padding: 14px 22px;
     }
-    
-    button:hover {
-      opacity: 0.9;
+
+    button:focus-visible {
+      outline: 3px solid rgba(212, 175, 55, 0.38);
+      outline-offset: 3px;
     }
-    
+
     .status {
-      margin-top: 2rem;
-      font-size: 0.875rem;
-      color: #999;
+      margin-top: 20px;
+      font-size: 13px;
+      color: rgba(18, 18, 18, 0.56);
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="icon">📶</div>
-    <div class="logo">NUBIA AURA</div>
+  <main>
+    <div class="mark" aria-hidden="true">NA</div>
     <h1>Vous êtes hors ligne</h1>
-    <p>
-      Impossible de se connecter à internet. Vérifiez votre connexion et réessayez.
-    </p>
-    <button onclick="window.location.reload()">
-      Réessayer
-    </button>
+    <p>Votre connexion internet semble indisponible. Les pages déjà ouvertes peuvent rester accessibles.</p>
+    <button type="button" onclick="window.location.reload()">Réessayer</button>
     <p class="status" id="status">En attente de connexion...</p>
-  </div>
-  
+  </main>
+
   <script>
-    // Check for online status
-    window.addEventListener('online', () => {
-      document.getElementById('status').textContent = '✓ Connexion rétablie! Rechargement...';
-      setTimeout(() => window.location.reload(), 1000);
+    window.addEventListener('online', function () {
+      document.getElementById('status').textContent = 'Connexion rétablie. Rechargement...';
+      setTimeout(function () {
+        window.location.reload();
+      }, 900);
     });
-    
-    window.addEventListener('offline', () => {
+
+    window.addEventListener('offline', function () {
       document.getElementById('status').textContent = 'En attente de connexion...';
     });
   </script>

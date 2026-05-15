@@ -1,174 +1,218 @@
-// Service Worker for NUBIA AURA PWA
-const CACHE_NAME = 'nubia-aura-v1';
+const VERSION = '2026-05-15';
+const CORE_CACHE = `nubia-aura-core-${VERSION}`;
+const RUNTIME_CACHE = `nubia-aura-runtime-${VERSION}`;
+const IMAGE_CACHE = `nubia-aura-images-${VERSION}`;
 
-// Assets to cache immediately
-const STATIC_ASSETS = [
-    '/',
-    '/fr',
-    '/en',
-    '/offline.html',
-    '/manifest.json',
+const CORE_ASSETS = [
+  '/fr',
+  '/offline.html',
+  '/manifest.json',
+  '/favicon.ico',
+  '/apple-touch-icon.png',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png',
+  '/icons/maskable-192x192.png',
+  '/icons/maskable-512x512.png',
 ];
 
-// Install event - cache static assets
+const STATIC_ASSET_PATTERN = /\.(?:css|js|mjs|png|jpg|jpeg|gif|webp|avif|svg|ico|woff2?|ttf|otf)$/i;
+
+async function cacheCoreAssets() {
+  const cache = await caches.open(CORE_CACHE);
+
+  await Promise.all(
+    CORE_ASSETS.map(async (asset) => {
+      try {
+        const request = new Request(asset, { cache: 'reload' });
+        const response = await fetch(request);
+        if (isCacheable(response)) {
+          await cache.put(request, response);
+        }
+      } catch {
+        // A single failed preload must not block the service worker install.
+      }
+    })
+  );
+}
+
+function isCacheable(response) {
+  return response && (response.ok || response.type === 'opaque');
+}
+
+async function putInCache(cacheName, request, response) {
+  if (!isCacheable(response)) return;
+
+  try {
+    const cache = await caches.open(cacheName);
+    await cache.put(request, response.clone());
+  } catch {
+    // Ignore quota and opaque-response cache failures.
+  }
+}
+
+async function cacheFirst(request, cacheName = RUNTIME_CACHE) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+
+  const response = await fetch(request);
+  await putInCache(cacheName, request, response);
+  return response;
+}
+
+async function staleWhileRevalidate(request, cacheName = RUNTIME_CACHE) {
+  const cached = await caches.match(request);
+  const fetchPromise = fetch(request)
+    .then(async (response) => {
+      await putInCache(cacheName, request, response);
+      return response;
+    })
+    .catch(() => cached);
+
+  return cached || fetchPromise;
+}
+
+async function networkFirst(request, fallbackUrl) {
+  try {
+    const response = await fetch(request);
+    await putInCache(RUNTIME_CACHE, request, response);
+    return response;
+  } catch {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+
+    if (fallbackUrl) {
+      return caches.match(fallbackUrl);
+    }
+
+    return undefined;
+  }
+}
+
+async function navigationResponse(event) {
+  try {
+    const preload = await event.preloadResponse;
+    if (preload) {
+      await putInCache(RUNTIME_CACHE, event.request, preload);
+      return preload;
+    }
+  } catch {
+    // Continue with normal navigation handling.
+  }
+
+  const response = await networkFirst(event.request, '/offline.html');
+  return response || caches.match('/offline.html');
+}
+
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installing...');
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then((cache) => {
-                console.log('[SW] Caching static assets');
-                return cache.addAll(STATIC_ASSETS);
-            })
-            .then(() => self.skipWaiting())
-    );
+  event.waitUntil(cacheCoreAssets().then(() => self.skipWaiting()));
 });
 
-// Activate event - cleanup old caches
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Activating...');
-    event.waitUntil(
-        caches.keys()
-            .then((keys) => {
-                return Promise.all(
-                    keys
-                        .filter((key) => key !== CACHE_NAME)
-                        .map((key) => {
-                            console.log('[SW] Removing old cache:', key);
-                            return caches.delete(key);
-                        })
-                );
-            })
-            .then(() => self.clients.claim())
-    );
+  event.waitUntil(
+    (async () => {
+      if ('navigationPreload' in self.registration) {
+        await self.registration.navigationPreload.enable();
+      }
+
+      const cacheNames = await caches.keys();
+      await Promise.all(
+        cacheNames
+          .filter((cacheName) => ![CORE_CACHE, RUNTIME_CACHE, IMAGE_CACHE].includes(cacheName))
+          .map((cacheName) => caches.delete(cacheName))
+      );
+
+      await self.clients.claim();
+    })()
+  );
 });
 
-// Fetch event - Network first, fallback to cache
 self.addEventListener('fetch', (event) => {
-    const { request } = event;
-    const url = new URL(request.url);
+  const { request } = event;
 
-    // Skip non-GET requests
-    if (request.method !== 'GET') return;
+  if (request.method !== 'GET') return;
 
-    // Skip API requests (don't cache)
-    if (url.pathname.startsWith('/api/')) return;
+  const url = new URL(request.url);
+  const isHttpRequest = url.protocol === 'http:' || url.protocol === 'https:';
+  if (!isHttpRequest) return;
 
-    // Skip external requests
-    if (url.origin !== self.location.origin) return;
+  const isSameOrigin = url.origin === self.location.origin;
+  if (isSameOrigin && url.pathname.startsWith('/api/')) return;
+  if (isSameOrigin && url.searchParams.has('_rsc')) return;
 
-    // For navigation requests, use Network First strategy
-    if (request.mode === 'navigate') {
-        event.respondWith(
-            fetch(request)
-                .then((response) => {
-                    // Cache the new page
-                    const responseClone = response.clone();
-                    caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(request, responseClone);
-                    });
-                    return response;
-                })
-                .catch(() => {
-                    // Return cached page or offline page
-                    return caches.match(request)
-                        .then((cached) => cached || caches.match('/offline.html'));
-                })
-        );
-        return;
-    }
+  if (request.mode === 'navigate') {
+    event.respondWith(navigationResponse(event));
+    return;
+  }
 
-    // For static assets (images, CSS, JS), use Cache First strategy
-    if (
-        url.pathname.match(/\.(png|jpg|jpeg|gif|webp|svg|ico|css|js|woff2?)$/) ||
-        url.pathname.startsWith('/_next/')
-    ) {
-        event.respondWith(
-            caches.match(request)
-                .then((cached) => {
-                    if (cached) {
-                        // Update cache in background
-                        fetch(request).then((response) => {
-                            caches.open(CACHE_NAME).then((cache) => {
-                                cache.put(request, response);
-                            });
-                        });
-                        return cached;
-                    }
+  if (request.destination === 'image') {
+    event.respondWith(staleWhileRevalidate(request, IMAGE_CACHE));
+    return;
+  }
 
-                    // Not in cache, fetch and cache
-                    return fetch(request).then((response) => {
-                        const responseClone = response.clone();
-                        caches.open(CACHE_NAME).then((cache) => {
-                            cache.put(request, responseClone);
-                        });
-                        return response;
-                    });
-                })
-        );
-        return;
-    }
+  if (isSameOrigin && (url.pathname.startsWith('/_next/static/') || STATIC_ASSET_PATTERN.test(url.pathname))) {
+    event.respondWith(cacheFirst(request, RUNTIME_CACHE));
+    return;
+  }
 
-    // Default: Network first with cache fallback
-    event.respondWith(
-        fetch(request)
-            .then((response) => {
-                const responseClone = response.clone();
-                caches.open(CACHE_NAME).then((cache) => {
-                    cache.put(request, responseClone);
-                });
-                return response;
-            })
-            .catch(() => caches.match(request))
-    );
+  if (isSameOrigin) {
+    event.respondWith(networkFirst(request));
+  }
 });
 
-// Background sync for cart operations
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener('sync', (event) => {
-    if (event.tag === 'sync-cart') {
-        console.log('[SW] Syncing cart...');
-        // Cart sync logic would go here
-    }
+  if (event.tag === 'sync-cart') {
+    event.waitUntil(Promise.resolve());
+  }
 });
 
-// Push notifications
 self.addEventListener('push', (event) => {
-    if (!event.data) return;
+  if (!event.data) return;
 
-    const data = event.data.json();
-    const options = {
-        body: data.body || '',
-        icon: '/icons/icon-192x192.png',
-        badge: '/icons/icon-72x72.png',
-        tag: data.tag || 'nubia-notification',
-        data: data.data || {},
-        actions: data.actions || [],
-        vibrate: [100, 50, 100],
-    };
+  let data = {};
+  try {
+    data = event.data.json();
+  } catch {
+    data = { title: 'Nubia Aura', body: event.data.text() };
+  }
 
-    event.waitUntil(
-        self.registration.showNotification(data.title || 'NUBIA AURA', options)
-    );
+  const options = {
+    body: data.body || '',
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/icon-72x72.png',
+    tag: data.tag || 'nubia-notification',
+    data: data.data || {},
+    actions: data.actions || [],
+    vibrate: [100, 50, 100],
+  };
+
+  event.waitUntil(self.registration.showNotification(data.title || 'Nubia Aura', options));
 });
 
-// Notification click handler
 self.addEventListener('notificationclick', (event) => {
-    event.notification.close();
+  event.notification.close();
 
-    const url = event.notification.data?.url || '/';
+  const targetUrl = event.notification.data?.url || '/fr';
+  const absoluteUrl = new URL(targetUrl, self.location.origin).href;
 
-    event.waitUntil(
-        self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-            .then((clients) => {
-                // Focus existing window if available
-                for (const client of clients) {
-                    if (client.url === url && 'focus' in client) {
-                        return client.focus();
-                    }
-                }
-                // Open new window
-                if (self.clients.openWindow) {
-                    return self.clients.openWindow(url);
-                }
-            })
-    );
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if (client.url === absoluteUrl && 'focus' in client) {
+          return client.focus();
+        }
+      }
+
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(absoluteUrl);
+      }
+
+      return undefined;
+    })
+  );
 });

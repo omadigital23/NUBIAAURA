@@ -11,6 +11,7 @@ const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfa
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.nubiaaura.com'),
+  applicationName: 'Nubia Aura',
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
@@ -25,6 +26,11 @@ export const metadata: Metadata = {
     shortcut: '/favicon.ico',
   },
   manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Nubia Aura',
+  },
   title: {
     default: 'Nubia Aura - Mode Africaine Éthique & Sur-Mesure | Sénégal & Maroc',
     template: '%s | Nubia Aura',

@@ -11,6 +11,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/hooks/useAuth';
 import { getProductImageUrl } from '@/lib/media';
 import OptimizedImage from './OptimizedImage';
+import PwaInstallButton from './PwaInstallButton';
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -48,7 +49,7 @@ export default function Header() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden lg:flex items-center space-x-8">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -65,6 +66,7 @@ export default function Header() {
 
           {/* Right Icons */}
           <div className="flex items-center gap-0 sm:gap-2 md:gap-4">
+            <PwaInstallButton variant="desktop" />
             <Link
               href={`/${locale}/catalogue#catalog-search`}
               className="p-2 sm:p-3 text-nubia-gold hover:text-nubia-white transition-colors focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2 focus:ring-offset-nubia-black rounded"
@@ -106,7 +108,7 @@ export default function Header() {
 
             {/* Mobile Menu Button */}
             <button
-              className="md:hidden p-2 sm:p-3 text-nubia-gold hover:text-nubia-white transition-colors focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2 focus:ring-offset-nubia-black rounded"
+              className="lg:hidden p-2 sm:p-3 text-nubia-gold hover:text-nubia-white transition-colors focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2 focus:ring-offset-nubia-black rounded"
               onClick={() => setIsOpen(!isOpen)}
               aria-label={isOpen ? t('nav.close_menu', 'Fermer le menu') : t('nav.open_menu', 'Ouvrir le menu')}
               aria-expanded={isOpen}
@@ -118,28 +120,32 @@ export default function Header() {
         </div>
 
         {/* Mobile Navigation */}
-        {isOpen && (
-          <nav className="md:hidden pb-4 space-y-2" id="mobile-navigation" role="navigation" aria-label={t('nav.main_navigation', 'Navigation principale')}>
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`block px-4 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2 focus:ring-offset-nubia-black rounded ${isActive(link.href) ? 'text-nubia-gold bg-nubia-gold/10' : 'text-nubia-gold/90 hover:text-nubia-gold hover:bg-nubia-gold/5'
-                  }`}
-                onClick={() => setIsOpen(false)}
-              >
-                {link.label}
-              </Link>
-            ))}
+        <nav
+          className={`${isOpen ? 'block' : 'hidden'} lg:hidden pb-4 space-y-2`}
+          id="mobile-navigation"
+          role="navigation"
+          aria-label={t('nav.main_navigation', 'Navigation principale')}
+        >
+          <PwaInstallButton variant="mobile" />
+          {navLinks.map((link) => (
             <Link
-              href={`/${locale}/catalogue#catalog-search`}
-              className="block rounded bg-nubia-gold/10 px-4 py-2 font-semibold text-nubia-gold transition-colors hover:bg-nubia-gold/15 focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2 focus:ring-offset-nubia-black"
+              key={link.href}
+              href={link.href}
+              className={`block px-4 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2 focus:ring-offset-nubia-black rounded ${isActive(link.href) ? 'text-nubia-gold bg-nubia-gold/10' : 'text-nubia-gold/90 hover:text-nubia-gold hover:bg-nubia-gold/5'
+                }`}
               onClick={() => setIsOpen(false)}
             >
-              {t('catalog.search_placeholder', 'Rechercher un produit...')}
+              {link.label}
             </Link>
-          </nav>
-        )}
+          ))}
+          <Link
+            href={`/${locale}/catalogue#catalog-search`}
+            className="block rounded bg-nubia-gold/10 px-4 py-2 font-semibold text-nubia-gold transition-colors hover:bg-nubia-gold/15 focus:outline-none focus:ring-2 focus:ring-nubia-gold focus:ring-offset-2 focus:ring-offset-nubia-black"
+            onClick={() => setIsOpen(false)}
+          >
+            {t('catalog.search_placeholder', 'Rechercher un produit...')}
+          </Link>
+        </nav>
       </div>
     </header>
   );

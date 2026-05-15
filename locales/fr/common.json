@@ -538,6 +538,8 @@
   "checkout.promo.success": "Code promo appliqué !",
   "common.load_more": "Voir plus",
   "pwa.install": "Installer l'application",
+  "pwa.install_short": "Installer",
+  "pwa.install_ios_hint": "Sur iPhone/iPad: utilisez Partager puis Ajouter à l'écran d'accueil.",
   "pwa.installed": "Application installée",
   "returns.select_reason": "Sélectionnez une raison",
   "returns.defective_product": "Produit défectueux",

@@ -554,6 +554,8 @@
   "auth.change_email_title": "Change email address",
   "merci.back_to_home": "Back to Home",
   "pwa.install": "Install App",
+  "pwa.install_short": "Install",
+  "pwa.install_ios_hint": "On iPhone/iPad: use Share, then Add to Home Screen.",
   "pwa.installed": "App Installed",
   "auth.login_title": "Login",
   "auth.signup_title": "Sign Up",
